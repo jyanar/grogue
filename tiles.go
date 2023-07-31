@@ -1,0 +1,68 @@
+// Implements the TileManager interface for gruid-sdl:
+//
+//   // TileManager manages tiles fetching.
+//   type TileManager interface {
+// 	   // GetImage returns the image to be used for a given cell style.
+// 	   GetImage(gruid.Cell) image.Image
+//
+// 	   // TileSize returns the (width, height) in pixels of the tiles. Both
+// 	   // should be positive and non-zero.
+// 	   TileSize() gruid.Point
+//   }
+//
+
+package main
+
+import (
+	"image"
+	"image/color"
+
+	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/tiles"
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/opentype"
+)
+
+type TileDrawer struct {
+	drawer *tiles.Drawer
+}
+
+func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
+	fg := image.NewUniform(color.RGBA{0xad, 0xbc, 0xbc, 255})
+	bg := image.NewUniform(color.RGBA{0x10, 0x3c, 0x48, 255})
+
+	return t.drawer.Draw(c.Rune, fg, bg)
+}
+
+func (t *TileDrawer) TileSize() gruid.Point {
+	return t.drawer.Size()
+}
+
+func NewTileDrawer() (*TileDrawer, error) {
+	t := &TileDrawer{}
+
+	// Grab the monospace font TTF.
+	font, err := opentype.Parse(gomono.TTF)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the font face.
+	face, err := opentype.NewFace(font, &opentype.FaceOptions{
+		Size: 12,
+		DPI:  72 * 2,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Create new drawer for tiles using the face. Note that we could use
+	// multiple faces (e.g. italic/bold/etc) -- in that case we would simply
+	// define drawers for those as well and call the appropriate one in the
+	// GetImage method.
+	t.drawer, err = tiles.NewDrawer(face)
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
+}
