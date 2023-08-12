@@ -32,7 +32,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		// Initialize entities.
 		m.game.ecs = NewECS()
 		m.game.ecs.Create(
-			Position{size.Div(2)},
+			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{'@', gruid.ColorDefault},
 			Input{},
