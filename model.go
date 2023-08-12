@@ -37,6 +37,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Renderable{'@', gruid.ColorDefault},
 			Input{},
 		)
+		m.game.ecs.Map = m.game.Map
 		m.game.ecs.Update()
 
 	case gruid.MsgKeyDown:

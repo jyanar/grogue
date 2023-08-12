@@ -34,12 +34,14 @@ type MovementSystem struct {
 	ecs *ECS
 }
 
-func (ms MovementSystem) Update() {
+func (ms *MovementSystem) Update() {
 	for _, e := range ms.ecs.entities {
 		if ms.ecs.HasComponent(e, Bump{}) && ms.ecs.HasComponent(e, Position{}) {
-			b := ms.ecs.bumps[e]
 			p := ms.ecs.positions[e]
-			b.Point = p.Point.Add(b.Point)
+			b := ms.ecs.bumps[e]
+			if ms.ecs.Map.Walkable(p.Point.Add(b.Point)) {
+				p.Point = p.Point.Add(b.Point)
+			}
 			b = nil
 		}
 	}
@@ -55,6 +57,8 @@ type ECS struct {
 	bumps       map[int]*Bump
 
 	systems []System
+
+	Map *Map
 }
 
 func NewECS() *ECS {
@@ -64,8 +68,7 @@ func NewECS() *ECS {
 	ecs.names = make(map[int]*Name)
 	ecs.inputs = make(map[int]*Input)
 	ecs.bumps = make(map[int]*Bump)
-
-	ecs.systems = append(ecs.systems, MovementSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &MovementSystem{ecs: ecs})
 	return ecs
 }
 
