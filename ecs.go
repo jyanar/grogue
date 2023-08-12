@@ -7,7 +7,7 @@ import (
 )
 
 type Position struct {
-	x, y int
+	gruid.Point
 }
 
 type Renderable struct {
@@ -23,7 +23,7 @@ type Name struct {
 type Input struct{}
 
 type Bump struct {
-	dx, dy int
+	gruid.Point
 }
 
 type System interface {
@@ -36,18 +36,13 @@ type MovementSystem struct {
 
 func (ms MovementSystem) Update() {
 	for _, e := range ms.ecs.entities {
-		// Do we have a bump component?
-		if b := ms.ecs.bumps[e]; b != nil {
-			// Do we have a position component?
-			if p := ms.ecs.positions[e]; p != nil {
-				p.x += b.dx
-				p.y += b.dy
-				b = nil
-			}
+		if ms.ecs.HasComponent(e, Bump{}) && ms.ecs.HasComponent(e, Position{}) {
+			b := ms.ecs.bumps[e]
+			p := ms.ecs.positions[e]
+			b.Point = p.Point.Add(b.Point)
+			b = nil
 		}
-
 	}
-
 }
 
 type ECS struct {
@@ -94,7 +89,7 @@ func (ecs *ECS) Update() {
 	}
 }
 
-func (ecs *ECS) InEntities(entity int) bool {
+func (ecs *ECS) Exists(entity int) bool {
 	for _, e := range ecs.entities {
 		if entity == e {
 			return true
@@ -122,6 +117,32 @@ func (ecs *ECS) AddComponents(entity int, components ...any) {
 	for _, c := range components {
 		ecs.AddComponent(entity, c)
 	}
+}
+
+func (ecs *ECS) HasComponent(entity int, component any) bool {
+	switch component.(type) {
+	case Position:
+		if c := ecs.positions[entity]; c != nil {
+			return true
+		}
+	case Renderable:
+		if c := ecs.renderables[entity]; c != nil {
+			return true
+		}
+	case Name:
+		if c := ecs.names[entity]; c != nil {
+			return true
+		}
+	case Input:
+		if c := ecs.inputs[entity]; c != nil {
+			return true
+		}
+	case Bump:
+		if c := ecs.bumps[entity]; c != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (ecs *ECS) RemoveComponent(entity int, component any) {

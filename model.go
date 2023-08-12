@@ -32,14 +32,12 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		// Initialize entities.
 		m.game.ecs = NewECS()
 		m.game.ecs.Create(
-			Position{size.Div(2).X, size.Div(2).Y},
+			Position{size.Div(2)},
 			Name{"Player"},
 			Renderable{'@', gruid.ColorDefault},
 			Input{},
 		)
 		m.game.ecs.Update()
-		// Initialization: create a player entity centered on the map.
-		// m.game.ecs.PlayerID = m.game.ECS.AddEntity(&Player{}, size.Div(2))
 
 	case gruid.MsgKeyDown:
 		m.updateMsgKeyDown(msg)
@@ -76,26 +74,22 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
 func (m *model) Draw() gruid.Grid {
+	// Draw the map.
 	m.grid.Fill(gruid.Cell{Rune: ' '})
-	// We draw the map tiles first.
 	it := m.game.Map.Grid.Iterator()
 	for it.Next() {
 		m.grid.Set(it.P(), gruid.Cell{Rune: m.game.Map.Rune(it.Cell())})
 	}
-	// We draw the entities.
-	for _, i := range m.game.ecs.entities {
-		if p := m.game.ecs.positions[i]; p != nil {
-			if r := m.game.ecs.renderables[i]; r != nil {
-				m.grid.Set(gruid.Point{X: p.x, Y: p.y}, gruid.Cell{
-					Rune:  r.glyph,
-					Style: gruid.Style{Fg: gruid.ColorDefault},
-				})
-			}
+	// Draw the entities.
+	for _, e := range m.game.ecs.entities {
+		if m.game.ecs.HasComponent(e, Position{}) && m.game.ecs.HasComponent(e, Renderable{}) {
+			p := m.game.ecs.positions[e]
+			r := m.game.ecs.renderables[e]
+			m.grid.Set(p.Point, gruid.Cell{
+				Rune:  r.glyph,
+				Style: gruid.Style{Fg: r.color},
+			})
 		}
-		// m.grid.Set(m.game.ecs.Positions[i], gruid.Cell{
-		// 	Rune:  e.Rune(),
-		// 	Style: gruid.Style{Fg: e.Color()},
-		// })
 	}
 	return m.grid
 }
