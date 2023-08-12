@@ -1,6 +1,9 @@
 package main
 
-import "github.com/anaseto/gruid"
+import (
+	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/rl"
+)
 
 type Position struct {
 	gruid.Point
@@ -13,6 +16,11 @@ type Renderable struct {
 
 type Name struct {
 	string
+}
+
+type FOV struct {
+	LOS int
+	FOV *rl.FOV
 }
 
 // Entities with this component can accept keyboard input.

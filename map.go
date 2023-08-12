@@ -16,14 +16,17 @@ const (
 
 // Map represents the rectangular grid of the game's level.
 type Map struct {
-	Grid rl.Grid
-	Rand *rand.Rand
+	Grid     rl.Grid              // Gamemap.
+	Rand     *rand.Rand           // Random number generator.
+	Explored map[gruid.Point]bool // Explored tiles.
 }
 
 func NewMap(size gruid.Point) *Map {
-	m := &Map{}
-	m.Grid = rl.NewGrid(size.X, size.Y)
-	m.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	m := &Map{
+		Grid:     rl.NewGrid(size.X, size.Y),
+		Rand:     rand.New(rand.NewSource(time.Now().UnixNano())),
+		Explored: make(map[gruid.Point]bool),
+	}
 	m.Generate()
 	return m
 }

@@ -12,6 +12,7 @@ type ECS struct {
 	names       map[int]*Name
 	inputs      map[int]*Input
 	bumps       map[int]*Bump
+	fovs        map[int]*FOV
 
 	systems []System
 
@@ -25,7 +26,9 @@ func NewECS() *ECS {
 	ecs.names = make(map[int]*Name)
 	ecs.inputs = make(map[int]*Input)
 	ecs.bumps = make(map[int]*Bump)
+	ecs.fovs = make(map[int]*FOV)
 	ecs.systems = append(ecs.systems, &MovementSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	return ecs
 }
 
@@ -38,6 +41,14 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.positions[idx] = &c
 		case Renderable:
 			ecs.renderables[idx] = &c
+		case Name:
+			ecs.names[idx] = &c
+		case Input:
+			ecs.inputs[idx] = &c
+		case Bump:
+			ecs.bumps[idx] = &c
+		case FOV:
+			ecs.fovs[idx] = &c
 		}
 	}
 	return idx
@@ -70,6 +81,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.inputs[entity] = &c
 	case Bump:
 		ecs.bumps[entity] = &c
+	case FOV:
+		ecs.fovs[entity] = &c
 	}
 }
 
@@ -101,6 +114,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if c := ecs.bumps[entity]; c != nil {
 			return true
 		}
+	case FOV:
+		if c := ecs.fovs[entity]; c != nil {
+			return true
+		}
 	}
 	return false
 }
@@ -112,11 +129,13 @@ func (ecs *ECS) RemoveComponent(entity int, component any) {
 	case Renderable:
 		ecs.renderables[entity] = nil
 	case Name:
-		ecs.renderables[entity] = nil
+		ecs.names[entity] = nil
 	case Input:
-		ecs.renderables[entity] = nil
+		ecs.inputs[entity] = nil
 	case Bump:
-		ecs.renderables[entity] = nil
+		ecs.bumps[entity] = nil
+	case FOV:
+		ecs.fovs[entity] = nil
 	}
 }
 

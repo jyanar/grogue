@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/rl"
 )
 
 type model struct {
@@ -35,6 +36,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{'@', gruid.ColorDefault},
+			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
 			Input{},
 		)
 		m.game.ecs.Map = m.game.Map
