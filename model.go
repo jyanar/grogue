@@ -1,6 +1,8 @@
 package main
 
-import "github.com/anaseto/gruid"
+import (
+	"github.com/anaseto/gruid"
+)
 
 type model struct {
 	grid   gruid.Grid // The drawing grid.
@@ -9,7 +11,8 @@ type model struct {
 }
 
 type game struct {
-	PlayerPos gruid.Point
+	ecs *ECS
+	Map *Map
 }
 
 func NewModel(g gruid.Grid) *model {
@@ -21,10 +24,26 @@ func NewModel(g gruid.Grid) *model {
 func (m *model) Update(msg gruid.Msg) gruid.Effect {
 	m.action = action{}
 	switch msg := msg.(type) {
+
 	case gruid.MsgInit:
-		m.game.PlayerPos = m.grid.Size().Div(2)
+		// Initialize map.
+		size := m.grid.Size()
+		m.game.Map = NewMap(size)
+		// Initialize entities.
+		m.game.ecs = NewECS()
+		m.game.ecs.Create(
+			Position{size.Div(2).X, size.Div(2).Y},
+			Name{"Player"},
+			Renderable{'@', gruid.ColorDefault},
+			Input{},
+		)
+		m.game.ecs.Update()
+		// Initialization: create a player entity centered on the map.
+		// m.game.ecs.PlayerID = m.game.ECS.AddEntity(&Player{}, size.Div(2))
+
 	case gruid.MsgKeyDown:
 		m.updateMsgKeyDown(msg)
+
 	}
 	// Handle action (if any provided).
 	return m.handleAction()
@@ -57,14 +76,26 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
 func (m *model) Draw() gruid.Grid {
-	it := m.grid.Iterator()
+	m.grid.Fill(gruid.Cell{Rune: ' '})
+	// We draw the map tiles first.
+	it := m.game.Map.Grid.Iterator()
 	for it.Next() {
-		switch {
-		case it.P() == m.game.PlayerPos:
-			it.SetCell(gruid.Cell{Rune: '@'})
-		default:
-			it.SetCell(gruid.Cell{Rune: ' '})
+		m.grid.Set(it.P(), gruid.Cell{Rune: m.game.Map.Rune(it.Cell())})
+	}
+	// We draw the entities.
+	for _, i := range m.game.ecs.entities {
+		if p := m.game.ecs.positions[i]; p != nil {
+			if r := m.game.ecs.renderables[i]; r != nil {
+				m.grid.Set(gruid.Point{X: p.x, Y: p.y}, gruid.Cell{
+					Rune:  r.glyph,
+					Style: gruid.Style{Fg: gruid.ColorDefault},
+				})
+			}
 		}
+		// m.grid.Set(m.game.ecs.Positions[i], gruid.Cell{
+		// 	Rune:  e.Rune(),
+		// 	Style: gruid.Style{Fg: e.Color()},
+		// })
 	}
 	return m.grid
 }

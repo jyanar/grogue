@@ -18,7 +18,16 @@ const (
 func (m *model) handleAction() gruid.Effect {
 	switch m.action.Type {
 	case ActionMovement:
-		m.game.PlayerPos = m.game.PlayerPos.Add(m.action.Delta)
+		// Add a bump component to all entities with an Input component
+		m.game.ecs.AddComponent(0, Bump{dx: m.action.Delta.X, dy: m.action.Delta.Y})
+		m.game.ecs.Update()
+
+		// np := m.game.ECS.Positions[m.game.ECS.PlayerID]
+		// np = np.Add(m.action.Delta)
+		// if m.game.Map.Walkable(np) {
+		// 	m.game.ECS.MovePlayer(np)
+		// }
+
 	case ActionQuit:
 		return gruid.End()
 	}

@@ -1,14 +1,9 @@
 // Implements the TileManager interface for gruid-sdl:
 //
-//   // TileManager manages tiles fetching.
-//   type TileManager interface {
-// 	   // GetImage returns the image to be used for a given cell style.
-// 	   GetImage(gruid.Cell) image.Image
-//
-// 	   // TileSize returns the (width, height) in pixels of the tiles. Both
-// 	   // should be positive and non-zero.
-// 	   TileSize() gruid.Point
-//   }
+// type TileManager interface {
+//   GetImage(gruid.Cell) image.Image
+//   TileSize() gruid.Point
+// }
 //
 
 package main
@@ -28,9 +23,9 @@ type TileDrawer struct {
 }
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
+	// Selenized theme
 	fg := image.NewUniform(color.RGBA{0xad, 0xbc, 0xbc, 255})
 	bg := image.NewUniform(color.RGBA{0x10, 0x3c, 0x48, 255})
-
 	return t.drawer.Draw(c.Rune, fg, bg)
 }
 
