@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/paths"
 	"github.com/anaseto/gruid/rl"
 )
 
@@ -74,14 +75,26 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	}
 }
 
+const (
+	ColorFOV gruid.Color = iota + 1
+)
+
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
 func (m *model) Draw() gruid.Grid {
+	g := m.game
 	// Draw the map.
 	m.grid.Fill(gruid.Cell{Rune: ' '})
-	it := m.game.Map.Grid.Iterator()
+	it := g.Map.Grid.Iterator()
 	for it.Next() {
-		m.grid.Set(it.P(), gruid.Cell{Rune: m.game.Map.Rune(it.Cell())})
+		if !g.Map.Explored[it.P()] {
+			continue
+		}
+		c := gruid.Cell{Rune: g.Map.Rune(it.Cell())}
+		if g.InFOV(it.P()) {
+			c.Style.Bg = ColorFOV
+		}
+		m.grid.Set(it.P(), c)
 	}
 	// Draw the entities.
 	for _, e := range m.game.ecs.entities {
@@ -90,9 +103,19 @@ func (m *model) Draw() gruid.Grid {
 			r := m.game.ecs.renderables[e]
 			m.grid.Set(p.Point, gruid.Cell{
 				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color},
+				Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
 			})
 		}
 	}
 	return m.grid
+}
+
+// InFOV returns true if p is in the player's field of view. We only keep cells
+// within maxLOS manhattan distance from the player, as natural given our
+// current 4-way movement. With 8-way movement, the natural distance choice
+func (g *game) InFOV(p gruid.Point) bool {
+	pp := g.ecs.positions[0].Point
+	// return true
+	return g.ecs.fovs[0].FOV.Visible(p) &&
+		paths.DistanceManhattan(pp, p) <= 10
 }
