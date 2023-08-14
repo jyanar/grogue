@@ -1,1 +1,4 @@
-- Where does gruid wait for input?
+Observations
+============
+* After trying out many of the different ECS frameworks available in Go, I opted for making my own from scratch. It's dead simple and much more inefficient than existing solutions, but that's fine.
+* At one point I was trying to figure out a nice way of placing the rendering system inside the ECS (that way rendering is just another system, like everything else) but I found that it breaks the Model-View-Controller architecture that gruid naturally pushes you to use. So I ended up moving all the rendering (both of the game map and the entities) back up into the model, as the tutorial does.

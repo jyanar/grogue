@@ -193,21 +193,6 @@ func (ecs *ECS) RemoveComponent(entity int, component any) {
 	}
 }
 
-// Not valid Go?
-// No.
-// https://stackoverflow.com/questions/17934611/multiple-assignment-from-array-or-slice
-// func (ecs *ECS) GetComponents(entity int, components ...any) (results []any, ok bool) {
-// 	ok = true
-// 	for _, c := range components {
-// 		results = append(results, ecs.GetComponent(entity, c))
-// 		if results[len(results)-1] == nil {
-// 			ok = false
-// 		}
-// 	}
-// 	results = append(results, ok)
-// 	return results, ok
-// }
-
 // Draws all entities onto a passed grid.
 func (ecs *ECS) Draw(grid *gruid.Grid) {
 	for _, e := range ecs.entities {
