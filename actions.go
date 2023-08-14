@@ -20,8 +20,8 @@ func (m *model) handleAction() gruid.Effect {
 	case ActionMovement:
 		// Add a bump component to all entities with an Input component
 		// (just the player for now)
-		m.game.ecs.AddComponent(0, Bump{m.action.Delta})
-		m.game.ecs.Update()
+		m.game.ECS.AddComponent(0, Bump{m.action.Delta})
+		m.game.ECS.Update()
 
 	case ActionQuit:
 		return gruid.End()

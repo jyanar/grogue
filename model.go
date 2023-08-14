@@ -13,7 +13,7 @@ type model struct {
 }
 
 type game struct {
-	ecs *ECS
+	ECS *ECS
 	Map *Map
 }
 
@@ -32,16 +32,23 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		size := m.grid.Size()
 		m.game.Map = NewMap(size)
 		// Initialize entities.
-		m.game.ecs = NewECS()
-		m.game.ecs.Create(
+		m.game.ECS = NewECS()
+		m.game.ECS.Create(
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{'@', gruid.ColorDefault},
 			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
 			Input{},
 		)
-		m.game.ecs.Map = m.game.Map
-		m.game.ecs.Update()
+		m.game.ECS.Create(
+			Position{m.game.Map.RandomFloor()},
+			Name{"Goblin"},
+			Renderable{'g', gruid.ColorDefault},
+			// FOV{LOS: 3, FOV: rl.NewFOV(gruid.NewRange(-3, -3, 3+1, 3+1))},
+		)
+		m.game.ECS.drawgrid = &m.grid
+		m.game.ECS.Map = m.game.Map
+		m.game.ECS.Update()
 
 	case gruid.MsgKeyDown:
 		m.updateMsgKeyDown(msg)
@@ -82,40 +89,22 @@ const (
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
 func (m *model) Draw() gruid.Grid {
-	g := m.game
-	// Draw the map.
-	m.grid.Fill(gruid.Cell{Rune: ' '})
-	it := g.Map.Grid.Iterator()
-	for it.Next() {
-		if !g.Map.Explored[it.P()] {
-			continue
-		}
-		c := gruid.Cell{Rune: g.Map.Rune(it.Cell())}
-		if g.InFOV(it.P()) {
-			c.Style.Bg = ColorFOV
-		}
-		m.grid.Set(it.P(), c)
-	}
-	// Draw the entities.
-	for _, e := range m.game.ecs.entities {
-		if m.game.ecs.HasComponent(e, Position{}) && m.game.ecs.HasComponent(e, Renderable{}) {
-			p := m.game.ecs.positions[e]
-			r := m.game.ecs.renderables[e]
-			m.grid.Set(p.Point, gruid.Cell{
-				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
-			})
-		}
-	}
+	// m.grid.Fill(gruid.Cell{Rune: ' '})
+	// m.game.Map.Draw(&m.grid) // Draw the map.
+	// m.game.ECS.Draw(&m.grid) // Draw the entities.
 	return m.grid
 }
 
-// InFOV returns true if p is in the player's field of view. We only keep cells
-// within maxLOS manhattan distance from the player, as natural given our
-// current 4-way movement. With 8-way movement, the natural distance choice
+// InFOV returns true if p is in the field of view of an entity with FOV. We only
+// keep cells within maxLOS manhattan distance from the source entity.
 func (g *game) InFOV(p gruid.Point) bool {
-	pp := g.ecs.positions[0].Point
-	// return true
-	return g.ecs.fovs[0].FOV.Visible(p) &&
-		paths.DistanceManhattan(pp, p) <= 10
+	pp := g.ECS.positions[0].Point
+	// While we iterate over all entities with FOV components, typically only the
+	// player has an FOV component, so generally the iterator returns on index 0.
+	for _, f := range g.ECS.fovs {
+		if f.FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= 10 {
+			return true
+		}
+	}
+	return false
 }

@@ -30,3 +30,6 @@ type Input struct{}
 type Bump struct {
 	gruid.Point
 }
+
+// Obstructs movement
+type Obstruct struct{}

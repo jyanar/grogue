@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/anaseto/gruid"
 )
 
 type ECS struct {
@@ -13,22 +13,30 @@ type ECS struct {
 	inputs      map[int]*Input
 	bumps       map[int]*Bump
 	fovs        map[int]*FOV
+	obstructs   map[int]*Obstruct
 
 	systems []System
 
-	Map *Map
+	drawgrid *gruid.Grid
+	Map      *Map
 }
 
+// Note that we do not initialize the map here. The idea is that
+// the callee is initializing that and will assign it right after this.
 func NewECS() *ECS {
-	ecs := &ECS{}
-	ecs.positions = make(map[int]*Position)
-	ecs.renderables = make(map[int]*Renderable)
-	ecs.names = make(map[int]*Name)
-	ecs.inputs = make(map[int]*Input)
-	ecs.bumps = make(map[int]*Bump)
-	ecs.fovs = make(map[int]*FOV)
+	ecs := &ECS{
+		positions:   make(map[int]*Position),
+		renderables: make(map[int]*Renderable),
+		names:       make(map[int]*Name),
+		inputs:      make(map[int]*Input),
+		bumps:       make(map[int]*Bump),
+		fovs:        make(map[int]*FOV),
+		obstructs:   make(map[int]*Obstruct),
+	}
 	ecs.systems = append(ecs.systems, &MovementSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &RenderSystem{ecs: ecs})
+
 	return ecs
 }
 
@@ -49,6 +57,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.bumps[idx] = &c
 		case FOV:
 			ecs.fovs[idx] = &c
+		case Obstruct:
+			ecs.obstructs[idx] = &c
 		}
 	}
 	return idx
@@ -83,6 +93,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.bumps[entity] = &c
 	case FOV:
 		ecs.fovs[entity] = &c
+	case Obstruct:
+		ecs.obstructs[entity] = &c
 	}
 }
 
@@ -118,8 +130,41 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if c := ecs.fovs[entity]; c != nil {
 			return true
 		}
+	case Obstruct:
+		if c := ecs.obstructs[entity]; c != nil {
+			return true
+		}
 	}
 	return false
+}
+
+func (ecs *ECS) GetComponent(entity int, component any) any {
+	switch component.(type) {
+	case Position:
+		return ecs.positions[entity]
+	case Renderable:
+		return ecs.renderables[entity]
+	case Name:
+		return ecs.names[entity]
+	case Input:
+		return ecs.inputs[entity]
+	case Bump:
+		return ecs.bumps[entity]
+	case FOV:
+		return ecs.fovs[entity]
+	case Obstruct:
+		return ecs.obstructs[entity]
+	}
+	return nil
+}
+
+func (ecs *ECS) GetEntityAt(p gruid.Point) (entity int, ok bool) {
+	for i, pos := range ecs.positions {
+		if pos != nil && p.X == pos.X && p.Y == pos.Y {
+			return i, true
+		}
+	}
+	return -1, false
 }
 
 func (ecs *ECS) RemoveComponent(entity int, component any) {
@@ -136,40 +181,40 @@ func (ecs *ECS) RemoveComponent(entity int, component any) {
 		ecs.bumps[entity] = nil
 	case FOV:
 		ecs.fovs[entity] = nil
+	case Obstruct:
+		ecs.obstructs[entity] = nil
 	}
 }
 
-func (ecs *ECS) printData(entity int) {
-	fmt.Printf("Information for %v...\n", entity)
-	if v, ok := ecs.positions[entity]; ok {
-		fmt.Printf("%v, %T\n", v, v)
-	}
-	if v, ok := ecs.renderables[entity]; ok {
-		fmt.Printf("%v, %T\n", v, v)
-	}
-	if v, ok := ecs.names[entity]; ok {
-		fmt.Printf("%v, %T\n", v, v)
-	}
-}
-
-// func main() {
-// 	// ecs := ECS{}
-// 	ecs := NewECS()
-// 	ecs.Create(Position{10, 10}, Renderable{glyph: '@'})
-// 	ecs.Create(Renderable{glyph: 'g'})
-
-// 	fmt.Println("\nPrinting data...")
-// 	ecs.printData(0)
-// 	ecs.printData(1)
-
-// 	ecs.AddComponent(1, Position{15, 10})
-// 	fmt.Println("\nPrinting again!")
-// 	ecs.printData(0)
-// 	ecs.printData(1)
-
-// 	ecs.RemoveComponent(0, Renderable{})
-// 	fmt.Println("\nPrinting again!")
-// 	ecs.printData(0)
-// 	ecs.printData(1)
-
+// Not valid Go?
+// No.
+// https://stackoverflow.com/questions/17934611/multiple-assignment-from-array-or-slice
+// func (ecs *ECS) GetComponents(entity int, components ...any) (results []any, ok bool) {
+// 	ok = true
+// 	for _, c := range components {
+// 		results = append(results, ecs.GetComponent(entity, c))
+// 		if results[len(results)-1] == nil {
+// 			ok = false
+// 		}
+// 	}
+// 	results = append(results, ok)
+// 	return results, ok
 // }
+
+// Draws all entities onto a passed grid.
+func (ecs *ECS) Draw(grid *gruid.Grid) {
+	for _, e := range ecs.entities {
+		if ecs.HasComponent(e, Position{}) && ecs.HasComponent(e, Renderable{}) {
+			p := ecs.positions[e]
+			r := ecs.renderables[e]
+			bg := gruid.ColorDefault
+			if ecs.HasComponent(e, FOV{}) {
+				bg = ColorFOV
+			}
+			grid.Set(p.Point, gruid.Cell{
+				Rune:  r.glyph,
+				Style: gruid.Style{Fg: r.color, Bg: bg},
+			})
+		}
+	}
+}
