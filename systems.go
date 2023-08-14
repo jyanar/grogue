@@ -61,37 +61,3 @@ func (s *FOVSystem) Update() {
 		}
 	}
 }
-
-type RenderSystem struct {
-	ecs *ECS
-}
-
-// Note, if we want the RenderSystem here to handle everything (map drawing, entity
-// drawing, etc) then we need to pass a pointer of the model to the ECS system. Which
-// ends up making the code a bit less clean and more ugly. However, it does end up
-// with the benefit of having all the logic being isolated to one place -- here, in the
-// systems. The only exception really is the Map, which has its own set of logics for
-// generating the map and everything.
-//
-// It might just be better to keep the rendersystem separate, in model. That way we can
-// adhere to the Model View Controller architecture cleanly.
-func (s *RenderSystem) Update() {
-	s.ecs.drawgrid.Fill(gruid.Cell{Rune: ' '})
-	// Draw the map first.
-	s.ecs.Map.Draw(s.ecs.drawgrid)
-	// Draw the entities.
-	for _, e := range s.ecs.entities {
-		if s.ecs.HasComponent(e, Position{}) && s.ecs.HasComponent(e, Renderable{}) {
-			p := s.ecs.positions[e]
-			r := s.ecs.renderables[e]
-			bg := gruid.ColorDefault
-			if s.ecs.HasComponent(e, FOV{}) {
-				bg = ColorFOV
-			}
-			s.ecs.drawgrid.Set(p.Point, gruid.Cell{
-				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color, Bg: bg},
-			})
-		}
-	}
-}

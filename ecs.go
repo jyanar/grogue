@@ -17,8 +17,7 @@ type ECS struct {
 
 	systems []System
 
-	drawgrid *gruid.Grid
-	Map      *Map
+	Map *Map
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -35,7 +34,6 @@ func NewECS() *ECS {
 	}
 	ecs.systems = append(ecs.systems, &MovementSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &RenderSystem{ecs: ecs})
 
 	return ecs
 }
@@ -136,6 +134,15 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	}
 	return false
+}
+
+func (ecs *ECS) HasComponents(entity int, components ...any) bool {
+	for _, c := range components {
+		if !ecs.HasComponent(entity, c) {
+			return false
+		}
+	}
+	return true
 }
 
 func (ecs *ECS) GetComponent(entity int, component any) any {

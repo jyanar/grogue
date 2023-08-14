@@ -80,7 +80,7 @@ func (m *Map) Generate() {
 func (m *Map) RandomFloor() gruid.Point {
 	size := m.Grid.Size()
 	for {
-		freep := gruid.Point{m.Rand.Intn(size.X), m.Rand.Intn(size.Y)}
+		freep := gruid.Point{X: m.Rand.Intn(size.X), Y: m.Rand.Intn(size.Y)}
 		if m.Grid.At(freep) == Floor {
 			return freep
 		}
