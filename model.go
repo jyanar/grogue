@@ -112,13 +112,10 @@ func (m *model) Draw() gruid.Grid {
 			if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
 				continue
 			}
-			bg := gruid.ColorDefault
-			if ECS.HasComponent(e, FOV{}) { // TODO: How much more efficient is it to just use `if ECS.fovs[e] != nil {...}` ?
-				bg = ColorFOV
-			}
+			// Entity is in a FOV. We draw them.
 			m.grid.Set(p.Point, gruid.Cell{
 				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color, Bg: bg},
+				Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
 			})
 		}
 	}
