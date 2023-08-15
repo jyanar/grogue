@@ -5,31 +5,18 @@ import (
 	"log"
 
 	"github.com/anaseto/gruid"
-	sdl "github.com/anaseto/gruid-sdl"
 )
 
 func main() {
-	// Construct grid.
+	// Construct the drawgrid, and a new model.
 	gd := gruid.NewGrid(80, 24)
-
-	// Construct a model.
 	m := NewModel(gd)
 
-	// Construct a TileDrawer.
-	t, err := NewTileDrawer()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Fetch SDL driver (can replace with terminal or JS driver).
-	dr := sdl.NewDriver(sdl.Config{
-		TileManager: t,
-	})
-
-	// Define new application using the SDL2 gruid driver and our model.
+	// Instantiate new app. driver is generated in sdl.go, or in
+	// js.go if application is built with js flags (see README).
 	app := gruid.NewApp(gruid.AppConfig{
 		Model:  m,
-		Driver: dr,
+		Driver: driver,
 	})
 
 	if err := app.Start(context.Background()); err != nil {
