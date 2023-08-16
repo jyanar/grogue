@@ -48,6 +48,7 @@ func NewECS() *ECS {
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
 }
@@ -140,16 +141,16 @@ func (ecs *ECS) AddComponents(entity int, components ...any) {
 
 func (ecs *ECS) HasComponent(entity int, component any) bool {
 	switch component.(type) {
+	case Name:
+		if c := ecs.names[entity]; c != nil {
+			return true
+		}
 	case Position:
 		if c := ecs.positions[entity]; c != nil {
 			return true
 		}
 	case Renderable:
 		if c := ecs.renderables[entity]; c != nil {
-			return true
-		}
-	case Name:
-		if c := ecs.names[entity]; c != nil {
 			return true
 		}
 	case Input:
@@ -232,9 +233,12 @@ func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
 
 func (ecs *ECS) printDebug(e int) {
 	fmt.Println("====================")
-	fmt.Println("Entity: " + string(e))
+	fmt.Printf("Entity: %d\n", e)
 	if ecs.bumps[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.bumps[e], ecs.bumps[e])
+	}
+	if ecs.positions[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.positions[e], ecs.positions[e])
 	}
 	if ecs.damages[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.damages[e], ecs.damages[e])
@@ -260,8 +264,10 @@ func (ecs *ECS) printDebug(e int) {
 	if ecs.renderables[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.renderables[e], ecs.renderables[e])
 	}
-	if ecs.positions[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.positions[e], ecs.positions[e])
+	if ecs.deaths[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
 	}
-
+	if ecs.perceptions[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
+	}
 }

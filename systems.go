@@ -79,7 +79,9 @@ type DeathSystem struct {
 func (s *DeathSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(Death{}) {
 		name := s.ecs.names[e]
-		s.ecs.obstructs[e] = nil // No longer blocking.
+		s.ecs.obstructs[e] = nil   // No longer blocking.
+		s.ecs.perceptions[e] = nil // No longer perceiving.
+		s.ecs.ais[e] = nil         // No longer pathing.
 		s.ecs.AddComponent(e, Name{"Remains of " + name.string})
 		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
 		s.ecs.deaths[e] = nil // Consume the death component.
@@ -94,14 +96,14 @@ func (s *PerceptionSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(Position{}, Perception{}) {
 		pos := s.ecs.positions[e]
 		per := s.ecs.perceptions[e]
-		// Check -- are there any other entities around?
+		per.perceived = []int{}
 		for _, other := range s.ecs.EntitiesWith(Position{}) {
 			if other == e {
 				continue
 			}
 			pos_other := s.ecs.positions[other]
-			if (pos.X - pos_other.X) < per.radius {
-				fmt.Println("CLOSE!!!!!")
+			if paths.DistanceChebyshev(pos.Point, pos_other.Point) < per.radius {
+				per.perceived = append(per.perceived, other)
 			}
 		}
 	}
@@ -125,3 +127,15 @@ func (s *PerceptionSystem) Update() {
 // 	}
 
 // }
+
+type DebugSystem struct {
+	ecs *ECS
+}
+
+// Prints out component information for every entity.
+func (s *DebugSystem) Update() {
+	fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+	for _, e := range s.ecs.entities {
+		s.ecs.printDebug(e)
+	}
+}
