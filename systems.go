@@ -91,3 +91,40 @@ func (s *DeathSystem) Update() {
 		s.ecs.deaths[e] = nil // Consume the death component.
 	}
 }
+
+type PerceptionSystem struct {
+	ecs *ECS
+}
+
+func (s *PerceptionSystem) Update() {
+	for _, e := range s.ecs.EntitiesWith(Position{}, Perception{}) {
+		pos := s.ecs.positions[e]
+		per := s.ecs.perceptions[e]
+		// Check -- are there any other entities around?
+		for _, other := range s.ecs.EntitiesWith(Position{}) {
+			pos_other := s.ecs.positions[other]
+			if (pos.X - pos_other.X) < per.radius {
+				fmt.Println("CLOSE!!!!!")
+			}
+		}
+	}
+}
+
+// type HostileSystem struct {
+// 	ecs *ECS
+// }
+
+// func (s *HostileSystem) Update() {
+// 	for _, e := range s.ecs.entities {
+// 		if s.ecs.HasComponents(e, Position{}, Perception{}, AI{}) {
+// 			per := s.ecs.perceptions[e]
+// 			if len(per.perceived) > 0 && per.perceived[0] == 0 {
+// 				// Perceived entity is the player. Path towards them.
+
+// 			}
+// 			// Check through perceived entities. If player is in
+
+// 		}
+// 	}
+
+// }

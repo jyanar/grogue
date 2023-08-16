@@ -19,6 +19,8 @@ type ECS struct {
 	healths     map[int]*Health
 	damages     map[int]*Damage
 	deaths      map[int]*Death
+	perceptions map[int]*Perception
+	ais         map[int]*AI
 
 	systems []System
 
@@ -39,10 +41,13 @@ func NewECS() *ECS {
 		healths:     make(map[int]*Health),
 		damages:     make(map[int]*Damage),
 		deaths:      make(map[int]*Death),
+		perceptions: make(map[int]*Perception),
+		ais:         make(map[int]*AI),
 	}
 	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
 
 	return ecs
 }
@@ -72,6 +77,10 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.damages[idx] = &c
 		case Death:
 			ecs.deaths[idx] = &c
+		case Perception:
+			ecs.perceptions[idx] = &c
+		case AI:
+			ecs.ais[idx] = &c
 		}
 	}
 	return idx
@@ -116,6 +125,10 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.damages[entity] = &c
 	case Death:
 		ecs.deaths[entity] = &c
+	case Perception:
+		ecs.perceptions[entity] = &c
+	case AI:
+		ecs.ais[entity] = &c
 	}
 }
 
@@ -167,6 +180,14 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if c := ecs.deaths[entity]; c != nil {
 			return true
 		}
+	case Perception:
+		if c := ecs.perceptions[entity]; c != nil {
+			return true
+		}
+	case AI:
+		if c := ecs.ais[entity]; c != nil {
+			return true
+		}
 	}
 	return false
 }
@@ -180,30 +201,14 @@ func (ecs *ECS) HasComponents(entity int, components ...any) bool {
 	return true
 }
 
-func (ecs *ECS) GetComponent(entity int, component any) any {
-	switch component.(type) {
-	case Position:
-		return ecs.positions[entity]
-	case Renderable:
-		return ecs.renderables[entity]
-	case Name:
-		return ecs.names[entity]
-	case Input:
-		return ecs.inputs[entity]
-	case Bump:
-		return ecs.bumps[entity]
-	case FOV:
-		return ecs.fovs[entity]
-	case Obstruct:
-		return ecs.obstructs[entity]
-	case Health:
-		return ecs.healths[entity]
-	case Damage:
-		return ecs.damages[entity]
-	case Death:
-		return ecs.deaths[entity]
+func (ecs *ECS) EntitiesWith(components ...any) []int {
+	entities := []int{}
+	for _, e := range ecs.entities {
+		if ecs.HasComponents(e, components...) {
+			entities = append(entities, e)
+		}
 	}
-	return nil
+	return entities
 }
 
 func (ecs *ECS) GetEntityAt(p gruid.Point) (entity int, ok bool) {

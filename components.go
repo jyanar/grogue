@@ -55,3 +55,14 @@ type Damage struct {
 
 // Entities with this component will be processed as dead.
 type Death struct{}
+
+// Entities with this component perceive other entities around them.
+type Perception struct {
+	radius    int   // Perception radius.
+	perceived []int // List of perceived entities.
+}
+
+// Entities with this component can path (for now, towards the player).
+type AI struct {
+	Path []gruid.Point
+}
