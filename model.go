@@ -97,21 +97,19 @@ func (m *model) Draw() gruid.Grid {
 	corpsesToDraw := []int{}
 	itemsToDraw := []int{}
 	actorsToDraw := []int{}
-	for _, e := range ECS.entities {
-		if ECS.HasComponents(e, Position{}, Renderable{}) {
-			p := ECS.positions[e]
-			if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
-				continue
-			}
-			// Entity is in a FOV. Add them to the list.
-			switch ECS.renderables[e].order {
-			case ROCorpse:
-				corpsesToDraw = append(corpsesToDraw, e)
-			case ROItem:
-				itemsToDraw = append(itemsToDraw, e)
-			case ROActor:
-				actorsToDraw = append(actorsToDraw, e)
-			}
+	for _, e := range ECS.EntitiesWith(Position{}, Renderable{}) {
+		p := ECS.positions[e]
+		if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
+			continue
+		}
+		// Entity is in a FOV. Add them to the list.
+		switch ECS.renderables[e].order {
+		case ROCorpse:
+			corpsesToDraw = append(corpsesToDraw, e)
+		case ROItem:
+			itemsToDraw = append(itemsToDraw, e)
+		case ROActor:
+			actorsToDraw = append(actorsToDraw, e)
 		}
 	}
 	// // Sort them according to drawing order.

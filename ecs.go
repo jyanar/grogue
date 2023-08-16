@@ -230,31 +230,6 @@ func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
 	return true
 }
 
-func (ecs *ECS) RemoveComponent(entity int, component any) {
-	switch component.(type) {
-	case Position:
-		ecs.positions[entity] = nil
-	case Renderable:
-		ecs.renderables[entity] = nil
-	case Name:
-		ecs.names[entity] = nil
-	case Input:
-		ecs.inputs[entity] = nil
-	case Bump:
-		ecs.bumps[entity] = nil
-	case FOV:
-		ecs.fovs[entity] = nil
-	case Obstruct:
-		ecs.obstructs[entity] = nil
-	case Health:
-		ecs.obstructs[entity] = nil
-	case Damage:
-		ecs.damages[entity] = nil
-	case Death:
-		ecs.deaths[entity] = nil
-	}
-}
-
 func (ecs *ECS) printDebug(e int) {
 	fmt.Println("====================")
 	fmt.Println("Entity: " + string(e))

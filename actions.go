@@ -21,10 +21,8 @@ func (m *model) handleAction() gruid.Effect {
 	switch m.action.Type {
 	case ActionBump:
 		// Add a bump component to all entities with an Input component
-		for _, e := range m.game.ECS.entities {
-			if m.game.ECS.inputs[e] != nil {
-				m.game.ECS.AddComponent(e, Bump{m.action.Delta})
-			}
+		for _, e := range m.game.ECS.EntitiesWith(Input{}) {
+			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
 		m.game.ECS.Update()
 
