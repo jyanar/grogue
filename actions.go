@@ -5,21 +5,21 @@ import (
 )
 
 type action struct {
-	Type  actionType
-	Delta gruid.Point
+	Type  actionType  // Kind of action (bump, quit, open inventory, etc)
+	Delta gruid.Point // direction for ActionBump
 }
 
 type actionType int
 
 const (
-	NoAction       actionType = iota
-	ActionMovement            // Movement request.
-	ActionQuit                // Quit the game.
+	NoAction   actionType = iota
+	ActionBump            // Movement request.
+	ActionQuit            // Quit the game.
 )
 
 func (m *model) handleAction() gruid.Effect {
 	switch m.action.Type {
-	case ActionMovement:
+	case ActionBump:
 		// Add a bump component to all entities with an Input component
 		for _, e := range m.game.ECS.entities {
 			if m.game.ECS.inputs[e] != nil {

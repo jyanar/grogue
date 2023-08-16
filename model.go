@@ -31,21 +31,16 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		// Initialize map.
 		size := m.grid.Size()
 		m.game.Map = NewMap(size)
-		// Initialize entities.
 		m.game.ECS = NewECS()
+		m.game.ECS.Map = m.game.Map
 		m.game.ECS.Create(
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
-			Renderable{'@', gruid.ColorDefault},
+			Renderable{'@', ColorPlayer},
 			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
 			Input{},
 		)
-		m.game.ECS.Create(
-			Position{m.game.Map.RandomFloor()},
-			Name{"Goblin"},
-			Renderable{'g', gruid.ColorDefault},
-		)
-		m.game.ECS.Map = m.game.Map
+		m.game.SpawnEnemies()
 		m.game.ECS.Update()
 
 	case gruid.MsgKeyDown:
@@ -60,29 +55,25 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	pdelta := gruid.Point{}
 	switch msg.Key {
 	case gruid.KeyArrowLeft, "h":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(-1, 0)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 0)}
 	case gruid.KeyArrowDown, "j":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(0, 1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(0, 1)}
 	case gruid.KeyArrowUp, "k":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(0, -1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(0, -1)}
 	case gruid.KeyArrowRight, "l":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(1, 0)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 0)}
 	case gruid.KeyEscape, "q":
 		m.action = action{Type: ActionQuit}
 	case "y":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(-1, -1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, -1)}
 	case "u":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(1, -1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, -1)}
 	case "b":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(-1, 1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 1)}
 	case "n":
-		m.action = action{Type: ActionMovement, Delta: pdelta.Shift(1, 1)}
+		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
 	}
 }
-
-const (
-	ColorFOV gruid.Color = iota + 1
-)
 
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
@@ -132,4 +123,36 @@ func (g *game) InFOV(p gruid.Point) bool {
 		return true
 	}
 	return false
+}
+
+const MonstersToSpawn = 6
+
+func (g *game) SpawnEnemies() {
+	for i := 0; i < MonstersToSpawn; i++ {
+		switch {
+		case g.Map.Rand.Intn(100) < 80:
+			g.ECS.Create(
+				Position{g.Map.RandomFloor()},
+				Name{"Goblin"},
+				Renderable{'g', ColorMonster},
+			)
+		default:
+			g.ECS.Create(
+				Position{g.Map.RandomFloor()},
+				Name{"Orc"},
+				Renderable{'o', ColorMonster},
+			)
+		}
+		g.ECS.Create()
+	}
+}
+
+// Returns a free floor tile in the map.
+func (g *game) FreeFloorTile() gruid.Point {
+	for {
+		p := g.Map.RandomFloor()
+		if g.ECS.NoBlockingEntityAt(p) {
+			return p
+		}
+	}
 }

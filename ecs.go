@@ -32,7 +32,7 @@ func NewECS() *ECS {
 		fovs:        make(map[int]*FOV),
 		obstructs:   make(map[int]*Obstruct),
 	}
-	ecs.systems = append(ecs.systems, &MovementSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 
 	return ecs
@@ -166,12 +166,22 @@ func (ecs *ECS) GetComponent(entity int, component any) any {
 }
 
 func (ecs *ECS) GetEntityAt(p gruid.Point) (entity int, ok bool) {
-	for i, pos := range ecs.positions {
-		if pos != nil && p.X == pos.X && p.Y == pos.Y {
+	for i, q := range ecs.positions {
+		if q != nil && p == q.Point {
 			return i, true
 		}
 	}
 	return -1, false
+}
+
+// Returns true if there is no blocking entity at p.
+func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
+	if e, ok := ecs.GetEntityAt(p); ok {
+		if ecs.HasComponent(e, Obstruct{}) {
+			return false
+		}
+	}
+	return true
 }
 
 func (ecs *ECS) RemoveComponent(entity int, component any) {

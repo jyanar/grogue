@@ -11,18 +11,19 @@ type System interface {
 	Update()
 }
 
-type MovementSystem struct {
+type BumpSystem struct {
 	ecs *ECS
 }
 
-func (s *MovementSystem) Update() {
+func (s *BumpSystem) Update() {
 	for _, e := range s.ecs.entities {
 		if s.ecs.HasComponent(e, Bump{}) && s.ecs.HasComponent(e, Position{}) {
 			p := s.ecs.positions[e]
 			b := s.ecs.bumps[e]
 			if s.ecs.Map.Walkable(p.Point.Add(b.Point)) {
-				if _, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
-					fmt.Println("Entity there! Can't move!")
+				if e, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
+					fmt.Printf("You kick the %s, much to its annoyance!\n", s.ecs.names[e].string)
+					return
 				} else {
 					p.Point = p.Point.Add(b.Point)
 				}
