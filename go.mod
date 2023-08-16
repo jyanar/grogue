@@ -11,5 +11,5 @@ require (
 
 require (
 	github.com/veandco/go-sdl2 v0.4.5 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 )
