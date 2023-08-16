@@ -6,7 +6,7 @@ require (
 	github.com/anaseto/gruid v0.22.0
 	github.com/anaseto/gruid-js v0.1.1
 	github.com/anaseto/gruid-sdl v0.4.0
-	golang.org/x/image v0.0.0-20210216034530-4410531fe030
+	golang.org/x/image v0.11.0
 )
 
 require (
