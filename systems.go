@@ -21,14 +21,27 @@ func (s *BumpSystem) Update() {
 			p := s.ecs.positions[e]
 			b := s.ecs.bumps[e]
 			if s.ecs.Map.Walkable(p.Point.Add(b.Point)) {
-				if e, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
-					fmt.Printf("You kick the %s, much to its annoyance!\n", s.ecs.names[e].string)
-					return
-				} else {
-					p.Point = p.Point.Add(b.Point)
+				// There's an entitity at the target location.
+				if target, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
+					// Attack is defined, if target has health and obstruct components.
+					if s.ecs.HasComponents(target, Health{}, Obstruct{}) {
+						dmg := s.ecs.damages[e].int
+						name := s.ecs.names[e].string
+						name_target := s.ecs.names[target].string
+						health_target := s.ecs.healths[target]
+						fmt.Printf("%s hits the %s for %d damage!\n", name, name_target, dmg)
+						health_target.hp -= dmg
+						if health_target.hp <= 0 {
+							health_target.hp = 0
+							s.ecs.AddComponent(target, Death{}) // Entity marked for death.
+						}
+						return
+					}
 				}
+				// Otherwise, move to the location.
+				p.Point = p.Point.Add(b.Point)
 			}
-			b = nil
+			b = nil // Consume the bump component.
 		}
 	}
 }
@@ -59,6 +72,21 @@ func (s *FOVSystem) Update() {
 					s.ecs.Map.Explored[point] = true
 				}
 			}
+		}
+	}
+}
+
+type DeathSystem struct {
+	ecs *ECS
+}
+
+func (s *DeathSystem) Update() {
+	for _, e := range s.ecs.entities {
+		if s.ecs.HasComponent(e, Death{}) {
+			name := s.ecs.names[e]
+			s.ecs.obstructs[e] = nil // No longer blocking.
+			s.ecs.AddComponent(e, Name{"Remains of " + name.string})
+			s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse})
 		}
 	}
 }

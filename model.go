@@ -31,8 +31,10 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{'@', ColorPlayer},
+			Health{hp: 20, maxhp: 20},
 			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
 			Input{},
+			Damage{5},
 		)
 		m.game.SpawnEnemies()
 		m.game.ECS.Update()

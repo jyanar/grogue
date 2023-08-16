@@ -32,12 +32,18 @@ func (g *game) SpawnEnemies() {
 				Position{g.Map.RandomFloor()},
 				Name{"Goblin"},
 				Renderable{'g', ColorMonster},
+				Health{hp: 10, maxhp: 10},
+				Damage{2},
+				Obstruct{},
 			)
 		default:
 			g.ECS.Create(
 				Position{g.Map.RandomFloor()},
 				Name{"Orc"},
 				Renderable{'o', ColorMonster},
+				Health{hp: 15, maxhp: 15},
+				Damage{3},
+				Obstruct{},
 			)
 		}
 		g.ECS.Create()

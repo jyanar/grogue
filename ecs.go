@@ -14,6 +14,9 @@ type ECS struct {
 	bumps       map[int]*Bump
 	fovs        map[int]*FOV
 	obstructs   map[int]*Obstruct
+	healths     map[int]*Health
+	damages     map[int]*Damage
+	deaths      map[int]*Death
 
 	systems []System
 
@@ -31,9 +34,13 @@ func NewECS() *ECS {
 		bumps:       make(map[int]*Bump),
 		fovs:        make(map[int]*FOV),
 		obstructs:   make(map[int]*Obstruct),
+		healths:     make(map[int]*Health),
+		damages:     make(map[int]*Damage),
+		deaths:      make(map[int]*Death),
 	}
 	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
 
 	return ecs
 }
@@ -57,6 +64,12 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.fovs[idx] = &c
 		case Obstruct:
 			ecs.obstructs[idx] = &c
+		case Health:
+			ecs.healths[idx] = &c
+		case Damage:
+			ecs.damages[idx] = &c
+		case Death:
+			ecs.deaths[idx] = &c
 		}
 	}
 	return idx
@@ -77,6 +90,8 @@ func (ecs *ECS) Exists(entity int) bool {
 	return false
 }
 
+// Adds a component to an entity. If one of this type already exists,
+// replaces it.
 func (ecs *ECS) AddComponent(entity int, component any) {
 	switch c := component.(type) {
 	case Position:
@@ -93,6 +108,12 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.fovs[entity] = &c
 	case Obstruct:
 		ecs.obstructs[entity] = &c
+	case Health:
+		ecs.healths[entity] = &c
+	case Damage:
+		ecs.damages[entity] = &c
+	case Death:
+		ecs.deaths[entity] = &c
 	}
 }
 
@@ -132,6 +153,18 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if c := ecs.obstructs[entity]; c != nil {
 			return true
 		}
+	case Health:
+		if c := ecs.healths[entity]; c != nil {
+			return true
+		}
+	case Damage:
+		if c := ecs.damages[entity]; c != nil {
+			return true
+		}
+	case Death:
+		if c := ecs.deaths[entity]; c != nil {
+			return true
+		}
 	}
 	return false
 }
@@ -161,6 +194,12 @@ func (ecs *ECS) GetComponent(entity int, component any) any {
 		return ecs.fovs[entity]
 	case Obstruct:
 		return ecs.obstructs[entity]
+	case Health:
+		return ecs.healths[entity]
+	case Damage:
+		return ecs.damages[entity]
+	case Death:
+		return ecs.deaths[entity]
 	}
 	return nil
 }
@@ -200,6 +239,12 @@ func (ecs *ECS) RemoveComponent(entity int, component any) {
 		ecs.fovs[entity] = nil
 	case Obstruct:
 		ecs.obstructs[entity] = nil
+	case Health:
+		ecs.obstructs[entity] = nil
+	case Damage:
+		ecs.damages[entity] = nil
+	case Death:
+		ecs.deaths[entity] = nil
 	}
 }
 
