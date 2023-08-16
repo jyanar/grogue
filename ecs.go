@@ -6,10 +6,6 @@ import (
 	"github.com/anaseto/gruid"
 )
 
-type Component interface {
-	Position | Renderable | Name | Input | Bump
-}
-
 type ECS struct {
 	entities []int
 
