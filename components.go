@@ -9,9 +9,18 @@ type Position struct {
 	gruid.Point
 }
 
+type renderOrder int
+
+const (
+	ROCorpse renderOrder = iota
+	ROItem
+	ROActor
+)
+
 type Renderable struct {
 	glyph rune
 	color gruid.Color
+	order renderOrder
 }
 
 type Name struct {

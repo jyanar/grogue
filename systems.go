@@ -86,7 +86,8 @@ func (s *DeathSystem) Update() {
 			name := s.ecs.names[e]
 			s.ecs.obstructs[e] = nil // No longer blocking.
 			s.ecs.AddComponent(e, Name{"Remains of " + name.string})
-			s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse})
+			s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
 		}
+		s.ecs.deaths[e] = nil // Consume the death component.
 	}
 }

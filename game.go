@@ -31,7 +31,7 @@ func (g *game) SpawnEnemies() {
 			g.ECS.Create(
 				Position{g.Map.RandomFloor()},
 				Name{"Goblin"},
-				Renderable{'g', ColorMonster},
+				Renderable{glyph: 'g', color: ColorMonster, order: ROActor},
 				Health{hp: 10, maxhp: 10},
 				Damage{2},
 				Obstruct{},
@@ -40,7 +40,7 @@ func (g *game) SpawnEnemies() {
 			g.ECS.Create(
 				Position{g.Map.RandomFloor()},
 				Name{"Orc"},
-				Renderable{'o', ColorMonster},
+				Renderable{glyph: 'o', color: ColorMonster, order: ROActor},
 				Health{hp: 15, maxhp: 15},
 				Damage{3},
 				Obstruct{},

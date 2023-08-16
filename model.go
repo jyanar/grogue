@@ -30,7 +30,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		m.game.ECS.Create(
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
-			Renderable{'@', ColorPlayer},
+			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
 			Health{hp: 20, maxhp: 20},
 			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
 			Input{},
@@ -92,19 +92,68 @@ func (m *model) Draw() gruid.Grid {
 		m.grid.Set(it.P(), c)
 	}
 	// Draw the entities.
+	// TODO Refactor this ugly mess.
+	// Collect list of entities to draw.
+	corpsesToDraw := []int{}
+	itemsToDraw := []int{}
+	actorsToDraw := []int{}
 	for _, e := range ECS.entities {
 		if ECS.HasComponents(e, Position{}, Renderable{}) {
 			p := ECS.positions[e]
-			r := ECS.renderables[e]
 			if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
 				continue
 			}
-			// Entity is in a FOV. We draw them.
-			m.grid.Set(p.Point, gruid.Cell{
-				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
-			})
+			// Entity is in a FOV. Add them to the list.
+			switch ECS.renderables[e].order {
+			case ROCorpse:
+				corpsesToDraw = append(corpsesToDraw, e)
+			case ROItem:
+				itemsToDraw = append(itemsToDraw, e)
+			case ROActor:
+				actorsToDraw = append(actorsToDraw, e)
+			}
 		}
 	}
+	// // Sort them according to drawing order.
+	// fmt.Println(entitiesToDraw)
+	// for _, e := range entitiesToDraw {
+	// 	ECS.printDebug(e)
+	// }
+	// sort.Slice(entitiesToDraw, func(i, j int) bool { // Why is this segfaulting?
+	// 	return ECS.renderables[i].order < ECS.renderables[j].order
+	// })
+	// Draw.
+	for _, e := range corpsesToDraw {
+		p := ECS.positions[e]
+		r := ECS.renderables[e]
+		m.grid.Set(p.Point, gruid.Cell{
+			Rune:  r.glyph,
+			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
+		})
+	}
+	for _, e := range itemsToDraw {
+		p := ECS.positions[e]
+		r := ECS.renderables[e]
+		m.grid.Set(p.Point, gruid.Cell{
+			Rune:  r.glyph,
+			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
+		})
+	}
+	for _, e := range actorsToDraw {
+		p := ECS.positions[e]
+		r := ECS.renderables[e]
+		m.grid.Set(p.Point, gruid.Cell{
+			Rune:  r.glyph,
+			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
+		})
+	}
+	// for _, e := range entitiesToDraw {
+	// 	p := ECS.positions[e]
+	// 	r := ECS.renderables[e]
+	// 	m.grid.Set(p.Point, gruid.Cell{
+	// 		Rune:  r.glyph,
+	// 		Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
+	// 	})
+	// }
 	return m.grid
 }

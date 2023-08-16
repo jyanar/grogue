@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/anaseto/gruid"
 )
+
+type Component interface {
+	Position | Renderable | Name | Input | Bump
+}
 
 type ECS struct {
 	entities []int
@@ -248,20 +254,38 @@ func (ecs *ECS) RemoveComponent(entity int, component any) {
 	}
 }
 
-// Draws all entities onto a passed grid.
-func (ecs *ECS) Draw(grid *gruid.Grid) {
-	for _, e := range ecs.entities {
-		if ecs.HasComponent(e, Position{}) && ecs.HasComponent(e, Renderable{}) {
-			p := ecs.positions[e]
-			r := ecs.renderables[e]
-			bg := gruid.ColorDefault
-			if ecs.HasComponent(e, FOV{}) {
-				bg = ColorFOV
-			}
-			grid.Set(p.Point, gruid.Cell{
-				Rune:  r.glyph,
-				Style: gruid.Style{Fg: r.color, Bg: bg},
-			})
-		}
+func (ecs *ECS) printDebug(e int) {
+	fmt.Println("====================")
+	fmt.Println("Entity: " + string(e))
+	if ecs.bumps[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.bumps[e], ecs.bumps[e])
 	}
+	if ecs.damages[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.damages[e], ecs.damages[e])
+	}
+	if ecs.deaths[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
+	}
+	if ecs.fovs[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.fovs[e], ecs.fovs[e])
+	}
+	if ecs.healths[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.healths[e], ecs.healths[e])
+	}
+	if ecs.inputs[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.inputs[e], ecs.inputs[e])
+	}
+	if ecs.names[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.names[e], ecs.names[e])
+	}
+	if ecs.obstructs[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.obstructs[e], ecs.obstructs[e])
+	}
+	if ecs.renderables[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.renderables[e], ecs.renderables[e])
+	}
+	if ecs.positions[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.positions[e], ecs.positions[e])
+	}
+
 }
