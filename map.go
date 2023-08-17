@@ -19,6 +19,7 @@ type Map struct {
 	Grid     rl.Grid              // Gamemap.
 	Rand     *rand.Rand           // Random number generator.
 	Explored map[gruid.Point]bool // Explored tiles.
+	PR       *paths.PathRange
 }
 
 func NewMap(size gruid.Point) *Map {
@@ -26,6 +27,7 @@ func NewMap(size gruid.Point) *Map {
 		Grid:     rl.NewGrid(size.X, size.Y),
 		Rand:     rand.New(rand.NewSource(time.Now().UnixNano())),
 		Explored: make(map[gruid.Point]bool),
+		PR:       paths.NewPathRange(gruid.NewRange(0, 0, size.X, size.Y)),
 	}
 	m.Generate()
 	return m

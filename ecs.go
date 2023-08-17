@@ -48,7 +48,8 @@ func NewECS() *ECS {
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
+	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
 }
@@ -269,5 +270,8 @@ func (ecs *ECS) printDebug(e int) {
 	}
 	if ecs.perceptions[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
+	}
+	if ecs.ais[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
 	}
 }

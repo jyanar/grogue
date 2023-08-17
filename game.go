@@ -35,6 +35,7 @@ func (g *game) SpawnEnemies() {
 				Health{hp: 10, maxhp: 10},
 				Damage{2},
 				Perception{radius: 4},
+				AI{state: CSWandering},
 				Obstruct{},
 			)
 		default:
@@ -45,6 +46,7 @@ func (g *game) SpawnEnemies() {
 				Health{hp: 15, maxhp: 15},
 				Damage{3},
 				Perception{radius: 4},
+				AI{state: CSWandering},
 				Obstruct{},
 			)
 		}

@@ -98,35 +98,78 @@ func (s *PerceptionSystem) Update() {
 		per := s.ecs.perceptions[e]
 		per.perceived = []int{}
 		for _, other := range s.ecs.EntitiesWith(Position{}) {
+			// Ignore self.
 			if other == e {
 				continue
 			}
+			// If other entity is within perceptive radius, add to perceived list.
 			pos_other := s.ecs.positions[other]
 			if paths.DistanceChebyshev(pos.Point, pos_other.Point) < per.radius {
 				per.perceived = append(per.perceived, other)
+				// If the other entity is the player, switch creature state to Hunting.
+				if other == 0 && s.ecs.HasComponent(e, AI{}) {
+					s.ecs.ais[e].state = CSHunting
+				}
 			}
 		}
 	}
 }
 
-// type HostileSystem struct {
-// 	ecs *ECS
-// }
+type AISystem struct {
+	ecs *ECS
+	aip *aiPath
+}
 
-// func (s *HostileSystem) Update() {
-// 	for _, e := range s.ecs.entities {
-// 		if s.ecs.HasComponents(e, Position{}, Perception{}, AI{}) {
-// 			per := s.ecs.perceptions[e]
-// 			if len(per.perceived) > 0 && per.perceived[0] == 0 {
-// 				// Perceived entity is the player. Path towards them.
+type aiPath struct {
+	ecs *ECS
+	nb  paths.Neighbors
+}
 
-// 			}
-// 			// Check through perceived entities. If player is in
+func (aip *aiPath) Neighbors(q gruid.Point) []gruid.Point {
+	return aip.nb.Cardinal(q,
+		func(r gruid.Point) bool {
+			return aip.ecs.Map.Walkable(r)
+		})
+}
 
-// 		}
-// 	}
+func (aip *aiPath) Cost(p, q gruid.Point) int {
+	if !aip.ecs.NoBlockingEntityAt(q) {
+		// Extra cost for blocked positions: this encourages the pathfinding
+		// algorithm to take another path to reach the their destination.
+		return 8
+	}
+	return 1
+}
 
-// }
+func (aip *aiPath) Estimation(p, q gruid.Point) int {
+	return paths.DistanceManhattan(p, q)
+}
+
+func (s *AISystem) Update() {
+	for _, e := range s.ecs.EntitiesWith(AI{}, Position{}) {
+		ai := s.ecs.ais[e]
+		pos := s.ecs.positions[e]
+		switch ai.state {
+		case CSSleeping:
+			return // Do nothing, creature is asleep!
+		case CSWandering:
+			// If current path is run out, start pathing towards new direction.
+			if len(ai.path) < 1 {
+				ai.path = s.ecs.Map.PR.AstarPath(s.aip, pos.Point, s.ecs.Map.RandomFloor())
+			}
+			s.ecs.AddComponent(e, Bump{ai.path[0].Sub(pos.Point)})
+			ai.path = ai.path[1:]
+		case CSHunting:
+			// Check that the path still points towards the player. If not, recompute.
+			player_pos := s.ecs.positions[0]
+			if ai.path[len(ai.path)-1] != player_pos.Point {
+				ai.path = s.ecs.Map.PR.AstarPath(s.aip, pos.Point, player_pos.Point)
+			}
+			s.ecs.AddComponent(e, Bump{ai.path[0].Sub(pos.Point)})
+			ai.path = ai.path[1:]
+		}
+	}
+}
 
 type DebugSystem struct {
 	ecs *ECS

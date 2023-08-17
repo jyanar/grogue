@@ -40,7 +40,7 @@ type Bump struct {
 	gruid.Point
 }
 
-// Obstructs movement
+// Entities with this component obstruct movement. Corpses do not.
 type Obstruct struct{}
 
 // Entities with this component have health, and can take damage.
@@ -53,7 +53,7 @@ type Damage struct {
 	int
 }
 
-// Entities with this component will be processed as dead.
+// Entities with this component are marked for death (see DeathSystem).
 type Death struct{}
 
 // Entities with this component perceive other entities around them.
@@ -62,7 +62,17 @@ type Perception struct {
 	perceived []int // List of perceived entities.
 }
 
-// Entities with this component can path (for now, towards the player).
+type creatureState int
+
+const (
+	CSWandering = iota
+	CSSleeping
+	CSHunting
+)
+
+// Entities with this component will be controlled by AI, and can wander,
+// sleep, or hunt the player.
 type AI struct {
-	Path []gruid.Point
+	state creatureState
+	path  []gruid.Point
 }
