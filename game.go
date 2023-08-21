@@ -15,8 +15,10 @@ type game struct {
 //
 // NOTE: Currently InFOV only returns true for the player FOV.
 func (g *game) InFOV(p gruid.Point) bool {
+	// return true
 	pp := g.ECS.positions[0].Point
-	if g.ECS.fovs[0].FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= 10 {
+	los := g.ECS.fovs[0].LOS
+	if g.ECS.fovs[0].FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
 		return true
 	}
 	return false

@@ -47,18 +47,6 @@ func (m *Map) Rune(c rl.Cell) (r rune) {
 	return r
 }
 
-// Draws the Map onto the passed grid.
-func (m *Map) Draw(grid *gruid.Grid) {
-	it := m.Grid.Iterator()
-	for it.Next() {
-		if !m.Explored[it.P()] {
-			continue
-		}
-		c := gruid.Cell{Rune: m.Rune(it.Cell())}
-		grid.Set(it.P(), c)
-	}
-}
-
 // Generate fills the Grid attribute of m with a procedurally generated map.
 func (m *Map) Generate() {
 	// Using the rl package from gruid.

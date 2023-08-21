@@ -49,7 +49,7 @@ func NewECS() *ECS {
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
-	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
 }
@@ -143,51 +143,51 @@ func (ecs *ECS) AddComponents(entity int, components ...any) {
 func (ecs *ECS) HasComponent(entity int, component any) bool {
 	switch component.(type) {
 	case Name:
-		if c := ecs.names[entity]; c != nil {
+		if ecs.names[entity] != nil {
 			return true
 		}
 	case Position:
-		if c := ecs.positions[entity]; c != nil {
+		if ecs.positions[entity] != nil {
 			return true
 		}
 	case Renderable:
-		if c := ecs.renderables[entity]; c != nil {
+		if ecs.renderables[entity] != nil {
 			return true
 		}
 	case Input:
-		if c := ecs.inputs[entity]; c != nil {
+		if ecs.inputs[entity] != nil {
 			return true
 		}
 	case Bump:
-		if c := ecs.bumps[entity]; c != nil {
+		if ecs.bumps[entity] != nil {
 			return true
 		}
 	case FOV:
-		if c := ecs.fovs[entity]; c != nil {
+		if ecs.fovs[entity] != nil {
 			return true
 		}
 	case Obstruct:
-		if c := ecs.obstructs[entity]; c != nil {
+		if ecs.obstructs[entity] != nil {
 			return true
 		}
 	case Health:
-		if c := ecs.healths[entity]; c != nil {
+		if ecs.healths[entity] != nil {
 			return true
 		}
 	case Damage:
-		if c := ecs.damages[entity]; c != nil {
+		if ecs.damages[entity] != nil {
 			return true
 		}
 	case Death:
-		if c := ecs.deaths[entity]; c != nil {
+		if ecs.deaths[entity] != nil {
 			return true
 		}
 	case Perception:
-		if c := ecs.perceptions[entity]; c != nil {
+		if ecs.perceptions[entity] != nil {
 			return true
 		}
 	case AI:
-		if c := ecs.ais[entity]; c != nil {
+		if ecs.ais[entity] != nil {
 			return true
 		}
 	}
