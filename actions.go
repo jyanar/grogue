@@ -14,6 +14,7 @@ type actionType int
 const (
 	NoAction   actionType = iota
 	ActionBump            // Movement request.
+	ActionWait            // Step forward one tick.
 	ActionQuit            // Quit the game.
 )
 
@@ -24,6 +25,9 @@ func (m *model) handleAction() gruid.Effect {
 		for _, e := range m.game.ECS.EntitiesWith(Input{}) {
 			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
+		m.game.ECS.Update()
+
+	case ActionWait:
 		m.game.ECS.Update()
 
 	case ActionQuit:

@@ -32,7 +32,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Name{"Player"},
 			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
 			Health{hp: 20, maxhp: 20},
-			FOV{LOS: 10, FOV: rl.NewFOV(gruid.NewRange(-10, -10, 10+1, 10+1))},
+			FOV{LOS: 100, FOV: rl.NewFOV(gruid.NewRange(-100, -100, 100+1, 100+1))},
 			Input{},
 			Damage{5},
 		)
@@ -50,6 +50,8 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	pdelta := gruid.Point{}
 	switch msg.Key {
+
+	// Movement
 	case gruid.KeyArrowLeft, "h":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 0)}
 	case gruid.KeyArrowDown, "j":
@@ -58,8 +60,6 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(0, -1)}
 	case gruid.KeyArrowRight, "l":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 0)}
-	case gruid.KeyEscape, "q":
-		m.action = action{Type: ActionQuit}
 	case "y":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, -1)}
 	case "u":
@@ -68,6 +68,14 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 1)}
 	case "n":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
+
+	// Waiting
+	case ".":
+		m.action = action{Type: ActionWait}
+
+	// Quitting
+	case gruid.KeyEscape, "q":
+		m.action = action{Type: ActionQuit}
 	}
 }
 
@@ -87,7 +95,7 @@ func (m *model) Draw() gruid.Grid {
 		}
 		c := gruid.Cell{Rune: Map.Rune(it.Cell())}
 		if m.game.InFOV(it.P()) {
-			c.Style.Bg = ColorFOV
+			c.Style.Fg = ColorFOV
 		}
 		m.grid.Set(it.P(), c)
 	}
