@@ -17,8 +17,8 @@ type BumpSystem struct {
 
 func (s *BumpSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(Bump{}, Position{}) {
-		p := s.ecs.positions[e]
 		b := s.ecs.bumps[e]
+		p := s.ecs.positions[e]
 		if s.ecs.Map.Walkable(p.Point.Add(b.Point)) {
 			// There's an entitity at the target location.
 			if target, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
@@ -82,9 +82,13 @@ func (s *DeathSystem) Update() {
 		s.ecs.obstructs[e] = nil   // No longer blocking.
 		s.ecs.perceptions[e] = nil // No longer perceiving.
 		s.ecs.ais[e] = nil         // No longer pathing.
+		s.ecs.bumps[e] = nil
+		s.ecs.inputs[e] = nil
+		s.ecs.damages[e] = nil
+		s.ecs.healths[e] = nil
+		s.ecs.deaths[e] = nil // Consume the death component.
 		s.ecs.AddComponent(e, Name{"Remains of " + name.string})
 		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
-		s.ecs.deaths[e] = nil // Consume the death component.
 	}
 }
 
@@ -107,9 +111,9 @@ func (s *PerceptionSystem) Update() {
 			if paths.DistanceChebyshev(pos.Point, pos_other.Point) < per.radius {
 				per.perceived = append(per.perceived, other)
 				// If the other entity is the player, switch creature state to Hunting.
-				if other == 0 && s.ecs.HasComponent(e, AI{}) {
-					s.ecs.ais[e].state = CSHunting
-				}
+				// if other == 0 && s.ecs.HasComponent(e, AI{}) {
+				// 	s.ecs.ais[e].state = CSHunting
+				// }
 			}
 		}
 	}
@@ -146,27 +150,54 @@ func (aip *aiPath) Estimation(p, q gruid.Point) int {
 }
 
 func (s *AISystem) Update() {
+	fmt.Println("===================")
 	for _, e := range s.ecs.EntitiesWith(AI{}, Position{}) {
 		ai := s.ecs.ais[e]
 		pos := s.ecs.positions[e]
 		switch ai.state {
+
 		case CSSleeping:
 			return // Do nothing, creature is asleep!
+
 		case CSWandering:
-			// If current path is run out, start pathing towards new direction.
-			if len(ai.path) < 1 {
-				ai.path = s.ecs.Map.PR.AstarPath(s.aip, pos.Point, s.ecs.Map.RandomFloor())
+			// Set a destination, if one is not yet set.
+			if ai.dest == nil || *ai.dest == pos.Point {
+				for {
+					f := s.ecs.Map.RandomFloor()
+					if f != pos.Point {
+						ai.dest = &f
+						break
+					}
+				}
+				fmt.Printf("New path established for entity: %d\n", e)
+				fmt.Printf("Waypoint: %v\n\n", ai.dest)
 			}
-			s.ecs.AddComponent(e, Bump{ai.path[0].Sub(pos.Point)})
-			ai.path = ai.path[1:]
+			// Compute path to it.
+			path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
+			// Move entity to first position in the path.
+			s.ecs.positions[e] = &Position{path[1]}
+
+			// var bump gruid.Point
+			// bump = pos.Point.Sub(path[1])
+			// s.ecs.AddComponent(e, Bump{bump})
+
+			// // If current path is run out, start pathing towards new direction.
+			// // if len(ai.path) < 1 {
+			// // 	ai.path = s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, s.ecs.Map.RandomFloor())
+			// // }
+			// ai.path = s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, s.ecs.Map.RandomFloor())
+			// bump := pos.Point.Sub(ai.path[1])
+			// fmt.Printf("Current LOC: %v\n", pos.Point)
+			// fmt.Printf("ai.path[1]:  %v\n", ai.path[1])
+			// fmt.Printf("BUMP: %v, %T\n", bump, bump)
+			// // fmt.Printf("path[2:5]: %v\n", ai.path[2:5])
+			// s.ecs.positions[e] = &Position{ai.path[1]}
+			// // s.ecs.AddComponent(e, Bump{pos.Point.Sub(ai.path[1])})
 		case CSHunting:
-			// Check that the path still points towards the player. If not, recompute.
-			player_pos := s.ecs.positions[0]
-			if ai.path[len(ai.path)-1] != player_pos.Point {
-				ai.path = s.ecs.Map.PR.AstarPath(s.aip, pos.Point, player_pos.Point)
-			}
-			s.ecs.AddComponent(e, Bump{ai.path[0].Sub(pos.Point)})
-			ai.path = ai.path[1:]
+			// Compute path to player.
+			// player_pos := s.ecs.positions[0]
+			// ai.path = s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, player_pos.Point)
+			// s.ecs.AddComponent(e, Bump{pos.Point.Sub(ai.path[1])})
 		}
 	}
 }

@@ -74,5 +74,6 @@ const (
 // sleep, or hunt the player.
 type AI struct {
 	state creatureState
-	path  []gruid.Point
+	dest  *gruid.Point
+	// path  []gruid.Point
 }
