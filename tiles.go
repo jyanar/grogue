@@ -15,6 +15,7 @@ import (
 
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/tiles"
+	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font/sfnt"
 )
@@ -35,7 +36,7 @@ const (
 	ThemeNoir
 )
 
-const theme = ThemeSelenized
+const theme = ThemeNoir
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 	fg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 255})
@@ -100,10 +101,10 @@ func NewTileDrawer() (*TileDrawer, error) {
 	// Grab the monospace font TTF.
 
 	// // GoMono
-	// font, err := opentype.Parse(gomono.TTF)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	font, err := opentype.Parse(gomono.TTF)
+	if err != nil {
+		return nil, err
+	}
 
 	// IBM EGA
 	// font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
@@ -111,11 +112,11 @@ func NewTileDrawer() (*TileDrawer, error) {
 	// 	return nil, err
 	// }
 
-	// IBM MDA
-	font, err := readTTF("assets/Mx437_IBM_MDA.ttf")
-	if err != nil {
-		return nil, err
-	}
+	// // IBM MDA
+	// font, err := readTTF("assets/Mx437_IBM_MDA.ttf")
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Retrieve the font face.
 	face, err := opentype.NewFace(font, &opentype.FaceOptions{

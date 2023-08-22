@@ -35,7 +35,7 @@ func (g *game) SpawnEnemies() {
 				Renderable{glyph: 'g', color: ColorMonster, order: ROActor},
 				Health{hp: 10, maxhp: 10},
 				Damage{2},
-				Perception{radius: 4},
+				Perception{radius: 8},
 				AI{state: CSWandering},
 				Obstruct{},
 			)
@@ -46,7 +46,7 @@ func (g *game) SpawnEnemies() {
 				Renderable{glyph: 'o', color: ColorMonster, order: ROActor},
 				Health{hp: 15, maxhp: 15},
 				Damage{3},
-				Perception{radius: 4},
+				Perception{radius: 8},
 				AI{state: CSWandering},
 				Obstruct{},
 			)
