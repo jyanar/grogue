@@ -117,10 +117,15 @@ func (s *PerceptionSystem) Update() {
 			pos_other := s.ecs.positions[other]
 			if paths.DistanceChebyshev(pos.Point, pos_other.Point) <= per.radius {
 				per.perceived = append(per.perceived, other)
-				// If the other entity is the player, switch creature state to Hunting.
-				if other == 0 && s.ecs.HasComponent(e, AI{}) {
-					s.ecs.ais[e].state = CSHunting
-				}
+			}
+		}
+		// Check if player is within perceived entities, and switch to appropriate state.
+		for _, other := range per.perceived {
+			name_other := s.ecs.names[other].string
+			if name_other == "Player" && s.ecs.HasComponent(e, AI{}) {
+				s.ecs.ais[e].state = CSHunting
+			} else {
+				s.ecs.ais[e].state = CSWandering
 			}
 		}
 	}
