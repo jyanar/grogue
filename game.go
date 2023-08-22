@@ -42,11 +42,11 @@ func (g *game) SpawnEnemies() {
 		default:
 			g.ECS.Create(
 				Position{g.Map.RandomFloor()},
-				Name{"Orc"},
-				Renderable{glyph: 'o', color: ColorMonster, order: ROActor},
-				Health{hp: 15, maxhp: 15},
-				Damage{3},
-				Perception{radius: 8},
+				Name{"Troll"},
+				Renderable{glyph: 'T', color: ColorMonster, order: ROActor},
+				Health{hp: 20, maxhp: 20},
+				Damage{5},
+				Perception{radius: 6},
 				AI{state: CSWandering},
 				Obstruct{},
 			)

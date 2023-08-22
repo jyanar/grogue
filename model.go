@@ -31,7 +31,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
-			Health{hp: 20, maxhp: 20},
+			Health{hp: 18, maxhp: 18},
 			FOV{LOS: 20, FOV: rl.NewFOV(gruid.NewRange(-20, -20, 20+1, 20+1))},
 			Input{},
 			Obstruct{},
