@@ -44,11 +44,11 @@ func NewECS() *ECS {
 		perceptions: make(map[int]*Perception),
 		ais:         make(map[int]*AI),
 	}
+	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
+	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
 	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
 	ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
