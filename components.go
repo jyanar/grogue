@@ -5,18 +5,22 @@ import (
 	"github.com/anaseto/gruid/rl"
 )
 
+// An entity position, defined as an X, Y coordinate.
 type Position struct {
 	gruid.Point
 }
 
-type renderOrder int
+// Determines order at which entity is drawn. Corpses are drawn first,
+// followed by items and actors.
+type renderOrder string
 
 const (
-	ROCorpse renderOrder = iota
-	ROItem
-	ROActor
+	ROCorpse renderOrder = "CORPSE"
+	ROItem   renderOrder = "ITEM"
+	ROActor  renderOrder = "ACTOR"
 )
 
+// Entities with this component can be rendered.
 type Renderable struct {
 	glyph rune
 	color gruid.Color
@@ -27,6 +31,8 @@ type Name struct {
 	string
 }
 
+// Entities with this component have an FOV computed. Typically, only the
+// player holds this component.
 type FOV struct {
 	LOS int
 	FOV *rl.FOV
@@ -62,12 +68,13 @@ type Perception struct {
 	perceived []int // List of perceived entities.
 }
 
-type creatureState int
+// I don't like this iota business. Prefer enums like this:
+type creatureState string
 
 const (
-	CSWandering = iota
-	CSSleeping
-	CSHunting
+	CSWandering creatureState = "WANDERING"
+	CSSleeping  creatureState = "SLEEPING"
+	CSHunting   creatureState = "HUNTING"
 )
 
 // Entities with this component will be controlled by AI, and can wander,
