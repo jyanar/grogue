@@ -19,10 +19,17 @@ func (s *BumpSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(Bump{}, Position{}) {
 		b := s.ecs.bumps[e]
 		p := s.ecs.positions[e]
+		s.ecs.bumps[e] = nil // Consume the bump component.
+		// Ignore movement to the same tile.
+		if b.X == 0 && b.Y == 0 {
+			return
+		}
+		// Otherwise, attempt to move.
 		if s.ecs.Map.Walkable(p.Point.Add(b.Point)) {
-			// There's an entitity at the target location.
+			// There's an entity at the target location.
 			if target, ok := s.ecs.GetEntityAt(p.Point.Add(b.Point)); ok {
 				// Attack is defined, if target has health and obstruct components.
+				// Perform attack and return.
 				if s.ecs.HasComponents(target, Health{}, Obstruct{}) {
 					dmg := s.ecs.damages[e].int
 					name := s.ecs.names[e].string
@@ -40,7 +47,6 @@ func (s *BumpSystem) Update() {
 			// Otherwise, move to the location.
 			p.Point = p.Point.Add(b.Point)
 		}
-		b = nil // Consume the bump component.
 	}
 }
 
@@ -111,9 +117,9 @@ func (s *PerceptionSystem) Update() {
 			if paths.DistanceChebyshev(pos.Point, pos_other.Point) < per.radius {
 				per.perceived = append(per.perceived, other)
 				// If the other entity is the player, switch creature state to Hunting.
-				// if other == 0 && s.ecs.HasComponent(e, AI{}) {
-				// 	s.ecs.ais[e].state = CSHunting
-				// }
+				if other == 0 && s.ecs.HasComponent(e, AI{}) {
+					s.ecs.ais[e].state = CSHunting
+				}
 			}
 		}
 	}
@@ -174,8 +180,10 @@ func (s *AISystem) Update() {
 			}
 			// Compute path to it.
 			path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
+			q := path[1]
 			// Move entity to first position in the path.
-			s.ecs.positions[e] = &Position{path[1]}
+			// s.ecs.positions[e] = &Position{path[1]}
+			s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
 
 			// var bump gruid.Point
 			// bump = pos.Point.Sub(path[1])
