@@ -32,15 +32,16 @@ type TileDrawer struct {
 
 const (
 	ThemeSelenized = iota
-	ThemeBlackWhite
+	ThemeNoir
 )
 
-const theme = ThemeBlackWhite
+const theme = ThemeSelenized
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 	fg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 255})
 	bg := image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
 	switch theme {
+
 	case ThemeSelenized:
 		fg = image.NewUniform(color.RGBA{0xad, 0xbc, 0xbc, 255})
 		bg = image.NewUniform(color.RGBA{0x10, 0x3c, 0x48, 255})
@@ -61,7 +62,7 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 
 		return t.drawer.Draw(c.Rune, fg, bg)
 
-	case ThemeBlackWhite:
+	case ThemeNoir:
 		fg = image.NewUniform(color.RGBA{100, 100, 100, 255})
 		bg = image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
 
@@ -97,7 +98,8 @@ func NewTileDrawer() (*TileDrawer, error) {
 	t := &TileDrawer{}
 
 	// Grab the monospace font TTF.
-	// GoMono
+
+	// // GoMono
 	// font, err := opentype.Parse(gomono.TTF)
 	// if err != nil {
 	// 	return nil, err

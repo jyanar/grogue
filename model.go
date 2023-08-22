@@ -32,8 +32,9 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Name{"Player"},
 			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
 			Health{hp: 20, maxhp: 20},
-			FOV{LOS: 100, FOV: rl.NewFOV(gruid.NewRange(-100, -100, 100+1, 100+1))},
+			FOV{LOS: 20, FOV: rl.NewFOV(gruid.NewRange(-20, -20, 20+1, 20+1))},
 			Input{},
+			Obstruct{},
 			Damage{5},
 		)
 		m.game.SpawnEnemies()
@@ -96,6 +97,7 @@ func (m *model) Draw() gruid.Grid {
 		c := gruid.Cell{Rune: Map.Rune(it.Cell())}
 		if m.game.InFOV(it.P()) {
 			c.Style.Fg = ColorFOV
+			c.Style.Bg = ColorFOV
 		}
 		m.grid.Set(it.P(), c)
 	}
