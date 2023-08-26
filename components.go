@@ -82,5 +82,11 @@ const (
 type AI struct {
 	state creatureState
 	dest  *gruid.Point
-	// path  []gruid.Point
+}
+
+// This component represents a message, to be processed by and added to the message log.
+type LogEntry struct {
+	Text  string      // entry text
+	Color gruid.Color // color
+	Dups  int         // consecutive duplicates of same message
 }

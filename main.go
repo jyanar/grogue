@@ -7,9 +7,16 @@ import (
 	"github.com/anaseto/gruid"
 )
 
+const (
+	UIWidth   = 80
+	UIHeight  = 24
+	MapWidth  = UIWidth
+	MapHeight = UIHeight - 3
+)
+
 func main() {
 	// Construct the drawgrid, and a new model.
-	gd := gruid.NewGrid(80, 24)
+	gd := gruid.NewGrid(UIWidth, UIHeight)
 	m := NewModel(gd)
 
 	// Instantiate new app. driver is generated in sdl.go, or in

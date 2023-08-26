@@ -21,6 +21,7 @@ type ECS struct {
 	deaths      map[int]*Death
 	perceptions map[int]*Perception
 	ais         map[int]*AI
+	logentries  map[int]*LogEntry
 
 	systems []System
 
@@ -43,6 +44,7 @@ func NewECS() *ECS {
 		deaths:      make(map[int]*Death),
 		perceptions: make(map[int]*Perception),
 		ais:         make(map[int]*AI),
+		logentries:  make(map[int]*LogEntry),
 	}
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
@@ -83,9 +85,34 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.perceptions[idx] = &c
 		case AI:
 			ecs.ais[idx] = &c
+		case LogEntry:
+			ecs.logentries[idx] = &c
 		}
 	}
 	return idx
+}
+
+func remove(slice []int, s int) []int {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func (ecs *ECS) Delete(entity int) {
+	// Remove from entity list
+	ecs.entities = remove(ecs.entities, entity)
+	// Delete associated data from maps
+	delete(ecs.positions, entity)
+	delete(ecs.renderables, entity)
+	delete(ecs.names, entity)
+	delete(ecs.inputs, entity)
+	delete(ecs.bumps, entity)
+	delete(ecs.fovs, entity)
+	delete(ecs.obstructs, entity)
+	delete(ecs.healths, entity)
+	delete(ecs.damages, entity)
+	delete(ecs.deaths, entity)
+	delete(ecs.perceptions, entity)
+	delete(ecs.ais, entity)
+	delete(ecs.logentries, entity)
 }
 
 func (ecs *ECS) Update() {
@@ -131,6 +158,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.perceptions[entity] = &c
 	case AI:
 		ecs.ais[entity] = &c
+	case LogEntry:
+		ecs.logentries[entity] = &c
 	}
 }
 
@@ -188,6 +217,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case AI:
 		if ecs.ais[entity] != nil {
+			return true
+		}
+	case LogEntry:
+		if ecs.logentries[entity] != nil {
 			return true
 		}
 	}
@@ -272,6 +305,9 @@ func (ecs *ECS) printDebug(e int) {
 		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
 	}
 	if ecs.ais[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
+	}
+	if ecs.logentries[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
 	}
 }

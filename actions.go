@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/ui"
 )
 
 type action struct {
@@ -12,10 +13,11 @@ type action struct {
 type actionType int
 
 const (
-	NoAction   actionType = iota
-	ActionBump            // Movement request.
-	ActionWait            // Step forward one tick.
-	ActionQuit            // Quit the game.
+	NoAction           actionType = iota
+	ActionBump                    // Movement request.
+	ActionWait                    // Step forward one tick.
+	ActionQuit                    // Quit the game.
+	ActionViewMessages            // View history messages.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -26,12 +28,24 @@ func (m *model) handleAction() gruid.Effect {
 			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
 		m.game.ECS.Update()
+		m.game.CollectMessages()
 
 	case ActionWait:
 		m.game.ECS.Update()
+		m.game.CollectMessages()
 
 	case ActionQuit:
 		return gruid.End()
+
+	case ActionViewMessages:
+		m.mode = modeMessageViewer
+		lines := []ui.StyledText{}
+		for _, e := range m.game.Log {
+			st := gruid.Style{}
+			st.Fg = e.Color
+			lines = append(lines, ui.NewStyledText(e.String(), st))
+		}
+		m.viewer.SetLines(lines)
 	}
 	return nil
 }

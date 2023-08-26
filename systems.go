@@ -36,7 +36,13 @@ func (s *BumpSystem) Update() {
 					name_src := s.ecs.names[e].string
 					name_target := s.ecs.names[target].string
 					health_target := s.ecs.healths[target]
-					fmt.Printf("%s hits the %s for %d damage!\n", name_src, name_target, dmg_src)
+					msg := fmt.Sprintf("%s hits the %s for %d damage!", name_src, name_target, dmg_src)
+					msgcolor := ColorLogMonsterAttack
+					if e == 0 {
+						msgcolor = ColorLogPlayerAttack
+					}
+					s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+					// fmt.Printf("%s hits the %s for %d damage!\n", name_src, name_target, dmg_src)
 					health_target.hp -= dmg_src
 					if health_target.hp <= 0 {
 						health_target.hp = 0
@@ -47,6 +53,8 @@ func (s *BumpSystem) Update() {
 			}
 			// Otherwise, move to destination.
 			p.Point = dest
+		} else {
+			s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
 		}
 	}
 }
@@ -115,7 +123,7 @@ func (s *PerceptionSystem) Update() {
 			}
 			// If other entity is within perceptive radius, add to perceived list.
 			pos_other := s.ecs.positions[other]
-			if paths.DistanceChebyshev(pos.Point, pos_other.Point) <= per.radius {
+			if paths.DistanceManhattan(pos.Point, pos_other.Point) <= per.radius {
 				per.perceived = append(per.perceived, other)
 			}
 		}
@@ -124,6 +132,7 @@ func (s *PerceptionSystem) Update() {
 			name_other := s.ecs.names[other].string
 			if name_other == "Player" && s.ecs.HasComponent(e, AI{}) {
 				s.ecs.ais[e].state = CSHunting
+				break
 			} else {
 				s.ecs.ais[e].state = CSWandering
 			}

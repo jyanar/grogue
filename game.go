@@ -8,6 +8,7 @@ import (
 type game struct {
 	ECS *ECS
 	Map *Map
+	Log []LogEntry
 }
 
 // InFOV returns true if p is in the field of view of an entity with FOV. We only
@@ -43,7 +44,7 @@ func (g *game) SpawnEnemies() {
 			g.ECS.Create(
 				Position{g.Map.RandomFloor()},
 				Name{"Troll"},
-				Renderable{glyph: 'T', color: ColorMonster, order: ROActor},
+				Renderable{glyph: 'T', color: ColorTroll, order: ROActor},
 				Health{hp: 20, maxhp: 20},
 				Damage{5},
 				Perception{radius: 6},
@@ -51,7 +52,6 @@ func (g *game) SpawnEnemies() {
 				Obstruct{},
 			)
 		}
-		g.ECS.Create()
 	}
 }
 

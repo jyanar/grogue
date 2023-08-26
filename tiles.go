@@ -20,23 +20,32 @@ import (
 	"golang.org/x/image/font/sfnt"
 )
 
+// Available colors. These are set to appropriate RGB values by the theme.
 const (
 	ColorFOV gruid.Color = iota + 1
 	ColorPlayer
 	ColorMonster
+	ColorTroll
 	ColorCorpse
+	ColorLogPlayerAttack
+	ColorLogMonsterAttack
+	ColorLogSpecial
+	ColorStatusHealthy
+	ColorStatusWounded
 )
 
-type TileDrawer struct {
-	drawer *tiles.Drawer
-}
-
+// A list of available themes.
 const (
 	ThemeSelenized = iota
 	ThemeNoir
 )
 
+// Current theme.
 const theme = ThemeNoir
+
+type TileDrawer struct {
+	drawer *tiles.Drawer
+}
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 	fg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 255})
@@ -54,14 +63,18 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{0xfa, 0x57, 0x50, 255})
 		case ColorCorpse:
 			fg = image.NewUniform(color.RGBA{0xff, 0xa0, 0x30, 255})
+		case ColorLogPlayerAttack, ColorStatusHealthy:
+			fg = image.NewUniform(color.RGBA{0x75, 0xb9, 0x38, 255})
+		case ColorLogMonsterAttack, ColorStatusWounded:
+			fg = image.NewUniform(color.RGBA{0xed, 0x86, 0x49, 255})
+		case ColorLogSpecial:
+			fg = image.NewUniform(color.RGBA{0xf2, 0x75, 0xbe, 255})
 		}
 
 		switch c.Style.Bg {
 		case ColorFOV:
 			bg = image.NewUniform(color.RGBA{0x18, 0x49, 0x56, 255})
 		}
-
-		return t.drawer.Draw(c.Rune, fg, bg)
 
 	case ThemeNoir:
 		fg = image.NewUniform(color.RGBA{100, 100, 100, 255})
@@ -72,9 +85,10 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{200, 200, 200, 255})
 		case ColorMonster:
 			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
+		case ColorTroll:
+			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
 		}
 
-		return t.drawer.Draw(c.Rune, fg, bg)
 	}
 	return t.drawer.Draw(c.Rune, fg, bg)
 }
