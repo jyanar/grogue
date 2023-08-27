@@ -93,7 +93,21 @@ func (ecs *ECS) Create(components ...any) int {
 }
 
 func remove(slice []int, s int) []int {
-	return append(slice[:s], slice[s+1:]...)
+	idx := -1
+	for i := 0; i < len(slice); i++ {
+		if slice[i] == s {
+			idx = i
+			break
+		}
+	}
+	if idx != -1 {
+		return removeAt(slice, idx)
+	}
+	return slice
+}
+
+func removeAt(slice []int, idx int) []int {
+	return append(slice[:idx], slice[idx+1:]...)
 }
 
 func (ecs *ECS) Delete(entity int) {

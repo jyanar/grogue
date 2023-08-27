@@ -24,7 +24,7 @@ func (s *BumpSystem) Update() {
 		s.ecs.bumps[e] = nil // Consume bump component.
 		// Ignore movement to the same tile.
 		if b.X == 0 && b.Y == 0 {
-			return
+			continue
 		}
 		// Let's attempt to move to dest.
 		if s.ecs.Map.Walkable(dest) {
@@ -48,7 +48,7 @@ func (s *BumpSystem) Update() {
 						health_target.hp = 0
 						s.ecs.AddComponent(target, Death{}) // Entity marked for death.
 					}
-					return
+					continue
 				}
 			}
 			// Otherwise, move to destination.
@@ -151,7 +151,7 @@ type aiPath struct {
 }
 
 func (aip *aiPath) Neighbors(q gruid.Point) []gruid.Point {
-	return aip.nb.Cardinal(q,
+	return aip.nb.All(q,
 		func(r gruid.Point) bool {
 			return aip.ecs.Map.Walkable(r)
 		})
@@ -167,7 +167,7 @@ func (aip *aiPath) Cost(p, q gruid.Point) int {
 }
 
 func (aip *aiPath) Estimation(p, q gruid.Point) int {
-	return paths.DistanceManhattan(p, q)
+	return paths.DistanceChebyshev(p, q)
 }
 
 func (s *AISystem) Update() {
