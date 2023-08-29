@@ -89,6 +89,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Damage{5},
 		)
 		m.game.SpawnEnemies()
+		m.game.PlaceItems()
 		m.game.ECS.Update()
 	case gruid.MsgKeyDown:
 		m.updateMsgKeyDown(msg)

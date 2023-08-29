@@ -26,6 +26,7 @@ const (
 	ColorMonster
 	ColorTroll
 	ColorCorpse
+	ColorHealthPotion
 	ColorLogPlayerAttack
 	ColorLogMonsterAttack
 	ColorLogSpecial
@@ -86,6 +87,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
 		case ColorTroll:
 			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
+		case ColorHealthPotion:
+			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
 		}
 
 	}

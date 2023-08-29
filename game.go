@@ -55,6 +55,21 @@ func (g *game) SpawnEnemies() {
 	}
 }
 
+const PotionsToPlace = 5
+
+func (g *game) PlaceItems() {
+	for i := 0; i < PotionsToPlace; i++ {
+		g.ECS.Create(
+			Name{"Health Potion"},
+			Renderable{glyph: '!', color: ColorHealthPotion, order: ROItem},
+			Collectible{},
+			Consumable{hp: 5},
+			Position{g.FreeFloorTile()},
+		)
+	}
+
+}
+
 // Returns a free floor tile in the map.
 func (g *game) FreeFloorTile() gruid.Point {
 	for {
