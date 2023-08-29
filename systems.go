@@ -5,6 +5,7 @@ import (
 
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/paths"
+	"github.com/anaseto/gruid/rl"
 )
 
 type System interface {
@@ -66,6 +67,9 @@ func (s *FOVSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(FOV{}, Position{}) {
 		p := s.ecs.positions[e]
 		f := s.ecs.fovs[e]
+		if f.FOV == nil {
+			f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
+		}
 		// We shift the FOV's range so that it will be centered on the position
 		// of the entity.
 		rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
@@ -92,7 +96,7 @@ type DeathSystem struct {
 
 func (s *DeathSystem) Update() {
 	for _, e := range s.ecs.EntitiesWith(Death{}) {
-		name := s.ecs.names[e]
+		name := s.ecs.names[e].string
 		s.ecs.obstructs[e] = nil   // No longer blocking.
 		s.ecs.perceptions[e] = nil // No longer perceiving.
 		s.ecs.ais[e] = nil         // No longer pathing.
@@ -101,8 +105,12 @@ func (s *DeathSystem) Update() {
 		s.ecs.damages[e] = nil
 		s.ecs.healths[e] = nil
 		s.ecs.deaths[e] = nil // Consume the death component.
-		s.ecs.AddComponent(e, Name{"Remains of " + name.string})
+		s.ecs.AddComponent(e, Name{"Remains of " + name})
 		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
+		s.ecs.Create(LogEntry{
+			Text:  fmt.Sprintf("%s has died!", name),
+			Color: ColorLogMonsterAttack,
+		})
 	}
 }
 

@@ -47,7 +47,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		case gruid.MsgKeyDown:
 			switch msg.Key {
 			case "q", gruid.KeyEscape:
-				// You died: quite on "q" or "escape"
+				// You died: quit on "q" or "escape"
 				return gruid.End()
 			case ".":
 				// Otherwise, allow player to continue watching sim.

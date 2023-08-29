@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/paths"
 )
@@ -80,6 +82,10 @@ func (g *game) PickupItem() {
 			if i != e && g.ECS.HasComponent(i, Collectible{}) {
 				// There is an item here that is collectible! Place a reference to it
 				// in e's inventory and remove both its Position and Renderable components.
+				name := g.ECS.names[e].string
+				itemName := g.ECS.names[i].string
+				msg := fmt.Sprintf("%s picks up %s.", name, itemName)
+				g.ECS.Create(LogEntry{Text: msg, Color: ColorLogSpecial})
 				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
 				g.ECS.positions[i] = nil
 				g.ECS.renderables[i] = nil
