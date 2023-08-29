@@ -9,19 +9,22 @@ import (
 type ECS struct {
 	entities []int
 
-	positions   map[int]*Position
-	renderables map[int]*Renderable
-	names       map[int]*Name
-	inputs      map[int]*Input
-	bumps       map[int]*Bump
-	fovs        map[int]*FOV
-	obstructs   map[int]*Obstruct
-	healths     map[int]*Health
-	damages     map[int]*Damage
-	deaths      map[int]*Death
-	perceptions map[int]*Perception
-	ais         map[int]*AI
-	logentries  map[int]*LogEntry
+	positions    map[int]*Position
+	renderables  map[int]*Renderable
+	names        map[int]*Name
+	inputs       map[int]*Input
+	bumps        map[int]*Bump
+	fovs         map[int]*FOV
+	obstructs    map[int]*Obstruct
+	healths      map[int]*Health
+	damages      map[int]*Damage
+	deaths       map[int]*Death
+	perceptions  map[int]*Perception
+	ais          map[int]*AI
+	logentries   map[int]*LogEntry
+	consumables  map[int]*Consumable
+	collectibles map[int]*Collectible
+	inventories  map[int]*Inventory
 
 	systems []System
 
@@ -32,19 +35,22 @@ type ECS struct {
 // the callee is initializing that and will assign it right after this.
 func NewECS() *ECS {
 	ecs := &ECS{
-		positions:   make(map[int]*Position),
-		renderables: make(map[int]*Renderable),
-		names:       make(map[int]*Name),
-		inputs:      make(map[int]*Input),
-		bumps:       make(map[int]*Bump),
-		fovs:        make(map[int]*FOV),
-		obstructs:   make(map[int]*Obstruct),
-		healths:     make(map[int]*Health),
-		damages:     make(map[int]*Damage),
-		deaths:      make(map[int]*Death),
-		perceptions: make(map[int]*Perception),
-		ais:         make(map[int]*AI),
-		logentries:  make(map[int]*LogEntry),
+		positions:    make(map[int]*Position),
+		renderables:  make(map[int]*Renderable),
+		names:        make(map[int]*Name),
+		inputs:       make(map[int]*Input),
+		bumps:        make(map[int]*Bump),
+		fovs:         make(map[int]*FOV),
+		obstructs:    make(map[int]*Obstruct),
+		healths:      make(map[int]*Health),
+		damages:      make(map[int]*Damage),
+		deaths:       make(map[int]*Death),
+		perceptions:  make(map[int]*Perception),
+		ais:          make(map[int]*AI),
+		logentries:   make(map[int]*LogEntry),
+		consumables:  make(map[int]*Consumable),
+		collectibles: make(map[int]*Collectible),
+		inventories:  make(map[int]*Inventory),
 	}
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
@@ -87,6 +93,12 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.ais[idx] = &c
 		case LogEntry:
 			ecs.logentries[idx] = &c
+		case Consumable:
+			ecs.consumables[idx] = &c
+		case Collectible:
+			ecs.collectibles[idx] = &c
+		case Inventory:
+			ecs.inventories[idx] = &c
 		}
 	}
 	return idx
@@ -127,6 +139,9 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.perceptions, entity)
 	delete(ecs.ais, entity)
 	delete(ecs.logentries, entity)
+	delete(ecs.consumables, entity)
+	delete(ecs.collectibles, entity)
+	delete(ecs.inventories, entity)
 }
 
 func (ecs *ECS) Update() {
@@ -174,6 +189,12 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.ais[entity] = &c
 	case LogEntry:
 		ecs.logentries[entity] = &c
+	case Consumable:
+		ecs.consumables[entity] = &c
+	case Collectible:
+		ecs.collectibles[entity] = &c
+	case Inventory:
+		ecs.inventories[entity] = &c
 	}
 }
 
@@ -235,6 +256,18 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case LogEntry:
 		if ecs.logentries[entity] != nil {
+			return true
+		}
+	case Consumable:
+		if ecs.consumables[entity] != nil {
+			return true
+		}
+	case Collectible:
+		if ecs.collectibles[entity] != nil {
+			return true
+		}
+	case Inventory:
+		if ecs.inventories[entity] != nil {
 			return true
 		}
 	}
@@ -322,6 +355,15 @@ func (ecs *ECS) printDebug(e int) {
 		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
 	}
 	if ecs.logentries[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
+		fmt.Printf("%v, %T\n", ecs.logentries[e], ecs.logentries[e])
+	}
+	if ecs.consumables[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.consumables[e], ecs.consumables[e])
+	}
+	if ecs.collectibles[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.collectibles[e], ecs.collectibles[e])
+	}
+	if ecs.inventories[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.inventories[e], ecs.inventories[e])
 	}
 }

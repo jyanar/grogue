@@ -125,6 +125,10 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case "n":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
 
+	// Message log
+	case "m":
+		m.action = action{Type: ActionViewMessages}
+
 	// Waiting
 	case ".":
 		m.action = action{Type: ActionWait, Delta: pdelta.Shift(0, 0)}

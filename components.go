@@ -90,3 +90,17 @@ type LogEntry struct {
 	Color gruid.Color // color
 	Dups  int         // consecutive duplicates of same message
 }
+
+// Entities with this component can be consumed, to replenish HP.
+type Consumable struct {
+	hp int
+}
+
+// Entities with this component can be picked up and placed in inventory.
+type Collectible struct{}
+
+// Entities with this component have an inventory, and can pick up Collectible
+// components.
+type Inventory struct {
+	items []int // A list of entities.
+}

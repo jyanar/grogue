@@ -42,7 +42,6 @@ func (s *BumpSystem) Update() {
 						msgcolor = ColorLogPlayerAttack
 					}
 					s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
-					// fmt.Printf("%s hits the %s for %d damage!\n", name_src, name_target, dmg_src)
 					health_target.hp -= dmg_src
 					if health_target.hp <= 0 {
 						health_target.hp = 0
