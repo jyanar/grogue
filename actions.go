@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -18,6 +20,9 @@ const (
 	ActionWait                    // Step forward one tick.
 	ActionQuit                    // Quit the game.
 	ActionViewMessages            // View history messages.
+	ActionInventory               // Open inventory.
+	ActionPickup                  // Pick up an item.
+	ActionDrop                    // Drop an item.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -34,8 +39,15 @@ func (m *model) handleAction() gruid.Effect {
 		m.game.ECS.Update()
 		m.game.CollectMessages()
 
-	case ActionQuit:
-		return gruid.End()
+	case ActionInventory:
+		fmt.Println("OPEN INVENTORY++++++++++++++++++++++++++=")
+
+	case ActionPickup:
+		fmt.Println("PICKING UP ITEM++++++++++++++++++++++++++")
+		m.game.PickupItem()
+
+	case ActionDrop:
+		fmt.Println("DROP AN ITEM++++++++++++++++++++++++++++++")
 
 	case ActionViewMessages:
 		m.mode = modeMessageViewer
@@ -46,6 +58,10 @@ func (m *model) handleAction() gruid.Effect {
 			lines = append(lines, ui.NewStyledText(e.String(), st))
 		}
 		m.viewer.SetLines(lines)
+
+	case ActionQuit:
+		return gruid.End()
+
 	}
 	return nil
 }

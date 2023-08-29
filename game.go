@@ -57,6 +57,7 @@ func (g *game) SpawnEnemies() {
 
 const PotionsToPlace = 5
 
+// Places potions and other items throughout the map during gen.
 func (g *game) PlaceItems() {
 	for i := 0; i < PotionsToPlace; i++ {
 		g.ECS.Create(
@@ -67,7 +68,24 @@ func (g *game) PlaceItems() {
 			Position{g.FreeFloorTile()},
 		)
 	}
+}
 
+func (g *game) PickupItem() {
+	// Right now only looking at entities that have both input and inventory (player)
+	// but want to write way of doing this that doesn't care about input
+	for _, e := range g.ECS.EntitiesWith(Input{}, Inventory{}) {
+		// Check if e is standing over a collectible item.
+		p := g.ECS.positions[e].Point
+		for _, i := range g.ECS.EntitiesAt(p) {
+			if i != e && g.ECS.HasComponent(i, Collectible{}) {
+				// There is an item here that is collectible! Place a reference to it
+				// in e's inventory and remove both its Position and Renderable components.
+				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
+				g.ECS.positions[i] = nil
+				g.ECS.renderables[i] = nil
+			}
+		}
+	}
 }
 
 // Returns a free floor tile in the map.

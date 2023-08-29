@@ -293,6 +293,16 @@ func (ecs *ECS) EntitiesWith(components ...any) []int {
 	return entities
 }
 
+func (ecs *ECS) EntitiesAt(p gruid.Point) (entities []int) {
+	for _, e := range ecs.EntitiesWith(Position{}) {
+		q := ecs.positions[e].Point
+		if p == q {
+			entities = append(entities, e)
+		}
+	}
+	return entities
+}
+
 func (ecs *ECS) GetEntityAt(p gruid.Point) (entity int, ok bool) {
 	for i, q := range ecs.positions {
 		if q != nil && p == q.Point {

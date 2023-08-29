@@ -104,3 +104,8 @@ type Collectible struct{}
 type Inventory struct {
 	items []int // A list of entities.
 }
+
+// Entities with this component will perform an action.
+type Action struct {
+	action actionType
+}

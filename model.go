@@ -73,7 +73,6 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		m.InitializeMessageViewer()
 		m.game = game{}
 		// Initialize map
-		// size := m.grid.Size()
 		size := gruid.Point{MapWidth, MapHeight}
 		m.game.Map = NewMap(size)
 		m.game.ECS = NewECS()
@@ -84,6 +83,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
 			Health{hp: 18, maxhp: 18},
 			FOV{LOS: 20, FOV: rl.NewFOV(gruid.NewRange(-20, -20, 20+1, 20+1))},
+			Inventory{},
 			Input{},
 			Obstruct{},
 			Damage{5},
@@ -126,9 +126,15 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case "n":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
 
-	// Message log
+	// Message log, inventory, pick up items
 	case "m":
 		m.action = action{Type: ActionViewMessages}
+	case "i":
+		m.action = action{Type: ActionInventory}
+	case "d":
+		m.action = action{Type: ActionDrop}
+	case "g":
+		m.action = action{Type: ActionPickup}
 
 	// Waiting
 	case ".":
@@ -257,11 +263,12 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	p := m.mousePos.Sub(gruid.Point{0, 2})
 	// We get the names of the entities at p.
 	names := []string{}
-	for i, q := range m.game.ECS.positions {
+	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
+		q := m.game.ECS.positions[e]
 		if q.Point != p || !m.game.InFOV(q.Point) {
 			continue
 		}
-		if name, ok := m.game.ECS.names[i]; ok {
+		if name, ok := m.game.ECS.names[e]; ok {
 			names = append(names, name.string)
 		}
 	}
