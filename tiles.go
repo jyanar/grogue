@@ -32,6 +32,9 @@ const (
 	ColorLogSpecial
 	ColorStatusHealthy
 	ColorStatusWounded
+
+	ColorHPBarEmpty
+	ColorHPBarFull
 )
 
 // A list of available themes.
@@ -81,7 +84,10 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		bg = image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
 
 		switch c.Style.Fg {
-		case ColorPlayer, ColorFOV:
+		case ColorPlayer:
+			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+
+		case ColorFOV:
 			fg = image.NewUniform(color.RGBA{200, 200, 200, 255})
 		case ColorMonster:
 			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
@@ -89,6 +95,16 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
 		case ColorHealthPotion:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+		}
+
+		switch c.Style.Bg {
+		case ColorHPBarEmpty:
+			fg = image.NewUniform(color.RGBA{0x40, 0x10, 0x10, 255})
+			bg = image.NewUniform(color.RGBA{0x40, 0x10, 0x10, 255})
+		case ColorHPBarFull:
+			fg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
+			bg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
+
 		}
 
 	}
@@ -138,6 +154,7 @@ func NewTileDrawer() (*TileDrawer, error) {
 	face, err := opentype.NewFace(font, &opentype.FaceOptions{
 		Size: 16,
 		DPI:  72 * 2,
+		// DPI:  72 * 2,
 		// Size: 12,
 		// DPI:  72 * 2,
 	})

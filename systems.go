@@ -103,7 +103,7 @@ func (s *DeathSystem) Update() {
 		s.ecs.bumps[e] = nil
 		s.ecs.inputs[e] = nil
 		s.ecs.damages[e] = nil
-		s.ecs.healths[e] = nil
+		// s.ecs.healths[e] = nil
 		s.ecs.deaths[e] = nil // Consume the death component.
 		s.ecs.AddComponent(e, Name{"Remains of " + name})
 		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})

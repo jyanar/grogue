@@ -9,9 +9,9 @@ import (
 
 const (
 	UIWidth   = 80
-	UIHeight  = 24
-	MapWidth  = UIWidth
-	MapHeight = UIHeight - 3
+	UIHeight  = 32
+	MapWidth  = UIWidth - 2
+	MapHeight = UIHeight - 5
 )
 
 func main() {

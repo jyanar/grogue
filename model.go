@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/rl"
 	"github.com/anaseto/gruid/ui"
 )
 
@@ -66,31 +65,34 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 	// Otherwise, we are in modeNormal
 	switch msg := msg.(type) {
+
 	case gruid.MsgInit:
 		m.log = &ui.Label{}
 		m.status = &ui.Label{}
 		m.desc = &ui.Label{Box: &ui.Box{}}
 		m.InitializeMessageViewer()
 		m.game = game{}
-		// Initialize map
-		size := gruid.Point{MapWidth, MapHeight}
-		m.game.Map = NewMap(size)
+		// Initialize map.
+		m.game.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
 		m.game.ECS = NewECS()
 		m.game.ECS.Map = m.game.Map
+		// Place player on a random floor.
 		m.game.ECS.Create(
 			Position{m.game.Map.RandomFloor()},
 			Name{"Player"},
 			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
 			Health{hp: 18, maxhp: 18},
-			FOV{LOS: 20, FOV: rl.NewFOV(gruid.NewRange(-20, -20, 20+1, 20+1))},
+			FOV{LOS: 20},
 			Inventory{},
 			Input{},
 			Obstruct{},
 			Damage{5},
 		)
-		m.game.SpawnEnemies()
+		// Spawn enemies, place items, and advance a tick.
+		// m.game.SpawnEnemies()
 		m.game.PlaceItems()
 		m.game.ECS.Update()
+
 	case gruid.MsgKeyDown:
 		m.updateMsgKeyDown(msg)
 
@@ -158,7 +160,7 @@ func (m *model) Draw() gruid.Grid {
 	}
 
 	m.grid.Fill(gruid.Cell{Rune: ' '}) // Clear the map.
-	mapgrid := m.grid.Slice(m.grid.Range().Shift(0, 2, 0, -1))
+	mapgrid := m.grid.Slice(m.grid.Range().Shift(1, 1, 0, 0))
 
 	// Draw the map.
 	it := Map.Grid.Iterator()
@@ -220,12 +222,12 @@ func (m *model) Draw() gruid.Grid {
 		})
 	}
 	m.DrawNames(mapgrid)
-	m.DrawLog(m.grid.Slice(m.grid.Range().Lines(0, 2)))
+	m.DrawLog(m.grid.Slice(m.grid.Range().Lines(m.grid.Size().Y-4, m.grid.Size().Y-1)))
 	m.DrawStatus(m.grid.Slice(m.grid.Range().Line(m.grid.Size().Y - 1)))
 	return m.grid
 }
 
-// Drawlog draws the last two lines of the log.
+// DrawLog draws the last two lines of the log.
 func (m *model) DrawLog(gd gruid.Grid) {
 	j := 1
 	for i := len(m.game.Log) - 1; i >= 0; i-- {
@@ -243,8 +245,9 @@ func (m *model) DrawLog(gd gruid.Grid) {
 
 // DrawStatus draws the status line.
 func (m *model) DrawStatus(gd gruid.Grid) {
-	st := gruid.Style{}
-	st.Fg = ColorStatusHealthy
+	// Write the HP on top of that.
+	st := gruid.Style{Fg: ColorStatusHealthy}
+	st.Bg = ColorLogMonsterAttack
 	player_health := m.game.ECS.healths[0]
 	if player_health.hp < player_health.maxhp/2 {
 		st.Fg = ColorStatusWounded
@@ -260,7 +263,8 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	if !m.mousePos.In(maprg) {
 		return
 	}
-	p := m.mousePos.Sub(gruid.Point{0, 2})
+	// p := m.mousePos.Sub(gruid.Point{X: 0, Y: 2})
+	p := m.mousePos.Shift(-1, -1)
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {

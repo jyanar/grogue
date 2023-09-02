@@ -11,7 +11,7 @@ func (e LogEntry) String() string {
 	if e.Dups == 0 {
 		return e.Text
 	}
-	return fmt.Sprintf("%s (%dx)", e.Text, e.Dups)
+	return fmt.Sprintf("%s (%dx)", e.Text, e.Dups+1)
 }
 
 // log adds an entry to the player's log.

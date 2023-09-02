@@ -43,8 +43,9 @@ func (m *model) handleAction() gruid.Effect {
 		fmt.Println("OPEN INVENTORY++++++++++++++++++++++++++=")
 
 	case ActionPickup:
-		fmt.Println("PICKING UP ITEM++++++++++++++++++++++++++")
 		m.game.PickupItem()
+		m.game.ECS.Update()
+		m.game.CollectMessages()
 
 	case ActionDrop:
 		fmt.Println("DROP AN ITEM++++++++++++++++++++++++++++++")
