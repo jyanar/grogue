@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	UIWidth   = 80
-	UIHeight  = 32
+	UIWidth   = 60
+	UIHeight  = 27
 	MapWidth  = UIWidth - 2
 	MapHeight = UIHeight - 5
 )
