@@ -94,6 +94,19 @@ func (g *game) PickupItem() {
 	}
 }
 
+// func (g *game) InventoryActivate(actor, n int) error {
+// 	inv := g.ECS.inventories[actor]
+// 	if len(inv.items) <= n {
+// 		return errors.New("Empty slot.")
+// 	}
+// 	i := inv.items[n]
+// 	if g.ECS.HasComponent(i, Consumable{}) {
+// 		c := g.ECS.consumables[i]
+// 		err :=
+// 	}
+
+// }
+
 // Returns a free floor tile in the map.
 func (g *game) FreeFloorTile() gruid.Point {
 	for {

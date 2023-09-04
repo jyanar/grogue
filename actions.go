@@ -40,7 +40,9 @@ func (m *model) handleAction() gruid.Effect {
 		m.game.CollectMessages()
 
 	case ActionInventory:
-		fmt.Println("OPEN INVENTORY++++++++++++++++++++++++++=")
+		m.OpenInventory("Use item")
+		m.mode = modeInventoryActivate
+		m.game.CollectMessages()
 
 	case ActionPickup:
 		m.game.PickupItem()

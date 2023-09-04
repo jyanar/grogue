@@ -18,6 +18,7 @@ func init() {
 		log.Fatal(err)
 	}
 	dr := sdl.NewDriver(sdl.Config{
+		WindowTitle: "grogue",
 		TileManager: t,
 	})
 	dr.PreventQuit()

@@ -10,15 +10,16 @@ import (
 )
 
 type model struct {
-	grid     gruid.Grid  // The drawing grid.
-	game     game        // The game state.
-	action   action      // The current UI action.
-	mode     mode        // The current UI mode.
-	log      *ui.Label   // Label for the log.
-	status   *ui.Label   // Label for the status.
-	desc     *ui.Label   // Label for position description.
-	viewer   *ui.Pager   // Message's history viewer.
-	mousePos gruid.Point // Mouse position.
+	grid      gruid.Grid  // The drawing grid.
+	game      game        // The game state.
+	action    action      // The current UI action.
+	mode      mode        // The current UI mode.
+	log       *ui.Label   // Label for the log.
+	status    *ui.Label   // Label for the status.
+	desc      *ui.Label   // Label for position description.
+	viewer    *ui.Pager   // Message's history viewer.
+	inventory *ui.Menu    // Inventory menu.
+	mousePos  gruid.Point // Mouse position.
 }
 
 type mode int
@@ -27,6 +28,8 @@ const (
 	modeNormal mode = iota
 	modeEnd         // Win or death (currently only death)
 	modeMessageViewer
+	modeInventoryActivate
+	modeInventoryDrop
 )
 
 func NewModel(g gruid.Grid) *model {
@@ -61,6 +64,16 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			m.mode = modeNormal
 		}
 		return nil
+
+	case modeInventoryActivate, modeInventoryDrop:
+		m.inventory.Update(msg)
+		if m.inventory.Action() == ui.MenuQuit {
+			m.mode = modeNormal
+		}
+		return nil
+		// m.updateInventory(msg)
+		// return nil
+
 	}
 
 	// Otherwise, we are in modeNormal
@@ -89,7 +102,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			Damage{5},
 		)
 		// Spawn enemies, place items, and advance a tick.
-		// m.game.SpawnEnemies()
+		m.game.SpawnEnemies()
 		m.game.PlaceItems()
 		m.game.ECS.Update()
 
@@ -148,6 +161,56 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	}
 }
 
+func (m *model) OpenInventory(title string) {
+	// Build list of entries in player inventory.
+	inv := m.game.ECS.inventories[0]
+	entries := []ui.MenuEntry{}
+	r := 'a'
+	for _, it := range inv.items {
+		name := m.game.ECS.names[it].string
+		entries = append(entries, ui.MenuEntry{
+			Text: ui.Text(string(r) + " - " + name),
+			Keys: []gruid.Key{gruid.Key(r)},
+		})
+		r++
+	}
+	// We create a new menu widget for the inventory window.
+	m.inventory = ui.NewMenu(ui.MenuConfig{
+		Grid:    gruid.NewGrid(40, MapHeight),
+		Box:     &ui.Box{Title: ui.Text(title)},
+		Entries: entries,
+	})
+}
+
+// updateInventory handles input messages when the inventory window is open.
+// func (m *model) updateInventory(msg gruid.Msg) {
+// 	// We call the Update function of the menu widget, so that we can
+// 	// inspect information about user activity on the menu.
+// 	m.inventory.Update(msg)
+// 	switch m.inventory.Action() {
+// 	case ui.MenuQuit:
+// 		// The user requested to quit the menu.
+// 		m.mode = modeNormal
+// 		return
+// 	case ui.MenuInvoke:
+// 		fmt.Println("HDSJKLFDSJKFLDSJF")
+// 		// The user invoked a particular entry of the menu (either by
+// 		// using enter or clicking on it).
+// 		// n := m.inventory.Active()
+// 		// var err error
+// 		// switch m.mode {
+// 		// case modeInventoryDrop:
+// 		// 	err = m.game.InventoryRemove(0, n)
+// 		// case modeInventoryActivate:
+// 		// 	err = m.game.InventoryActivate(0, n)
+// 		// if err != nil {
+// 		// 	m.game.ECS.Create(LogEntry{Text: err.Error()})
+// 		// }
+// 	}
+// }
+
+// DRAW METHODS ------------------
+
 // Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
 // grid.
 func (m *model) Draw() gruid.Grid {
@@ -156,6 +219,11 @@ func (m *model) Draw() gruid.Grid {
 
 	if m.mode == modeMessageViewer {
 		m.grid.Copy(m.viewer.Draw())
+		return m.grid
+	}
+
+	if m.mode == modeInventoryActivate {
+		m.grid.Copy(m.inventory.Draw())
 		return m.grid
 	}
 

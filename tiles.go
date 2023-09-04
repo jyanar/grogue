@@ -154,9 +154,6 @@ func NewTileDrawer() (*TileDrawer, error) {
 	face, err := opentype.NewFace(font, &opentype.FaceOptions{
 		Size: 16,
 		DPI:  72 * 2,
-		// DPI:  72 * 2,
-		// Size: 12,
-		// DPI:  72 * 2,
 	})
 	if err != nil {
 		return nil, err
