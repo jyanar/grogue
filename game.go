@@ -30,27 +30,9 @@ func (g *game) SpawnEnemies() {
 	for i := 0; i < MonstersToSpawn; i++ {
 		switch {
 		case g.Map.Rand.Intn(100) < 80:
-			g.ECS.Create(
-				Position{g.Map.RandomFloor()},
-				Name{"Goblin"},
-				Renderable{glyph: 'g', color: ColorMonster, order: ROActor},
-				Health{hp: 10, maxhp: 10},
-				Damage{2},
-				Perception{radius: 8},
-				AI{state: CSWandering},
-				Obstruct{},
-			)
+			g.NewGoblin()
 		default:
-			g.ECS.Create(
-				Position{g.Map.RandomFloor()},
-				Name{"Troll"},
-				Renderable{glyph: 'T', color: ColorTroll, order: ROActor},
-				Health{hp: 20, maxhp: 20},
-				Damage{5},
-				Perception{radius: 6},
-				AI{state: CSWandering},
-				Obstruct{},
-			)
+			g.NewTroll()
 		}
 	}
 }

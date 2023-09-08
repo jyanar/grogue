@@ -106,17 +106,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			m.game.ECS = NewECS()
 			m.game.ECS.Map = m.game.Map
 			// Place player on a random floor.
-			m.game.ECS.Create(
-				Position{m.game.Map.RandomFloor()},
-				Name{"Player"},
-				Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
-				Health{hp: 18, maxhp: 18},
-				FOV{LOS: 20},
-				Inventory{},
-				Input{},
-				Obstruct{},
-				Damage{5},
-			)
+			m.game.NewPlayer()
 			// Spawn enemies, place items, and advance a tick.
 			m.game.SpawnEnemies()
 			m.game.PlaceItems()
