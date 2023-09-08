@@ -87,7 +87,6 @@ func (g *game) PickupItem() (ok bool) {
 				g.Logf("%s picks up %s.", ColorLogSpecial, name, itemName)
 				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
 				g.ECS.positions[i] = nil
-				g.ECS.renderables[i] = nil
 			}
 		}
 	}

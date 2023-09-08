@@ -3,8 +3,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -44,11 +42,10 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		// The user invoked a particular entry of the menu (either by
 		// using enter or clicking on it).
 		n := m.inventory.Active()
-		fmt.Printf("HERE IS N:::::: %d\n", n)
 		var err error
 		switch m.mode {
-		// case modeInventoryDrop:
-		// 	err = m.game.InventoryRemove(0, n)
+		case modeInventoryDrop:
+			err = m.game.InventoryRemove(0, n)
 		case modeInventoryActivate:
 			err = m.game.InventoryActivate(0, n)
 		}
@@ -68,7 +65,6 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	// if len(inv.items) <= item {
 	// 	return errors.New("empty slot")
 	// }
-	g.ECS.printDebug(item)
 	if g.ECS.HasComponent(item, Consumable{}) {
 		// Use the potion!
 		g.ECS.healths[entity].hp += g.ECS.consumables[item].hp
@@ -77,11 +73,15 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 		// Delete the item!
 		g.ECS.Delete(item)
 	}
-	// g.ECS.Delete(item)
-	// i := inv.items[i]
-	// if g.ECS.HasComponent(i, Consumable{}) {
-	// 	c := g.ECS.consumables[i]
-	// 	// err :=
-	// }
+	return nil
+}
+
+func (g *game) InventoryRemove(entity, itemidx int) error {
+	item := g.ECS.inventories[entity].items[itemidx]
+	// Add Position component back to the item.
+	pos := g.ECS.positions[entity].Point
+	g.ECS.AddComponent(item, Position{pos})
+	// Remove item from inventory
+	g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
 	return nil
 }
