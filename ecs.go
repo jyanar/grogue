@@ -8,6 +8,7 @@ import (
 
 type ECS struct {
 	entities []int
+	nextID   int
 
 	positions    map[int]*Position
 	renderables  map[int]*Renderable
@@ -35,6 +36,7 @@ type ECS struct {
 // the callee is initializing that and will assign it right after this.
 func NewECS() *ECS {
 	ecs := &ECS{
+		nextID:       0,
 		positions:    make(map[int]*Position),
 		renderables:  make(map[int]*Renderable),
 		names:        make(map[int]*Name),
@@ -63,7 +65,7 @@ func NewECS() *ECS {
 }
 
 func (ecs *ECS) Create(components ...any) int {
-	idx := len(ecs.entities)
+	idx := ecs.nextID
 	ecs.entities = append(ecs.entities, idx)
 	for _, component := range components {
 		switch c := component.(type) {
@@ -101,6 +103,7 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.inventories[idx] = &c
 		}
 	}
+	ecs.nextID += 1
 	return idx
 }
 

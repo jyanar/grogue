@@ -1,3 +1,26 @@
+// This file defines the main model of the game: the Update function that
+// updates the model state in response to user input, and the Draw function,
+// which draw the final grid.
+//
+// That is, it fulfills the following interface:
+//
+//	  // Model contains the application's state.
+//	  type Model interface {
+//		  // Update is called when a message is received. Use it to update your
+//		  // model in response to messages and/or send commands or subscriptions.
+//		  // It is always called the first time with a MsgInit message.
+//		  Update(Msg) Effect
+//
+//		  // Draw is called after every Update. Use this function to draw the UI
+//		  // elements in a grid to be returned. If only parts of the grid are to
+//		  // be updated, you can return a smaller grid slice, or an empty grid
+//		  // slice to skip any drawing work. Note that the contents of the grid
+//		  // slice are then compared to the previous state at the same bounds,
+//		  // and only the changes are sent to the driver anyway.
+//		  Draw() Grid
+//	  }
+//
+
 package main
 
 import (
@@ -25,11 +48,11 @@ type model struct {
 type mode int
 
 const (
-	modeNormal mode = iota
-	modeEnd         // Win or death (currently only death)
-	modeMessageViewer
-	modeInventoryActivate
-	modeInventoryDrop
+	modeNormal            mode = iota // Controlling the player.
+	modeEnd                           // Win or death (currently only death).
+	modeMessageViewer                 // Currently viewing messages.
+	modeInventoryActivate             // Browsing inventory, in order to use an item.
+	modeInventoryDrop                 // Browsing inventory, in order to drop an item.
 )
 
 func NewModel(g gruid.Grid) *model {
@@ -41,9 +64,9 @@ func NewModel(g gruid.Grid) *model {
 // Update implements gruid.Model.update. It handles keyboard and mouse input
 // messages and updates the model in response to them.
 func (m *model) Update(msg gruid.Msg) gruid.Effect {
+
 	m.action = action{}
 	switch m.mode {
-
 	case modeEnd:
 		switch msg := msg.(type) {
 		case gruid.MsgKeyDown:
@@ -59,155 +82,59 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		return nil
 
 	case modeMessageViewer:
-		m.viewer.Update(msg)
+		m.viewer.Update(msg) // e.g., scrolling.
 		if m.viewer.Action() == ui.PagerQuit {
 			m.mode = modeNormal
 		}
 		return nil
 
 	case modeInventoryActivate, modeInventoryDrop:
-		m.inventory.Update(msg)
-		if m.inventory.Action() == ui.MenuQuit {
-			m.mode = modeNormal
-		}
+		m.updateInventory(msg)
 		return nil
-		// m.updateInventory(msg)
-		// return nil
 
-	}
+	case modeNormal:
+		switch msg := msg.(type) {
 
-	// Otherwise, we are in modeNormal
-	switch msg := msg.(type) {
+		case gruid.MsgInit:
+			m.log = &ui.Label{}
+			m.status = &ui.Label{}
+			m.desc = &ui.Label{Box: &ui.Box{}}
+			m.InitializeMessageViewer()
+			m.game = game{}
+			// Initialize map.
+			m.game.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
+			m.game.ECS = NewECS()
+			m.game.ECS.Map = m.game.Map
+			// Place player on a random floor.
+			m.game.ECS.Create(
+				Position{m.game.Map.RandomFloor()},
+				Name{"Player"},
+				Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
+				Health{hp: 18, maxhp: 18},
+				FOV{LOS: 20},
+				Inventory{},
+				Input{},
+				Obstruct{},
+				Damage{5},
+			)
+			// Spawn enemies, place items, and advance a tick.
+			m.game.SpawnEnemies()
+			m.game.PlaceItems()
+			m.game.ECS.Update()
 
-	case gruid.MsgInit:
-		m.log = &ui.Label{}
-		m.status = &ui.Label{}
-		m.desc = &ui.Label{Box: &ui.Box{}}
-		m.InitializeMessageViewer()
-		m.game = game{}
-		// Initialize map.
-		m.game.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
-		m.game.ECS = NewECS()
-		m.game.ECS.Map = m.game.Map
-		// Place player on a random floor.
-		m.game.ECS.Create(
-			Position{m.game.Map.RandomFloor()},
-			Name{"Player"},
-			Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
-			Health{hp: 18, maxhp: 18},
-			FOV{LOS: 20},
-			Inventory{},
-			Input{},
-			Obstruct{},
-			Damage{5},
-		)
-		// Spawn enemies, place items, and advance a tick.
-		m.game.SpawnEnemies()
-		m.game.PlaceItems()
-		m.game.ECS.Update()
+		case gruid.MsgKeyDown:
+			m.updateMsgKeyDown(msg)
 
-	case gruid.MsgKeyDown:
-		m.updateMsgKeyDown(msg)
-
-	case gruid.MsgMouse:
-		if msg.Action == gruid.MouseMove {
-			m.mousePos = msg.P
+		case gruid.MsgMouse:
+			if msg.Action == gruid.MouseMove {
+				m.mousePos = msg.P
+			}
 		}
 	}
 
 	// Handle action (if any provided).
 	return m.handleAction()
 }
-
-func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
-	pdelta := gruid.Point{}
-	switch msg.Key {
-
-	// Movement
-	case gruid.KeyArrowLeft, "h":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 0)}
-	case gruid.KeyArrowDown, "j":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(0, 1)}
-	case gruid.KeyArrowUp, "k":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(0, -1)}
-	case gruid.KeyArrowRight, "l":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 0)}
-	case "y":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, -1)}
-	case "u":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, -1)}
-	case "b":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(-1, 1)}
-	case "n":
-		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
-
-	// Message log, inventory, pick up items
-	case "m":
-		m.action = action{Type: ActionViewMessages}
-	case "i":
-		m.action = action{Type: ActionInventory}
-	case "d":
-		m.action = action{Type: ActionDrop}
-	case "g":
-		m.action = action{Type: ActionPickup}
-
-	// Waiting
-	case ".":
-		m.action = action{Type: ActionWait, Delta: pdelta.Shift(0, 0)}
-
-	// Quitting
-	case gruid.KeyEscape, "q":
-		m.action = action{Type: ActionQuit}
-	}
-}
-
-func (m *model) OpenInventory(title string) {
-	// Build list of entries in player inventory.
-	inv := m.game.ECS.inventories[0]
-	entries := []ui.MenuEntry{}
-	r := 'a'
-	for _, it := range inv.items {
-		name := m.game.ECS.names[it].string
-		entries = append(entries, ui.MenuEntry{
-			Text: ui.Text(string(r) + " - " + name),
-			Keys: []gruid.Key{gruid.Key(r)},
-		})
-		r++
-	}
-	// We create a new menu widget for the inventory window.
-	m.inventory = ui.NewMenu(ui.MenuConfig{
-		Grid:    gruid.NewGrid(40, MapHeight),
-		Box:     &ui.Box{Title: ui.Text(title)},
-		Entries: entries,
-	})
-}
-
-// updateInventory handles input messages when the inventory window is open.
-// func (m *model) updateInventory(msg gruid.Msg) {
-// 	// We call the Update function of the menu widget, so that we can
-// 	// inspect information about user activity on the menu.
-// 	m.inventory.Update(msg)
-// 	switch m.inventory.Action() {
-// 	case ui.MenuQuit:
-// 		// The user requested to quit the menu.
-// 		m.mode = modeNormal
-// 		return
-// 	case ui.MenuInvoke:
-// 		fmt.Println("HDSJKLFDSJKFLDSJF")
-// 		// The user invoked a particular entry of the menu (either by
-// 		// using enter or clicking on it).
-// 		// n := m.inventory.Active()
-// 		// var err error
-// 		// switch m.mode {
-// 		// case modeInventoryDrop:
-// 		// 	err = m.game.InventoryRemove(0, n)
-// 		// case modeInventoryActivate:
-// 		// 	err = m.game.InventoryActivate(0, n)
-// 		// if err != nil {
-// 		// 	m.game.ECS.Create(LogEntry{Text: err.Error()})
-// 		// }
-// 	}
-// }
 
 // DRAW METHODS ------------------
 
@@ -222,7 +149,7 @@ func (m *model) Draw() gruid.Grid {
 		return m.grid
 	}
 
-	if m.mode == modeInventoryActivate {
+	if m.mode == modeInventoryActivate || m.mode == modeInventoryDrop {
 		m.grid.Copy(m.inventory.Draw())
 		return m.grid
 	}

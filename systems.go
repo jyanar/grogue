@@ -43,6 +43,7 @@ func (s *BumpSystem) Update() {
 						msgcolor = ColorLogPlayerAttack
 					}
 					s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+
 					health_target.hp -= dmg_src
 					if health_target.hp <= 0 {
 						health_target.hp = 0

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/paths"
 )
@@ -84,8 +82,7 @@ func (g *game) PickupItem() {
 				// in e's inventory and remove both its Position and Renderable components.
 				name := g.ECS.names[e].string
 				itemName := g.ECS.names[i].string
-				msg := fmt.Sprintf("%s picks up %s.", name, itemName)
-				g.ECS.Create(LogEntry{Text: msg, Color: ColorLogSpecial})
+				g.Logf("%s picks up %s.", ColorLogSpecial, name, itemName)
 				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
 				g.ECS.positions[i] = nil
 				g.ECS.renderables[i] = nil
@@ -93,19 +90,6 @@ func (g *game) PickupItem() {
 		}
 	}
 }
-
-// func (g *game) InventoryActivate(actor, n int) error {
-// 	inv := g.ECS.inventories[actor]
-// 	if len(inv.items) <= n {
-// 		return errors.New("Empty slot.")
-// 	}
-// 	i := inv.items[n]
-// 	if g.ECS.HasComponent(i, Consumable{}) {
-// 		c := g.ECS.consumables[i]
-// 		err :=
-// 	}
-
-// }
 
 // Returns a free floor tile in the map.
 func (g *game) FreeFloorTile() gruid.Point {

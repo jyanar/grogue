@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -50,7 +48,9 @@ func (m *model) handleAction() gruid.Effect {
 		m.game.CollectMessages()
 
 	case ActionDrop:
-		fmt.Println("DROP AN ITEM++++++++++++++++++++++++++++++")
+		m.OpenInventory("Drop item")
+		m.mode = modeInventoryDrop
+		m.game.CollectMessages()
 
 	case ActionViewMessages:
 		m.mode = modeMessageViewer
