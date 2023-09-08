@@ -43,9 +43,11 @@ func (m *model) handleAction() gruid.Effect {
 		m.game.CollectMessages()
 
 	case ActionPickup:
-		m.game.PickupItem()
-		m.game.ECS.Update()
+		ok := m.game.PickupItem()
 		m.game.CollectMessages()
+		if ok {
+			m.game.ECS.Update()
+		}
 
 	case ActionDrop:
 		m.OpenInventory("Drop item")

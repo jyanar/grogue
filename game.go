@@ -70,9 +70,10 @@ func (g *game) PlaceItems() {
 	}
 }
 
-func (g *game) PickupItem() {
+func (g *game) PickupItem() (ok bool) {
 	// Right now only looking at entities that have both input and inventory (player)
 	// but want to write way of doing this that doesn't care about input
+	ok = false
 	for _, e := range g.ECS.EntitiesWith(Input{}, Inventory{}) {
 		// Check if e is standing over a collectible item.
 		p := g.ECS.positions[e].Point
@@ -80,6 +81,7 @@ func (g *game) PickupItem() {
 			if i != e && g.ECS.HasComponent(i, Collectible{}) {
 				// There is an item here that is collectible! Place a reference to it
 				// in e's inventory and remove both its Position and Renderable components.
+				ok = true
 				name := g.ECS.names[e].string
 				itemName := g.ECS.names[i].string
 				g.Logf("%s picks up %s.", ColorLogSpecial, name, itemName)
@@ -89,6 +91,7 @@ func (g *game) PickupItem() {
 			}
 		}
 	}
+	return ok
 }
 
 // Returns a free floor tile in the map.
