@@ -1,0 +1,10 @@
+* bug observed where player, corpse, and goblin were all standing on the same tile. pathing seems a bit wonky around corpses.
+* can eat corpses?
+* blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
+* corpses made up of body parts?
+* throw potions
+* other entities can pick up items
+* fix pathing, so enemies do not hit each other during normal ambulation
+* upon death, all items in inventory are dropped
+
+

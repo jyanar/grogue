@@ -60,14 +60,12 @@ const ErrNoShow = "ErrNoShow"
 
 func (g *game) InventoryActivate(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]
-	// inv := g.ECS.inventories[entity]
-
-	// if len(inv.items) <= item {
-	// 	return errors.New("empty slot")
-	// }
+	item_name := g.ECS.names[item].string
+	entity_name := g.ECS.names[entity].string
 	if g.ECS.HasComponent(item, Consumable{}) {
 		// Use the potion!
 		g.ECS.healths[entity].hp += g.ECS.consumables[item].hp
+		g.Logf("%s uses %s", ColorLogSpecial, entity_name, item_name)
 		// Delete from inventory.
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
 		// Delete the item!
@@ -78,10 +76,13 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 
 func (g *game) InventoryRemove(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]
+	item_name := g.ECS.names[item].string
+	entity_name := g.ECS.names[entity].string
 	// Add Position component back to the item.
 	pos := g.ECS.positions[entity].Point
 	g.ECS.AddComponent(item, Position{pos})
 	// Remove item from inventory
+	g.Logf("%s drops %s", ColorLogSpecial, entity_name, item_name)
 	g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
 	return nil
 }
