@@ -152,7 +152,7 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 	case gruid.MsgMouse:
 		switch msg.Action {
 		case gruid.MouseMove:
-			m.target.pos = msg.P
+			m.target.pos = msg.P.Shift(-1, -1)
 			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.InFOV, false)
 
 			fmt.Println("HERE IS ALL THE STUFF:")
@@ -263,7 +263,7 @@ func (m *model) Draw() gruid.Grid {
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
-		p = p.Shift(-1, -1)
+		// p = p.Shift(-1, -1)
 		c := gd.At(p)
 		gd.Set(p, gruid.Cell{Rune: c.Rune, Style: gruid.Style{Fg: c.Style.Fg, Bg: ColorTarget}})
 	}
@@ -305,8 +305,7 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	if !m.target.pos.In(maprg) {
 		return
 	}
-	// p := m.mousePos.Sub(gruid.Point{X: 0, Y: 2})
-	p := m.target.pos.Shift(-1, -1)
+	p := m.target.pos
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
