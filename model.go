@@ -90,20 +90,21 @@ func NewModel(gd gruid.Grid) *model {
 func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 	m.action = action{}
+
 	switch m.mode {
-	case modeEnd:
+
+	case modeNormal:
 		switch msg := msg.(type) {
+
+		case gruid.MsgInit:
+			m.game.Initialize()
+
 		case gruid.MsgKeyDown:
-			switch msg.Key {
-			case "q", gruid.KeyEscape:
-				// You died: quit on "q" or "escape"
-				return gruid.End()
-			case ".":
-				// Otherwise, allow player to continue watching sim.
-				m.updateMsgKeyDown(msg)
-			}
+			m.updateMsgKeyDown(msg)
+
+		case gruid.MsgMouse:
+			m.updateTargeting(msg)
 		}
-		return nil
 
 	case modeMessageViewer:
 		m.viewer.Update(msg) // e.g., scrolling.
@@ -120,21 +121,19 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		m.updateTargeting(msg)
 		return nil
 
-	case modeNormal:
+	case modeEnd:
 		switch msg := msg.(type) {
-
-		case gruid.MsgInit:
-			m.game.Initialize()
-
 		case gruid.MsgKeyDown:
-			m.updateMsgKeyDown(msg)
-
-		case gruid.MsgMouse:
-			m.updateTargeting(msg)
-			// if msg.Action == gruid.MouseMove {
-			// 	m.target.pos = msg.P
-			// }
+			switch msg.Key {
+			case "q", gruid.KeyEscape:
+				// You died: quit on "q" or "escape"
+				return gruid.End()
+			case ".":
+				// Otherwise, allow player to continue watching sim.
+				m.updateMsgKeyDown(msg)
+			}
 		}
+		return nil
 	}
 
 	// Handle action (if any provided).
