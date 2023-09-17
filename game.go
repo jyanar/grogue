@@ -26,12 +26,19 @@ func (g *game) Initialize() {
 
 // InFOV returns true if p is in the field of view of an entity with FOV. We only
 // keep cells within maxLOS manhattan distance from the source entity.
-//
-// NOTE: Currently InFOV only returns true for the player FOV.
 func (g *game) InFOV(p gruid.Point) bool {
-	pp := g.ECS.positions[0].Point
-	los := g.ECS.fovs[0].LOS
-	if g.ECS.fovs[0].FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
+	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
+		pp := g.ECS.positions[e].Point
+		los := g.ECS.fovs[e].LOS
+		if g.ECS.fovs[e].FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *game) Pathable(p gruid.Point) bool {
+	if g.InFOV(p) && g.Map.Walkable(p) {
 		return true
 	}
 	return false

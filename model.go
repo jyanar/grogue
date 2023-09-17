@@ -153,12 +153,11 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		switch msg.Action {
 		case gruid.MouseMove:
 			m.target.pos = msg.P.Shift(-1, -1)
-			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.InFOV, false)
-
-			fmt.Println("HERE IS ALL THE STUFF:")
-			fmt.Printf("Player Pos: %v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
-			fmt.Printf("Target Pos: %v, %T\n", m.target.pos, m.target.pos)
-			fmt.Printf("Path:       %v, %T\n", m.target.path, m.target.path)
+			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, false)
+			// fmt.Println("PATHING COMPUTE:")
+			// fmt.Printf("Player Pos: %v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
+			// fmt.Printf("Target Pos: %v, %T\n", m.target.pos, m.target.pos)
+			// fmt.Printf("Path:       %v, %T\n", m.target.path, m.target.path)
 		case gruid.MouseMain:
 			fmt.Println("CLICKED!!!!")
 		}
