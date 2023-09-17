@@ -35,17 +35,17 @@ import (
 )
 
 type model struct {
-	grid      gruid.Grid // The drawing grid.
-	game      game       // The game state.
-	action    action     // The current UI action.
-	mode      mode       // The current UI mode.
-	log       *ui.Label  // Label for the log.
-	status    *ui.Label  // Label for the status.
-	desc      *ui.Label  // Label for position description.
-	viewer    *ui.Pager  // Message's history viewer.
-	inventory *ui.Menu   // Inventory menu.
-	target    targeting  // Mouse position.
-	pr        *paths.PathRange
+	grid      gruid.Grid       // The drawing grid.
+	game      game             // The game state.
+	action    action           // The current UI action.
+	mode      mode             // The current UI mode.
+	log       *ui.Label        // Label for the log.
+	status    *ui.Label        // Label for the status.
+	desc      *ui.Label        // Label for position description.
+	viewer    *ui.Pager        // Message's history viewer.
+	inventory *ui.Menu         // Inventory menu.
+	pr        *paths.PathRange // Pathing algorithm.
+	target    targeting        // Mouse position.
 }
 
 // targeting describes information related to examination or selection of
@@ -82,6 +82,7 @@ func NewModel(gd gruid.Grid) *model {
 			Grid: gruid.NewGrid(UIWidth, UIHeight-1),
 			Box:  &ui.Box{},
 		}),
+		pr: paths.NewPathRange(gd.Range()),
 	}
 }
 
@@ -147,23 +148,17 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 	if !m.target.pos.In(maprg) {
 		m.target.pos = m.game.ECS.positions[0].Point.Add(maprg.Min)
 	}
-	// p := m.target.pos.Sub(maprg.Min)
 	switch msg := msg.(type) {
 	case gruid.MsgMouse:
 		switch msg.Action {
 		case gruid.MouseMove:
 			m.target.pos = msg.P
-			m.target.path = []gruid.Point{gruid.Point{}, gruid.Point{}, gruid.Point{}, gruid.Point{}}
-			m.pr = &paths.PathRange{}
-
-			ans := m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, func(p gruid.Point) bool { return true }, false)
-			m.target.path = ans
+			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.InFOV, false)
 
 			fmt.Println("HERE IS ALL THE STUFF:")
-			fmt.Printf("%v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
-			fmt.Printf("%v, %T\n", m.target.pos, m.target.pos)
-			fmt.Printf("%v, %T\n", m.target.path, m.target.path)
-			fmt.Printf("%v, %T\n", ans, ans)
+			fmt.Printf("Player Pos: %v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
+			fmt.Printf("Target Pos: %v, %T\n", m.target.pos, m.target.pos)
+			fmt.Printf("Path:       %v, %T\n", m.target.path, m.target.path)
 		case gruid.MouseMain:
 			fmt.Println("CLICKED!!!!")
 		}
@@ -172,21 +167,27 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 
 // DRAW METHODS ------------------
 
-// Draw implements gruid.Model.Draw. It draws a simple map that spans the whole
-// grid.
+// Draw implements gruid.Model.Draw.
+// It draws a simple map that spans the whole grid.
 func (m *model) Draw() gruid.Grid {
 	ECS := m.game.ECS
 	Map := m.game.Map
 
+	// Render message viewer, if that's the mode we're in.
 	if m.mode == modeMessageViewer {
 		m.grid.Copy(m.viewer.Draw())
 		return m.grid
 	}
 
+	// Render the inventory, if that's the mode we're in.
 	if m.mode == modeInventoryActivate || m.mode == modeInventoryDrop {
 		m.grid.Copy(m.inventory.Draw())
 		return m.grid
 	}
+
+	///////////////////////////////////////////////////
+	// Otherwise, render the map, entities, and log. //
+	///////////////////////////////////////////////////
 
 	m.grid.Fill(gruid.Cell{Rune: ' '}) // Clear the map.
 	mapgrid := m.grid.Slice(m.grid.Range().Shift(1, 1, 0, 0))
@@ -204,6 +205,7 @@ func (m *model) Draw() gruid.Grid {
 		}
 		mapgrid.Set(it.P(), c)
 	}
+
 	// Draw the entities.
 	// TODO Refactor this ugly mess to use sorting.
 	// Collect list of entities to draw.
@@ -225,7 +227,6 @@ func (m *model) Draw() gruid.Grid {
 			actorsToDraw = append(actorsToDraw, e)
 		}
 	}
-	// Draw.
 	for _, e := range corpsesToDraw {
 		p := ECS.positions[e]
 		r := ECS.renderables[e]
@@ -250,6 +251,8 @@ func (m *model) Draw() gruid.Grid {
 			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
 		})
 	}
+
+	// Draw target (if targeting), names, log, and status.
 	m.DrawTarget(mapgrid)
 	m.DrawNames(mapgrid)
 	m.DrawLog(m.grid.Slice(m.grid.Range().Lines(m.grid.Size().Y-4, m.grid.Size().Y-1)))
@@ -259,8 +262,8 @@ func (m *model) Draw() gruid.Grid {
 
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {
-	p := m.target.pos.Shift(-1, -1)
-	if m.game.InFOV(p) {
+	for _, p := range m.target.path {
+		p = p.Shift(-1, -1)
 		c := gd.At(p)
 		gd.Set(p, gruid.Cell{Rune: c.Rune, Style: gruid.Style{Fg: c.Style.Fg, Bg: ColorTarget}})
 	}

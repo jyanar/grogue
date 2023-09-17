@@ -3,6 +3,9 @@ package main
 import "github.com/anaseto/gruid"
 
 func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
+
+	m.target.path = nil // Remove path highlighting.
+
 	pdelta := gruid.Point{}
 	switch msg.Key {
 
