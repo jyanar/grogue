@@ -24,27 +24,42 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/anaseto/gruid"
+	"github.com/anaseto/gruid/paths"
 	"github.com/anaseto/gruid/ui"
 )
 
 type model struct {
-	grid      gruid.Grid  // The drawing grid.
-	game      game        // The game state.
-	action    action      // The current UI action.
-	mode      mode        // The current UI mode.
-	log       *ui.Label   // Label for the log.
-	status    *ui.Label   // Label for the status.
-	desc      *ui.Label   // Label for position description.
-	viewer    *ui.Pager   // Message's history viewer.
-	inventory *ui.Menu    // Inventory menu.
-	mousePos  gruid.Point // Mouse position.
+	grid      gruid.Grid // The drawing grid.
+	game      game       // The game state.
+	action    action     // The current UI action.
+	mode      mode       // The current UI mode.
+	log       *ui.Label  // Label for the log.
+	status    *ui.Label  // Label for the status.
+	desc      *ui.Label  // Label for position description.
+	viewer    *ui.Pager  // Message's history viewer.
+	inventory *ui.Menu   // Inventory menu.
+	target    targeting  // Mouse position.
+	pr        *paths.PathRange
 }
 
+// targeting describes information related to examination or selection of
+// particular positions in the map.
+type targeting struct {
+	pos    gruid.Point
+	path   []gruid.Point
+	item   int
+	radius int
+}
+
+// mode describes distinct kinds of modes for the UI. It is used to send user
+// input messages to different handlers (inventory window, map, message viewer,
+// etc.), depending on the current mode.
 type mode int
 
 const (
@@ -53,11 +68,20 @@ const (
 	modeMessageViewer                 // Currently viewing messages.
 	modeInventoryActivate             // Browsing inventory, in order to use an item.
 	modeInventoryDrop                 // Browsing inventory, in order to drop an item.
+	modeExamination                   // Keyboard map examination mode.
+	modeTargeting
 )
 
-func NewModel(g gruid.Grid) *model {
+func NewModel(gd gruid.Grid) *model {
 	return &model{
-		grid: g,
+		grid:   gd,
+		log:    &ui.Label{},
+		status: &ui.Label{},
+		desc:   &ui.Label{Box: &ui.Box{}},
+		viewer: ui.NewPager(ui.PagerConfig{
+			Grid: gruid.NewGrid(UIWidth, UIHeight-1),
+			Box:  &ui.Box{},
+		}),
 	}
 }
 
@@ -92,38 +116,59 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		m.updateInventory(msg)
 		return nil
 
+	case modeTargeting, modeExamination:
+		m.updateTargeting(msg)
+		return nil
+
 	case modeNormal:
 		switch msg := msg.(type) {
 
 		case gruid.MsgInit:
-			m.log = &ui.Label{}
-			m.status = &ui.Label{}
-			m.desc = &ui.Label{Box: &ui.Box{}}
-			m.InitializeMessageViewer()
-			m.game = game{}
-			// Initialize map.
-			m.game.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
-			m.game.ECS = NewECS()
-			m.game.ECS.Map = m.game.Map
-			// Place player on a random floor.
-			m.game.NewPlayer()
-			// Spawn enemies, place items, and advance a tick.
-			m.game.SpawnEnemies()
-			m.game.PlaceItems()
-			m.game.ECS.Update()
+			m.game.Initialize()
 
 		case gruid.MsgKeyDown:
 			m.updateMsgKeyDown(msg)
 
 		case gruid.MsgMouse:
-			if msg.Action == gruid.MouseMove {
-				m.mousePos = msg.P
-			}
+			m.updateTargeting(msg)
+			// if msg.Action == gruid.MouseMove {
+			// 	m.target.pos = msg.P
+			// }
 		}
 	}
 
 	// Handle action (if any provided).
 	return m.handleAction()
+}
+
+// updateTargeting updates targeting information in response to user input
+// messages.
+func (m *model) updateTargeting(msg gruid.Msg) {
+	maprg := gruid.NewRange(0, LogLines, UIWidth, UIHeight-1)
+	if !m.target.pos.In(maprg) {
+		m.target.pos = m.game.ECS.positions[0].Point.Add(maprg.Min)
+	}
+	// p := m.target.pos.Sub(maprg.Min)
+	switch msg := msg.(type) {
+	case gruid.MsgMouse:
+		switch msg.Action {
+		case gruid.MouseMove:
+			m.target.pos = msg.P
+			m.target.path = []gruid.Point{gruid.Point{}, gruid.Point{}, gruid.Point{}, gruid.Point{}}
+			m.pr = &paths.PathRange{}
+
+			ans := m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, func(p gruid.Point) bool { return true }, false)
+			m.target.path = ans
+
+			fmt.Println("HERE IS ALL THE STUFF:")
+			fmt.Printf("%v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
+			fmt.Printf("%v, %T\n", m.target.pos, m.target.pos)
+			fmt.Printf("%v, %T\n", m.target.path, m.target.path)
+			fmt.Printf("%v, %T\n", ans, ans)
+		case gruid.MouseMain:
+			fmt.Println("CLICKED!!!!")
+		}
+	}
 }
 
 // DRAW METHODS ------------------
@@ -206,10 +251,20 @@ func (m *model) Draw() gruid.Grid {
 			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
 		})
 	}
+	m.DrawTarget(mapgrid)
 	m.DrawNames(mapgrid)
 	m.DrawLog(m.grid.Slice(m.grid.Range().Lines(m.grid.Size().Y-4, m.grid.Size().Y-1)))
 	m.DrawStatus(m.grid.Slice(m.grid.Range().Line(m.grid.Size().Y - 1)))
 	return m.grid
+}
+
+// DrawTarget draws the current position of the mouse.
+func (m *model) DrawTarget(gd gruid.Grid) {
+	p := m.target.pos.Shift(-1, -1)
+	if m.game.InFOV(p) {
+		c := gd.At(p)
+		gd.Set(p, gruid.Cell{Rune: c.Rune, Style: gruid.Style{Fg: c.Style.Fg, Bg: ColorTarget}})
+	}
 }
 
 // DrawLog draws the last two lines of the log.
@@ -245,11 +300,11 @@ func (m *model) DrawStatus(gd gruid.Grid) {
 // if it is in the map.
 func (m *model) DrawNames(gd gruid.Grid) {
 	maprg := gruid.NewRange(0, 2, UIWidth, UIHeight-1)
-	if !m.mousePos.In(maprg) {
+	if !m.target.pos.In(maprg) {
 		return
 	}
 	// p := m.mousePos.Sub(gruid.Point{X: 0, Y: 2})
-	p := m.mousePos.Shift(-1, -1)
+	p := m.target.pos.Shift(-1, -1)
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {

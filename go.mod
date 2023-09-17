@@ -1,6 +1,6 @@
 module github.com/jyanar/grogue
 
-go 1.19
+go 1.21
 
 require (
 	github.com/anaseto/gruid v0.22.0

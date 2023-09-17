@@ -12,6 +12,7 @@ const (
 	UIHeight  = 27
 	MapWidth  = UIWidth - 2
 	MapHeight = UIHeight - 5
+	LogLines  = 5
 )
 
 func main() {

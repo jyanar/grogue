@@ -21,6 +21,7 @@ const (
 	ActionInventory               // Open inventory.
 	ActionPickup                  // Pick up an item.
 	ActionDrop                    // Drop an item.
+	ActionExamine                 // Examine the map.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -66,6 +67,10 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionQuit:
 		return gruid.End()
+
+	case ActionExamine:
+		m.mode = modeExamination
+		m.target.pos = m.game.ECS.positions[0].Point.Shift(0, 3)
 
 	}
 	return nil

@@ -6,5 +6,5 @@
 * other entities can pick up items
 * fix pathing, so enemies do not hit each other during normal ambulation
 * upon death, all items in inventory are dropped
-
+* unified message logging system
 

@@ -11,6 +11,19 @@ type game struct {
 	Log []LogEntry
 }
 
+func (g *game) Initialize() {
+	// Initialize map and ECS.
+	g.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
+	g.ECS = NewECS()
+	g.ECS.Map = g.Map
+	// Place player on a random floor.
+	g.NewPlayer()
+	// Spawn enemies, place items, and advance a tick.
+	g.SpawnEnemies()
+	g.PlaceItems()
+	g.ECS.Update()
+}
+
 // InFOV returns true if p is in the field of view of an entity with FOV. We only
 // keep cells within maxLOS manhattan distance from the source entity.
 //

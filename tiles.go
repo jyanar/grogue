@@ -32,6 +32,7 @@ const (
 	ColorLogSpecial
 	ColorStatusHealthy
 	ColorStatusWounded
+	ColorTarget
 
 	ColorHPBarEmpty
 	ColorHPBarFull
@@ -44,7 +45,7 @@ const (
 )
 
 // Current theme.
-const theme = ThemeSelenized
+const theme = ThemeNoir
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
@@ -77,6 +78,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		switch c.Style.Bg {
 		case ColorFOV:
 			bg = image.NewUniform(color.RGBA{0x18, 0x49, 0x56, 255})
+		case ColorTarget:
+			bg = image.NewUniform(color.RGBA{0x75, 0x75, 0x00, 255})
 		}
 
 	case ThemeNoir:
@@ -104,6 +107,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		case ColorHPBarFull:
 			fg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
 			bg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
+		case ColorTarget:
+			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
 
 		}
 
