@@ -153,7 +153,7 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		switch msg.Action {
 		case gruid.MouseMove:
 			m.target.pos = msg.P.Shift(-1, -1)
-			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, false)
+			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
 			// fmt.Println("PATHING COMPUTE:")
 			// fmt.Printf("Player Pos: %v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
 			// fmt.Printf("Target Pos: %v, %T\n", m.target.pos, m.target.pos)
@@ -164,7 +164,9 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 	}
 }
 
-// DRAW METHODS ------------------
+/////////////////////////////////////
+// DRAW METHODS ------------------ //
+/////////////////////////////////////
 
 // Draw implements gruid.Model.Draw.
 // It draws a simple map that spans the whole grid.
@@ -189,7 +191,10 @@ func (m *model) Draw() gruid.Grid {
 	///////////////////////////////////////////////////
 
 	m.grid.Fill(gruid.Cell{Rune: ' '}) // Clear the map.
+
 	mapgrid := m.grid.Slice(m.grid.Range().Shift(1, 1, 0, 0))
+	loggrid := m.grid.Slice(m.grid.Range().Lines(m.grid.Size().Y-4, m.grid.Size().Y-1))
+	statusgrid := m.grid.Slice(m.grid.Range().Line(m.grid.Size().Y - 1))
 
 	// Draw the map.
 	it := Map.Grid.Iterator()
@@ -254,15 +259,14 @@ func (m *model) Draw() gruid.Grid {
 	// Draw target (if targeting), names, log, and status.
 	m.DrawTarget(mapgrid)
 	m.DrawNames(mapgrid)
-	m.DrawLog(m.grid.Slice(m.grid.Range().Lines(m.grid.Size().Y-4, m.grid.Size().Y-1)))
-	m.DrawStatus(m.grid.Slice(m.grid.Range().Line(m.grid.Size().Y - 1)))
+	m.DrawLog(loggrid)
+	m.DrawStatus(statusgrid)
 	return m.grid
 }
 
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
-		// p = p.Shift(-1, -1)
 		c := gd.At(p)
 		gd.Set(p, gruid.Cell{Rune: c.Rune, Style: gruid.Style{Fg: c.Style.Fg, Bg: ColorTarget}})
 	}
