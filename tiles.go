@@ -51,6 +51,11 @@ type TileDrawer struct {
 	drawer *tiles.Drawer
 }
 
+func inverseColor(c *image.Uniform) *image.Uniform {
+	r, g, b, _ := c.RGBA()
+	return image.NewUniform(color.RGBA{uint8(255 - r), uint8(255 - g), uint8(255 - b), 255})
+}
+
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 	fg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 255})
 	bg := image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
@@ -109,8 +114,12 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			bg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
-
 		}
+
+		// switch c.Style.Attrs { // If you want to invert fg and bg
+		// case AttrReverse:
+		// 	fg, bg = bg, fg
+		// }
 
 	}
 	return t.drawer.Draw(c.Rune, fg, bg)
@@ -143,17 +152,17 @@ func NewTileDrawer() (*TileDrawer, error) {
 	// 	return nil, err
 	// }
 
-	// // IBM EGA
-	// font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// IBM MDA
-	font, err := opentype.Parse(ibm_mda)
+	// IBM EGA
+	font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
 	if err != nil {
 		return nil, err
 	}
+
+	// // IBM MDA
+	// font, err := opentype.Parse(ibm_mda)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Retrieve the font face.
 	face, err := opentype.NewFace(font, &opentype.FaceOptions{
