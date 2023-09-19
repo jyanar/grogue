@@ -109,6 +109,7 @@ func (s *DeathSystem) Update() {
 		s.ecs.AddComponent(e, Name{name + " corpse"})
 		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
 		s.ecs.AddComponent(e, Collectible{})
+		s.ecs.AddComponent(e, Consumable{hp: 2})
 		s.ecs.Create(LogEntry{
 			Text:  fmt.Sprintf("%s has died!", name),
 			Color: ColorLogMonsterAttack,

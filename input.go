@@ -27,7 +27,7 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case "n":
 		m.action = action{Type: ActionBump, Delta: pdelta.Shift(1, 1)}
 
-	// Message log, inventory, pick up items
+	// Message log, inventory, pick up items, and examine
 	case "m":
 		m.action = action{Type: ActionViewMessages}
 	case "i":
@@ -36,6 +36,8 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		m.action = action{Type: ActionDrop}
 	case "g":
 		m.action = action{Type: ActionPickup}
+	case "x":
+		m.action = action{Type: ActionExamine}
 
 	// Waiting
 	case ".":

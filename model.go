@@ -144,11 +144,41 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 // updateTargeting updates targeting information in response to user input
 // messages.
 func (m *model) updateTargeting(msg gruid.Msg) {
-	maprg := gruid.NewRange(0, LogLines, UIWidth, UIHeight-1)
+	maprg := gruid.NewRange(0, 0, UIWidth, UIHeight)
 	if !m.target.pos.In(maprg) {
 		m.target.pos = m.game.ECS.positions[0].Point.Add(maprg.Min)
 	}
+	p := m.target.pos
 	switch msg := msg.(type) {
+	case gruid.MsgKeyDown:
+		switch msg.Key {
+
+		case gruid.KeyArrowLeft, "h":
+			p = p.Shift(-1, 0)
+		case gruid.KeyArrowDown, "j":
+			p = p.Shift(0, 1)
+		case gruid.KeyArrowUp, "k":
+			p = p.Shift(0, -1)
+		case gruid.KeyArrowRight, "l":
+			p = p.Shift(1, 0)
+		case "y":
+			p = p.Shift(-1, -1)
+		case "u":
+			p = p.Shift(1, -1)
+		case "b":
+			p = p.Shift(-1, 1)
+		case "n":
+			p = p.Shift(1, 1)
+
+		case gruid.KeyEscape, "q":
+			m.mode = modeNormal
+			m.target = targeting{}
+			return
+		}
+
+		m.target.pos = p.Add(maprg.Min)
+		m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
+
 	case gruid.MsgMouse:
 		switch msg.Action {
 		case gruid.MouseMove:
@@ -264,11 +294,17 @@ func (m *model) Draw() gruid.Grid {
 	return m.grid
 }
 
+const (
+	AttrNone gruid.AttrMask = iota
+	AttrReverse
+)
+
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
 		c := gd.At(p)
-		gd.Set(p, gruid.Cell{Rune: c.Rune, Style: gruid.Style{Fg: c.Style.Fg, Bg: ColorTarget}})
+		// gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
+		gd.Set(p, c.WithStyle(c.Style.WithBg(ColorTarget)))
 	}
 }
 

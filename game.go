@@ -21,6 +21,7 @@ func (g *game) Initialize() {
 	// Spawn enemies, place items, and advance a tick.
 	g.SpawnEnemies()
 	g.PlaceItems()
+	g.SpawnCorpses()
 	g.ECS.Update()
 }
 
@@ -38,7 +39,7 @@ func (g *game) InFOV(p gruid.Point) bool {
 }
 
 func (g *game) Pathable(p gruid.Point) bool {
-	if g.InFOV(p) && g.Map.Walkable(p) {
+	if g.Map.Walkable(p) && g.Map.Explored[p] {
 		return true
 	}
 	return false
@@ -69,6 +70,13 @@ func (g *game) PlaceItems() {
 			Consumable{hp: 5},
 			Position{g.FreeFloorTile()},
 		)
+	}
+}
+
+func (g *game) SpawnCorpses() {
+	const corpsesToSpawn = 10
+	for i := 0; i < corpsesToSpawn; i++ {
+		g.NewCorpse()
 	}
 }
 

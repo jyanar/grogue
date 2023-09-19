@@ -70,7 +70,7 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionExamine:
 		m.mode = modeExamination
-		m.target.pos = m.game.ECS.positions[0].Point.Shift(0, 3)
+		m.target.pos = m.game.ECS.positions[0].Point.Shift(2, 2)
 
 	}
 	return nil
