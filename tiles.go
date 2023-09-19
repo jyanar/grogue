@@ -152,17 +152,17 @@ func NewTileDrawer() (*TileDrawer, error) {
 	// 	return nil, err
 	// }
 
-	// IBM EGA
-	font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
-	if err != nil {
-		return nil, err
-	}
-
-	// // IBM MDA
-	// font, err := opentype.Parse(ibm_mda)
+	// // IBM EGA
+	// font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
 	// if err != nil {
 	// 	return nil, err
 	// }
+
+	// IBM MDA
+	font, err := opentype.Parse(ibm_mda)
+	if err != nil {
+		return nil, err
+	}
 
 	// Retrieve the font face.
 	face, err := opentype.NewFace(font, &opentype.FaceOptions{
