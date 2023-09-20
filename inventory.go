@@ -52,6 +52,7 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		if err != nil {
 			m.game.Logf(err.Error(), ColorLogSpecial)
 		}
+		m.game.ECS.Update()
 		m.mode = modeNormal
 	}
 }
