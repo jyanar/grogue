@@ -319,6 +319,20 @@ func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
 	return len(ecs.EntitiesAtPWith(p, Obstruct{})) == 0
 }
 
+func (ecs *ECS) BloodAt(p gruid.Point) bool {
+	entities := ecs.EntitiesAtPWith(p, Name{})
+	if len(entities) == 0 {
+		return false
+	}
+	for _, e := range entities {
+		name := ecs.names[e].string
+		if name == "blood" {
+			return true
+		}
+	}
+	return false
+}
+
 func (ecs *ECS) printDebug(e int) {
 	fmt.Println("====================")
 	fmt.Printf("Entity: %d\n", e)

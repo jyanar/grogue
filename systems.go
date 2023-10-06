@@ -52,8 +52,13 @@ func (s *BumpSystem) Update() {
 			}
 			s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
 			health_target.hp -= dmg_src
-			// Add a blood tile here
-			s.ecs.Create(Name{"blood"}, Position{dest}, Renderable{glyph: '.', fg: ColorBlood, order: ROFloor})
+			if !s.ecs.BloodAt(dest) { // Add blood tile here.
+				s.ecs.Create(
+					Name{"blood"},
+					Position{dest},
+					Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
+				)
+			}
 			if health_target.hp <= 0 {
 				health_target.hp = 0
 				s.ecs.AddComponent(target, Death{}) // Entity marked for death.

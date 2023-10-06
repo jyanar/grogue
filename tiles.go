@@ -45,7 +45,7 @@ const (
 )
 
 // Current theme.
-const theme = ThemeSelenized
+const theme = ThemeNoir
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
@@ -98,6 +98,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		switch c.Style.Fg {
 		case ColorPlayer:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+		case ColorBlood:
+			fg = image.NewUniform(color.RGBA{138, 3, 3, 255})
 		case ColorFOV:
 			fg = image.NewUniform(color.RGBA{200, 200, 200, 255})
 		case ColorMonster:
@@ -110,7 +112,7 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 
 		switch c.Style.Bg {
 		case ColorBlood:
-			bg = image.NewUniform(color.RGBA{255, 0, 0, 255})
+			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
 		}
