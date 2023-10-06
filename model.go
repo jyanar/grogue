@@ -240,49 +240,39 @@ func (m *model) Draw() gruid.Grid {
 		mapgrid.Set(it.P(), c)
 	}
 
-	// Draw the entities.
-	// TODO Refactor this ugly mess to use sorting.
-	// Collect list of entities to draw.
-	corpsesToDraw := []int{}
-	itemsToDraw := []int{}
-	actorsToDraw := []int{}
+	// Collect entities to draw.
+	type tup struct {
+		entity int
+		order  renderOrder
+	}
+	entitiesToDraw := []tup{}
 	for _, e := range ECS.EntitiesWith(Position{}, Renderable{}) {
 		p := ECS.positions[e]
+		r := ECS.renderables[e]
+		// If entities is not in FOV, do not add them to list.
 		if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
 			continue
 		}
-		// Entity is in a FOV. Add them to the list.
-		switch ECS.renderables[e].order {
-		case ROCorpse:
-			corpsesToDraw = append(corpsesToDraw, e)
-		case ROItem:
-			itemsToDraw = append(itemsToDraw, e)
-		case ROActor:
-			actorsToDraw = append(actorsToDraw, e)
+		entitiesToDraw = append(entitiesToDraw, tup{e, r.order})
+	}
+	sort.SliceStable(entitiesToDraw, func(i, j int) bool {
+		return entitiesToDraw[i].order > entitiesToDraw[j].order
+	})
+	// Draw entities.
+	for _, e := range entitiesToDraw {
+		p := ECS.positions[e.entity]
+		r := ECS.renderables[e.entity]
+		c := mapgrid.At(p.Point)
+		fg, bg := c.Style.Fg, c.Style.Bg
+		if r.fg != gruid.ColorDefault {
+			fg = r.fg
 		}
-	}
-	for _, e := range corpsesToDraw {
-		p := ECS.positions[e]
-		r := ECS.renderables[e]
+		if r.bg != gruid.ColorDefault {
+			bg = r.bg
+		}
 		mapgrid.Set(p.Point, gruid.Cell{
 			Rune:  r.glyph,
-			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
-		})
-	}
-	for _, e := range itemsToDraw {
-		p := ECS.positions[e]
-		r := ECS.renderables[e]
-		mapgrid.Set(p.Point, gruid.Cell{
-			Rune:  r.glyph,
-			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
-		})
-	}
-	for _, e := range actorsToDraw {
-		p := ECS.positions[e]
-		r := ECS.renderables[e]
-		mapgrid.Set(p.Point, gruid.Cell{
-			Rune:  r.glyph,
-			Style: gruid.Style{Fg: r.color, Bg: ColorFOV},
+			Style: gruid.Style{Fg: fg, Bg: bg},
 		})
 	}
 

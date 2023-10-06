@@ -15,6 +15,7 @@ type Position struct {
 type renderOrder string
 
 const (
+	ROFloor  renderOrder = "FLOOR" // An item on the floor. Blood, grass, etc.
 	ROCorpse renderOrder = "CORPSE"
 	ROItem   renderOrder = "ITEM"
 	ROActor  renderOrder = "ACTOR"
@@ -23,7 +24,8 @@ const (
 // Entities with this component can be rendered.
 type Renderable struct {
 	glyph rune
-	color gruid.Color
+	fg    gruid.Color
+	bg    gruid.Color
 	order renderOrder
 }
 

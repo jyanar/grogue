@@ -33,9 +33,9 @@ const (
 	ColorStatusHealthy
 	ColorStatusWounded
 	ColorTarget
-
 	ColorHPBarEmpty
 	ColorHPBarFull
+	ColorBlood
 )
 
 // A list of available themes.
@@ -45,7 +45,7 @@ const (
 )
 
 // Current theme.
-const theme = ThemeNoir
+const theme = ThemeSelenized
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
@@ -68,6 +68,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		switch c.Style.Fg {
 		case ColorPlayer:
 			fg = image.NewUniform(color.RGBA{0x46, 0x95, 0xf7, 255})
+		case ColorBlood:
+			fg = image.NewUniform(color.RGBA{178, 3, 3, 255})
 		case ColorMonster:
 			fg = image.NewUniform(color.RGBA{0xfa, 0x57, 0x50, 255})
 		case ColorCorpse:
@@ -83,6 +85,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		switch c.Style.Bg {
 		case ColorFOV:
 			bg = image.NewUniform(color.RGBA{0x18, 0x49, 0x56, 255})
+		case ColorBlood:
+			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{0x75, 0x75, 0x00, 255})
 		}
@@ -94,7 +98,6 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		switch c.Style.Fg {
 		case ColorPlayer:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
-
 		case ColorFOV:
 			fg = image.NewUniform(color.RGBA{200, 200, 200, 255})
 		case ColorMonster:
@@ -106,12 +109,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		}
 
 		switch c.Style.Bg {
-		case ColorHPBarEmpty:
-			fg = image.NewUniform(color.RGBA{0x40, 0x10, 0x10, 255})
-			bg = image.NewUniform(color.RGBA{0x40, 0x10, 0x10, 255})
-		case ColorHPBarFull:
-			fg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
-			bg = image.NewUniform(color.RGBA{0x0, 0x60, 0x0, 255})
+		case ColorBlood:
+			bg = image.NewUniform(color.RGBA{255, 0, 0, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
 		}

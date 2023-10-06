@@ -29,31 +29,35 @@ func (s *BumpSystem) Update() {
 		}
 		// Let's attempt to move to dest.
 		if s.ecs.Map.Walkable(dest) {
-			// There's another entity at the location.
-			// If attack is defined between this pair, perform attack.
-			if target, ok := s.ecs.GetEntityAt(dest); ok {
-				if s.ecs.HasComponents(target, Health{}, Obstruct{}) {
-					dmg_src := s.ecs.damages[e].int
-					name_src := s.ecs.names[e].string
-					name_target := s.ecs.names[target].string
-					health_target := s.ecs.healths[target]
-					msg := fmt.Sprintf("%s hits the %s for %d damage!", name_src, name_target, dmg_src)
-					msgcolor := ColorLogMonsterAttack
-					if e == 0 {
-						msgcolor = ColorLogPlayerAttack
-					}
-					s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
-
-					health_target.hp -= dmg_src
-					if health_target.hp <= 0 {
-						health_target.hp = 0
-						s.ecs.AddComponent(target, Death{}) // Entity marked for death.
-					}
-					continue
-				}
+			// Check whether there are blocking entities at dest.
+			attackable := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
+			if len(attackable) == 0 {
+				// No entity blocking the way, move to dest.
+				p.Point = dest
+				continue
 			}
-			// Otherwise, move to destination.
-			p.Point = dest
+			if len(attackable) > 1 {
+				panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
+			}
+			// Attack entity at location.
+			target := attackable[0]
+			dmg_src := s.ecs.damages[e].int
+			name_src := s.ecs.names[e].string
+			name_target := s.ecs.names[target].string
+			health_target := s.ecs.healths[target]
+			msg := fmt.Sprintf("%s hits the %s for %d damage!", name_src, name_target, dmg_src)
+			msgcolor := ColorLogMonsterAttack
+			if e == 0 {
+				msgcolor = ColorLogPlayerAttack
+			}
+			s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+			health_target.hp -= dmg_src
+			// Add a blood tile here
+			s.ecs.Create(Name{"blood"}, Position{dest}, Renderable{glyph: '.', fg: ColorBlood, order: ROFloor})
+			if health_target.hp <= 0 {
+				health_target.hp = 0
+				s.ecs.AddComponent(target, Death{}) // Entity marked for death.
+			}
 		} else {
 			s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
 		}
@@ -107,7 +111,7 @@ func (s *DeathSystem) Update() {
 		// s.ecs.healths[e] = nil
 		s.ecs.deaths[e] = nil // Consume the death component.
 		s.ecs.AddComponent(e, Name{name + " corpse"})
-		s.ecs.AddComponent(e, Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse})
+		s.ecs.AddComponent(e, Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse})
 		s.ecs.AddComponent(e, Collectible{})
 		s.ecs.AddComponent(e, Consumable{hp: 2})
 		s.ecs.Create(LogEntry{
@@ -140,7 +144,7 @@ func (s *PerceptionSystem) Update() {
 		// Check if player is within perceived entities, and switch to appropriate state.
 		for _, other := range per.perceived {
 			name_other := s.ecs.names[other].string
-			if name_other == "Player" && s.ecs.HasComponent(e, AI{}) {
+			if name_other == "player" && s.ecs.HasComponent(e, AI{}) {
 				s.ecs.ais[e].state = CSHunting
 				break
 			} else {

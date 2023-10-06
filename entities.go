@@ -3,11 +3,13 @@
 
 package main
 
+import "github.com/anaseto/gruid"
+
 func (g *game) NewPlayer() int {
 	return g.ECS.Create(
-		Name{"Player"},
+		Name{"player"},
 		Position{g.FreeFloorTile()},
-		Renderable{glyph: '@', color: ColorPlayer, order: ROActor},
+		Renderable{glyph: '@', fg: ColorPlayer, order: ROActor},
 		Health{hp: 18, maxhp: 18},
 		Damage{5},
 		FOV{LOS: 20},
@@ -19,9 +21,9 @@ func (g *game) NewPlayer() int {
 
 func (g *game) NewGoblin() int {
 	return g.ECS.Create(
-		Name{"Goblin"},
+		Name{"goblin"},
 		Position{g.FreeFloorTile()},
-		Renderable{glyph: 'g', color: ColorMonster, order: ROActor},
+		Renderable{glyph: 'g', fg: ColorMonster, order: ROActor},
 		Health{hp: 10, maxhp: 10},
 		Damage{2},
 		Perception{radius: 8},
@@ -32,9 +34,9 @@ func (g *game) NewGoblin() int {
 
 func (g *game) NewTroll() int {
 	return g.ECS.Create(
-		Name{"Troll"},
+		Name{"troll"},
 		Position{g.FreeFloorTile()},
-		Renderable{glyph: 'T', color: ColorTroll, order: ROActor},
+		Renderable{glyph: 'T', fg: ColorTroll, order: ROActor},
 		Health{hp: 20, maxhp: 20},
 		Damage{5},
 		Perception{radius: 6},
@@ -45,9 +47,9 @@ func (g *game) NewTroll() int {
 
 func (g *game) NewHealthPotion() int {
 	return g.ECS.Create(
-		Name{"Health Potion"},
+		Name{"health potion"},
 		Position{g.FreeFloorTile()},
-		Renderable{glyph: '!', color: ColorHealthPotion, order: ROItem},
+		Renderable{glyph: '!', fg: ColorHealthPotion, order: ROItem},
 		Collectible{},
 		Consumable{hp: 5},
 	)
@@ -57,10 +59,18 @@ func (g *game) NewHealthPotion() int {
 // 2023 Sep 18 observed a corpse, goblin, player, and troll standing on the same tile.
 func (g *game) NewCorpse() int {
 	return g.ECS.Create(
-		Name{"Corpse"},
+		Name{"corpse"},
 		Position{g.Map.RandomFloor()},
-		Renderable{glyph: '%', color: ColorCorpse, order: ROCorpse},
+		Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse},
 		Collectible{},
 		Consumable{hp: 2},
+	)
+}
+
+func (g *game) NewBlood(p gruid.Point) int {
+	return g.ECS.Create(
+		Name{"blood"},
+		Position{p},
+		Renderable{glyph: '.', fg: ColorBlood, bg: ColorBlood, order: ROFloor},
 	)
 }

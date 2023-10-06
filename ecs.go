@@ -59,7 +59,7 @@ func NewECS() *ECS {
 	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
+	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
 }
@@ -286,8 +286,7 @@ func (ecs *ECS) HasComponents(entity int, components ...any) bool {
 	return true
 }
 
-func (ecs *ECS) EntitiesWith(components ...any) []int {
-	entities := []int{}
+func (ecs *ECS) EntitiesWith(components ...any) (entities []int) {
 	for _, e := range ecs.entities {
 		if ecs.HasComponents(e, components...) {
 			entities = append(entities, e)
@@ -306,23 +305,18 @@ func (ecs *ECS) EntitiesAt(p gruid.Point) (entities []int) {
 	return entities
 }
 
-func (ecs *ECS) GetEntityAt(p gruid.Point) (entity int, ok bool) {
-	for i, q := range ecs.positions {
-		if q != nil && p == q.Point {
-			return i, true
+func (ecs *ECS) EntitiesAtPWith(p gruid.Point, components ...any) (entities []int) {
+	for _, e := range ecs.EntitiesAt(p) {
+		if ecs.HasComponents(e, components...) {
+			entities = append(entities, e)
 		}
 	}
-	return -1, false
+	return entities
 }
 
 // Returns true if there is no blocking entity at p.
 func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
-	if e, ok := ecs.GetEntityAt(p); ok {
-		if ecs.HasComponent(e, Obstruct{}) {
-			return false
-		}
-	}
-	return true
+	return len(ecs.EntitiesAtPWith(p, Obstruct{})) == 0
 }
 
 func (ecs *ECS) printDebug(e int) {
