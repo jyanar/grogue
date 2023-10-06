@@ -118,6 +118,15 @@ func (s *DeathSystem) Update() {
 		s.ecs.AddComponent(e, Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse})
 		s.ecs.AddComponent(e, Collectible{})
 		s.ecs.AddComponent(e, Consumable{hp: 2})
+		// Drop everything in inventory
+		if s.ecs.HasComponent(e, Inventory{}) {
+			for _, item := range s.ecs.inventories[e].items {
+				s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
+				// r := s.ecs.renderables[item]
+				// s.ecs.AddComponent(item, Renderable{r.glyph, r.fg, r.bg, ROActor})
+			}
+			s.ecs.inventories[e] = nil
+		}
 		s.ecs.Create(LogEntry{
 			Text:  fmt.Sprintf("%s has died!", name),
 			Color: ColorLogMonsterAttack,
