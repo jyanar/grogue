@@ -30,11 +30,10 @@ const (
 	ColorLogPlayerAttack
 	ColorLogMonsterAttack
 	ColorLogSpecial
+	ColorLog
 	ColorStatusHealthy
 	ColorStatusWounded
 	ColorTarget
-	ColorHPBarEmpty
-	ColorHPBarFull
 	ColorBlood
 )
 
@@ -108,6 +107,12 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
 		case ColorHealthPotion:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+		case ColorLogPlayerAttack, ColorStatusHealthy:
+			fg = image.NewUniform(color.RGBA{0x75, 0xb9, 0x38, 255})
+		case ColorLogMonsterAttack, ColorStatusWounded:
+			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
+		case ColorLogSpecial:
+			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
 		}
 
 		switch c.Style.Bg {
@@ -117,10 +122,10 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
 		}
 
-		// switch c.Style.Attrs { // If you want to invert fg and bg
-		// case AttrReverse:
-		// 	fg, bg = bg, fg
-		// }
+		switch c.Style.Attrs { // If you want to invert fg and bg
+		case AttrReverse:
+			fg, bg = bg, fg
+		}
 
 	}
 	return t.drawer.Draw(c.Rune, fg, bg)

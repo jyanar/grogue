@@ -32,8 +32,7 @@ func (s *BumpSystem) Update() {
 			// Check whether there are blocking entities at dest.
 			attackable := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
 			if len(attackable) == 0 {
-				// No entity blocking the way, move to dest.
-				p.Point = dest
+				p.Point = dest // No entity blocking the way, move to dest.
 				continue
 			}
 			if len(attackable) > 1 {
@@ -135,6 +134,19 @@ func (s *PerceptionSystem) Update() {
 		pos := s.ecs.positions[e]
 		per := s.ecs.perceptions[e]
 		per.perceived = []int{}
+		if per.FOV == nil {
+			per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
+		}
+		rg := gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1)
+		per.FOV.SetRange(rg.Add(pos.Point).Intersect(s.ecs.Map.Grid.Range()))
+		passable := func(p gruid.Point) bool {
+			return s.ecs.Map.Grid.At(p) != Wall
+		}
+		for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, false) {
+			if paths.DistanceManhattan(point, pos.Point) > per.LOS {
+				continue
+			}
+		}
 		for _, other := range s.ecs.EntitiesWith(Position{}) {
 			// Ignore self.
 			if other == e {
@@ -142,7 +154,7 @@ func (s *PerceptionSystem) Update() {
 			}
 			// If other entity is within perceptive radius, add to perceived list.
 			pos_other := s.ecs.positions[other]
-			if paths.DistanceManhattan(pos.Point, pos_other.Point) <= per.radius {
+			if per.FOV.Visible(pos_other.Point) {
 				per.perceived = append(per.perceived, other)
 			}
 		}

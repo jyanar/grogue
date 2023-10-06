@@ -21,7 +21,7 @@ func (g *game) Initialize() {
 	// Spawn enemies, place items, and advance a tick.
 	g.SpawnEnemies()
 	g.PlaceItems()
-	g.SpawnCorpses()
+	// g.SpawnCorpses()
 	g.ECS.Update()
 }
 
@@ -31,7 +31,8 @@ func (g *game) InFOV(p gruid.Point) bool {
 	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
 		pp := g.ECS.positions[e].Point
 		los := g.ECS.fovs[e].LOS
-		if g.ECS.fovs[e].FOV.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
+		fov := g.ECS.fovs[e].FOV
+		if fov.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
 			return true
 		}
 	}

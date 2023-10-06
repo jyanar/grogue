@@ -26,7 +26,7 @@ func (g *game) NewGoblin() int {
 		Renderable{glyph: 'g', fg: ColorMonster, order: ROActor},
 		Health{hp: 10, maxhp: 10},
 		Damage{2},
-		Perception{radius: 8},
+		Perception{LOS: 8},
 		AI{state: CSWandering},
 		Obstruct{},
 	)
@@ -39,7 +39,7 @@ func (g *game) NewTroll() int {
 		Renderable{glyph: 'T', fg: ColorTroll, order: ROActor},
 		Health{hp: 20, maxhp: 20},
 		Damage{5},
-		Perception{radius: 6},
+		Perception{LOS: 6},
 		AI{state: CSWandering},
 		Obstruct{},
 	)

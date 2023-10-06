@@ -66,8 +66,9 @@ type Death struct{}
 
 // Entities with this component perceive other entities around them.
 type Perception struct {
-	radius    int   // Perception radius.
-	perceived []int // List of perceived entities.
+	LOS       int     // Perceptive radius.
+	FOV       *rl.FOV // Effective FOV, which can be affected by occlusion.
+	perceived []int   // List of perceived entities.
 }
 
 // I don't like this iota business. Prefer enums like this:

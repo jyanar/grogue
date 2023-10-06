@@ -293,8 +293,8 @@ const (
 func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
 		c := gd.At(p)
-		// gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
-		gd.Set(p, c.WithStyle(c.Style.WithBg(ColorTarget)))
+		gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
+		// gd.Set(p, c.WithStyle(c.Style.WithBg(ColorTarget)))
 	}
 }
 
