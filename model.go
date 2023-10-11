@@ -177,20 +177,23 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		}
 
 		m.target.pos = p.Add(maprg.Min)
-		m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
 
 	case gruid.MsgMouse:
 		switch msg.Action {
 		case gruid.MouseMove:
 			m.target.pos = msg.P.Shift(-1, -1)
-			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
-			// fmt.Println("PATHING COMPUTE:")
-			// fmt.Printf("Player Pos: %v, %T\n", m.game.ECS.positions[0].Point, m.game.ECS.positions[0].Point)
-			// fmt.Printf("Target Pos: %v, %T\n", m.target.pos, m.target.pos)
-			// fmt.Printf("Path:       %v, %T\n", m.target.path, m.target.path)
+
 		case gruid.MouseMain:
 			fmt.Println("CLICKED!!!!")
+
 		}
+	}
+
+	// We only compute the full path if the player is still alive.
+	if m.game.ECS.PlayerDead() {
+		m.target.path = []gruid.Point{m.target.pos}
+	} else {
+		m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
 	}
 }
 
@@ -294,7 +297,6 @@ func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
 		c := gd.At(p)
 		gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
-		// gd.Set(p, c.WithStyle(c.Style.WithBg(ColorTarget)))
 	}
 }
 

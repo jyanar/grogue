@@ -333,6 +333,10 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 	return false
 }
 
+func (ecs *ECS) PlayerDead() bool {
+	return ecs.names[0].string == "player corpse"
+}
+
 func (ecs *ECS) printDebug(e int) {
 	fmt.Println("====================")
 	fmt.Printf("Entity: %d\n", e)
