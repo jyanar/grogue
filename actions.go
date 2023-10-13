@@ -31,11 +31,11 @@ func (m *model) handleAction() gruid.Effect {
 		for _, e := range m.game.ECS.EntitiesWith(Input{}) {
 			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
-		m.game.ECS.Update()
+		m.game.ECS.Update2()
 		m.game.CollectMessages()
 
 	case ActionWait:
-		m.game.ECS.Update()
+		m.game.ECS.Update2()
 		m.game.CollectMessages()
 
 	case ActionInventory:
@@ -52,7 +52,7 @@ func (m *model) handleAction() gruid.Effect {
 		ok := m.game.PickupItem()
 		m.game.CollectMessages()
 		if ok {
-			m.game.ECS.Update()
+			m.game.ECS.Update2()
 		}
 
 	case ActionViewMessages:

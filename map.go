@@ -57,7 +57,7 @@ func (m *Map) Generate() {
 		{WCutoff1: 5, WCutoff2: 25, Reps: 3, WallsOutOfRange: true},
 	}
 	for {
-		mgen.CellularAutomataCave(Wall, Floor, 0.42, rules)
+		mgen.CellularAutomataCave(Wall, Floor, 0.45, rules)
 		freep := m.RandomFloor()
 		// We put walls in the floor cells non-reachable from freep, to ensure
 		// that all the cells are connected (which is not guaranteed with CA).

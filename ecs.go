@@ -29,6 +29,12 @@ type ECS struct {
 
 	systems []System
 
+	perceptionSystem PerceptionSystem
+	aISystem         AISystem
+	bumpSystem       BumpSystem
+	fOVSystem        FOVSystem
+	deathSystem      DeathSystem
+
 	Map *Map
 }
 
@@ -54,6 +60,11 @@ func NewECS() *ECS {
 		collectibles: make(map[int]*Collectible),
 		inventories:  make(map[int]*Inventory),
 	}
+	ecs.perceptionSystem = PerceptionSystem{ecs: ecs}
+	ecs.aISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
+	ecs.bumpSystem = BumpSystem{ecs: ecs}
+	ecs.fOVSystem = FOVSystem{ecs: ecs}
+	ecs.deathSystem = DeathSystem{ecs: ecs}
 	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
 	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
 	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
@@ -62,6 +73,37 @@ func NewECS() *ECS {
 	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
 
 	return ecs
+}
+
+// Entity-first updating.
+func (ecs *ECS) Update2() {
+	// Iterate over each entity, and update them based on what components they have.
+	for _, e := range ecs.entities {
+		// How do we check which systems this entity applies to? It has to be done
+		// dynamically, to allow us to remove and add components to entities.
+		if ecs.HasComponents(e, Position{}, Perception{}) {
+			ecs.perceptionSystem.Update2(e)
+		}
+		if ecs.HasComponents(e, Position{}, AI{}) {
+			ecs.aISystem.Update2(e)
+		}
+		if ecs.HasComponents(e, Position{}, Bump{}) {
+			ecs.bumpSystem.Update2(e)
+		}
+		if ecs.HasComponents(e, Position{}, FOV{}) {
+			ecs.fOVSystem.Update2(e)
+		}
+		if ecs.HasComponents(e, Death{}) {
+			ecs.deathSystem.Update2(e)
+		}
+	}
+}
+
+// Systems-first updating.
+func (ecs *ECS) Update() {
+	for _, s := range ecs.systems {
+		s.Update()
+	}
 }
 
 func (ecs *ECS) Create(components ...any) int {
@@ -145,12 +187,6 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.consumables, entity)
 	delete(ecs.collectibles, entity)
 	delete(ecs.inventories, entity)
-}
-
-func (ecs *ECS) Update() {
-	for _, s := range ecs.systems {
-		s.Update()
-	}
 }
 
 func (ecs *ECS) Exists(entity int) bool {

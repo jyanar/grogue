@@ -10,11 +10,12 @@
       4. Death system.
 
 [ ] fix pathing, so enemies do not hit each other during normal ambulation
-[ ] upon death, all items in inventory are dropped
 [ ] unified message logging system
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
+[ ] switch to per-entity turns rather than per-system turns?
 
 done
+[x] upon death, all items in inventory are dropped
 [x] bug observed where player, corpse, and goblin were all standing on the same tile. pathing seems a bit wonky around corpses.
 [x] perception system upgraded to be like FOV system
 [x] can eat corpses?
