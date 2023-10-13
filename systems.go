@@ -110,6 +110,7 @@ func (s *DeathSystem) Update(e int) {
 		return
 	}
 	name := s.ecs.names[e].string
+	fg := s.ecs.renderables[e].fg
 	s.ecs.obstructs[e] = nil   // No longer blocking.
 	s.ecs.perceptions[e] = nil // No longer perceiving.
 	s.ecs.ais[e] = nil         // No longer pathing.
@@ -119,7 +120,7 @@ func (s *DeathSystem) Update(e int) {
 	// s.ecs.healths[e] = nil
 	s.ecs.deaths[e] = nil // Consume the death component.
 	s.ecs.AddComponent(e, Name{name + " corpse"})
-	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse})
+	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: fg, order: ROCorpse})
 	s.ecs.AddComponent(e, Collectible{})
 	s.ecs.AddComponent(e, Consumable{hp: 2})
 	// Drop everything in inventory
@@ -221,11 +222,9 @@ func (s *AISystem) Update(e int) {
 	ai := s.ecs.ais[e]
 	pos := s.ecs.positions[e]
 	switch ai.state {
-
 	case CSSleeping:
 		// Do nothing, the entity is asleep!
 		return
-
 	case CSWandering:
 		// Set a destination, if one is not yet set or we've reached it.
 		if ai.dest == nil || *ai.dest == pos.Point {
@@ -237,7 +236,6 @@ func (s *AISystem) Update(e int) {
 				}
 			}
 		}
-
 	case CSHunting:
 		// Set destination to be the player.
 		ai.dest = &s.ecs.positions[0].Point
