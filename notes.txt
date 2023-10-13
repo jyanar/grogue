@@ -1,11 +1,45 @@
 Observations
 ============
-* After trying out many of the different ECS frameworks available in Go, I opted for making my own from scratch. It's dead simple: a map[int]*Component solution. This is likely much more inefficient than an archetype-based ECS, but things don't need to be optimized right now.
+* After trying out many of the different ECS frameworks available in Go, I opted
+for making my own from scratch. It's dead simple: a map[int]*Component solution.
+This is likely much more inefficient than an archetype-based ECS, but things
+don't need to be optimized right now.
 
-* At one point I was trying to figure out a nice way of placing the rendering system inside the ECS (that way rendering is just another system, like everything else) but I found that it breaks the Model-View-Controller architecture that gruid naturally pushes you to use. So I ended up moving all the rendering (both of the game map and the entities) back up into the model, as the tutorial does. This makes sense because the game model holds both the ECS and the Map, meaning that operations which naturally require both (rendering) are naturally expressed as methods on the game struct.
+* At one point I was trying to figure out a nice way of placing the rendering
+system inside the ECS (that way rendering is just another system, like
+everything else) but I found that it breaks the Model-View-Controller
+architecture that gruid naturally pushes you to use. So I ended up moving all
+the rendering (both of the game map and the entities) back up into the model, as
+the tutorial does. This makes sense because the game model holds both the ECS
+and the Map, meaning that operations which naturally require both (rendering)
+are naturally expressed as methods on the game struct.
 
-* We can implement a message log by simply having entities that hold string components. As events occur during turn processing that elicit messages, we simply add entities with messages to the ECS. Then, the model's Draw() method reads through all of these entities and performs the appropriate things, clearing them out for the next turn.
+* We can implement a message log by simply having entities that hold string
+components. As events occur during turn processing that elicit messages, we
+simply add entities with messages to the ECS. Then, the model's Draw() method
+reads through all of these entities and performs the appropriate things,
+clearing them out for the next turn.
 
-* Note to self: always, always check whether unexpected behavior is simply due to entities not having the appropriate components assigned. Spent days trying to debug my movement system before I realized that issues were due to the player entity lacking an Obstruct component.
+* Note to self: always, always check whether unexpected behavior is simply due
+to entities not having the appropriate components assigned. Spent days trying to
+debug my movement system before I realized that issues were due to the player
+entity lacking an Obstruct component.
 
-* Functionality is starting to creep in that breaks the clean separation of the ECS. For example, anaseto implements things such as "Pick up item" as a method on the game struct. If we really wanted to keep as much of the logic as possible (save rendering) in the ECS, then we would perhaps need to implement an action component which express actionTypes that are not movement or requests to open menus. And then these get processed by an ActionSystem.
+* Functionality is starting to creep in that breaks the clean separation of the
+ECS. For example, anaseto implements things such as "Pick up item" as a method
+on the game struct. If we really wanted to keep as much of the logic as possible
+(save rendering) in the ECS, then we would perhaps need to implement an action
+component which express actionTypes that are not movement or requests to open
+menus. And then these get processed by an ActionSystem.
+
+* I have modified the ECS system to iterate over entities instead of over
+systems. In the naive implementation of an ECS, you generally do the latter:
+`for entities with (Position{}, Perception{}) { do ... }` for the perception
+system, then `for entities with (Position{}, Bump{}) {...}` for the BumpSystem,
+etc. But this breaks the idea of turn-taking in the traditional sense, and leads
+to unintended behaviors: monsters would sometimes attack each other since all
+entities first set a path, then all entities execute their path (thus causing
+them to bump into one another). Another example is that if a monster is within
+fighting distance, but you move to another tile that is also within fighting
+distance, the monster moves to your previous tile instead of just attacking you.
+This is bad because it makes the AI seem dumb.

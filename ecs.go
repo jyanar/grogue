@@ -9,7 +9,8 @@ import (
 type ECS struct {
 	entities []int
 	nextID   int
-
+	Map      *Map
+	// Components
 	positions    map[int]*Position
 	renderables  map[int]*Renderable
 	names        map[int]*Name
@@ -26,10 +27,12 @@ type ECS struct {
 	consumables  map[int]*Consumable
 	collectibles map[int]*Collectible
 	inventories  map[int]*Inventory
-
-	systems []System
-
-	Map *Map
+	// Systems
+	PerceptionSystem
+	AISystem
+	BumpSystem
+	FOVSystem
+	DeathSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -54,14 +57,25 @@ func NewECS() *ECS {
 		collectibles: make(map[int]*Collectible),
 		inventories:  make(map[int]*Inventory),
 	}
-	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
-	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
-	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
-
+	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
+	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
+	ecs.BumpSystem = BumpSystem{ecs: ecs}
+	ecs.FOVSystem = FOVSystem{ecs: ecs}
+	ecs.DeathSystem = DeathSystem{ecs: ecs}
 	return ecs
+}
+
+// Iterates through each entity
+func (ecs *ECS) Update() {
+	for _, e := range ecs.entities {
+		ecs.PerceptionSystem.Update(e)
+		ecs.AISystem.Update(e)
+		ecs.BumpSystem.Update(e)
+		ecs.FOVSystem.Update(e)
+	}
+	for _, e := range ecs.entities {
+		ecs.DeathSystem.Update(e)
+	}
 }
 
 func (ecs *ECS) Create(components ...any) int {
@@ -145,12 +159,6 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.consumables, entity)
 	delete(ecs.collectibles, entity)
 	delete(ecs.inventories, entity)
-}
-
-func (ecs *ECS) Update() {
-	for _, s := range ecs.systems {
-		s.Update()
-	}
 }
 
 func (ecs *ECS) Exists(entity int) bool {
