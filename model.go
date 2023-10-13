@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/anaseto/gruid"
@@ -46,6 +47,7 @@ type model struct {
 	inventory *ui.Menu         // Inventory menu.
 	pr        *paths.PathRange // Pathing algorithm.
 	target    targeting        // Mouse position.
+	animation *Animation       // The animation.
 }
 
 // targeting describes information related to examination or selection of
@@ -70,6 +72,7 @@ const (
 	modeInventoryDrop                 // Browsing inventory, in order to drop an item.
 	modeExamination                   // Keyboard map examination mode.
 	modeTargeting
+	modeAnimation
 )
 
 func NewModel(gd gruid.Grid) *model {
@@ -105,6 +108,38 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 		case gruid.MsgMouse:
 			m.updateTargeting(msg)
+		}
+
+	case modeAnimation:
+		switch msg := msg.(type) {
+		case msgAnimation:
+			switch msg {
+			case true:
+				// Animation is ongoing, pop the next frame.
+				if len(m.animation.frames) > 1 {
+					m.animation.frames = m.animation.frames[1:]
+					return gruid.Cmd(func() gruid.Msg {
+						t := time.NewTimer(m.animation.frames[0].duration)
+						<-t.C
+						return msgAnimation(true)
+					})
+				} else {
+					return gruid.Cmd(func() gruid.Msg {
+						return msgAnimation(false)
+					})
+				}
+			case false:
+				// Animation finished. Return control to modeNormal.
+				m.animation = nil
+				m.mode = modeNormal
+				return nil
+			}
+
+		case gruid.MsgKeyDown:
+			// Interrupt animation and go back to modeNormal.
+			m.animation = nil
+			m.mode = modeNormal
+			return nil
 		}
 
 	case modeMessageViewer:
@@ -184,8 +219,7 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 			m.target.pos = msg.P.Shift(-1, -1)
 
 		case gruid.MouseMain:
-			fmt.Println("CLICKED!!!!")
-
+			fmt.Printf("Mouse click at: %v\n", msg.P)
 		}
 	}
 
@@ -284,6 +318,11 @@ func (m *model) Draw() gruid.Grid {
 	m.DrawNames(mapgrid)
 	m.DrawLog(loggrid)
 	m.DrawStatus(statusgrid)
+
+	if m.mode == modeAnimation {
+		m.DrawAnimation(mapgrid)
+	}
+
 	return m.grid
 }
 
@@ -372,4 +411,13 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	slice := gd.Slice(rg)
 	m.desc.Content = ui.Text(text)
 	m.desc.Draw(slice)
+}
+
+func (m *model) DrawAnimation(gd gruid.Grid) {
+	// Iterate over all framecells of the current frame, and draw.
+	for _, fc := range m.animation.frames[0].framecells {
+		p := fc.P
+		c := fc.Cell
+		gd.Set(p, c)
+	}
 }

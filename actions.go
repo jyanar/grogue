@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -22,6 +24,7 @@ const (
 	ActionPickup                  // Pick up an item.
 	ActionDrop                    // Drop an item.
 	ActionExamine                 // Examine the map.
+	ActionAnimate                 // Execute an animation.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -72,6 +75,13 @@ func (m *model) handleAction() gruid.Effect {
 		m.mode = modeExamination
 		m.target.pos = m.game.ECS.positions[0].Point.Shift(2, 2)
 
+	case ActionAnimate:
+		m.mode = modeAnimation
+		return gruid.Cmd(func() gruid.Msg {
+			t := time.NewTimer(m.animation.frames[0].duration)
+			<-t.C
+			return msgAnimation(true)
+		})
 	}
 	return nil
 }
