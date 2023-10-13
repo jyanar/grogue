@@ -9,7 +9,8 @@ import (
 type ECS struct {
 	entities []int
 	nextID   int
-
+	Map      *Map
+	// Components
 	positions    map[int]*Position
 	renderables  map[int]*Renderable
 	names        map[int]*Name
@@ -26,16 +27,12 @@ type ECS struct {
 	consumables  map[int]*Consumable
 	collectibles map[int]*Collectible
 	inventories  map[int]*Inventory
-
-	systems []System
-
-	perceptionSystem PerceptionSystem
-	aISystem         AISystem
-	bumpSystem       BumpSystem
-	fOVSystem        FOVSystem
-	deathSystem      DeathSystem
-
-	Map *Map
+	// Systems
+	PerceptionSystem
+	AISystem
+	BumpSystem
+	FOVSystem
+	DeathSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -60,49 +57,24 @@ func NewECS() *ECS {
 		collectibles: make(map[int]*Collectible),
 		inventories:  make(map[int]*Inventory),
 	}
-	ecs.perceptionSystem = PerceptionSystem{ecs: ecs}
-	ecs.aISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
-	ecs.bumpSystem = BumpSystem{ecs: ecs}
-	ecs.fOVSystem = FOVSystem{ecs: ecs}
-	ecs.deathSystem = DeathSystem{ecs: ecs}
-	ecs.systems = append(ecs.systems, &PerceptionSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}})
-	ecs.systems = append(ecs.systems, &BumpSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &FOVSystem{ecs: ecs})
-	ecs.systems = append(ecs.systems, &DeathSystem{ecs: ecs})
-	// ecs.systems = append(ecs.systems, &DebugSystem{ecs: ecs})
-
+	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
+	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
+	ecs.BumpSystem = BumpSystem{ecs: ecs}
+	ecs.FOVSystem = FOVSystem{ecs: ecs}
+	ecs.DeathSystem = DeathSystem{ecs: ecs}
 	return ecs
 }
 
-// Entity-first updating.
-func (ecs *ECS) Update2() {
-	// Iterate over each entity, and update them based on what components they have.
-	for _, e := range ecs.entities {
-		// How do we check which systems this entity applies to? It has to be done
-		// dynamically, to allow us to remove and add components to entities.
-		if ecs.HasComponents(e, Position{}, Perception{}) {
-			ecs.perceptionSystem.Update2(e)
-		}
-		if ecs.HasComponents(e, Position{}, AI{}) {
-			ecs.aISystem.Update2(e)
-		}
-		if ecs.HasComponents(e, Position{}, Bump{}) {
-			ecs.bumpSystem.Update2(e)
-		}
-		if ecs.HasComponents(e, Position{}, FOV{}) {
-			ecs.fOVSystem.Update2(e)
-		}
-		if ecs.HasComponents(e, Death{}) {
-			ecs.deathSystem.Update2(e)
-		}
-	}
-}
-
-// Systems-first updating.
+// Iterates through each entity
 func (ecs *ECS) Update() {
-	for _, s := range ecs.systems {
-		s.Update()
+	for _, e := range ecs.entities {
+		ecs.PerceptionSystem.Update(e)
+		ecs.AISystem.Update(e)
+		ecs.BumpSystem.Update(e)
+		ecs.FOVSystem.Update(e)
+	}
+	for _, e := range ecs.entities {
+		ecs.DeathSystem.Update(e)
 	}
 }
 
