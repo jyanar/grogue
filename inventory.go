@@ -14,8 +14,11 @@ func (m *model) OpenInventory(title string) {
 	r := 'a'
 	for _, it := range inv.items {
 		name := m.game.ECS.names[it].string
+		glyph := m.game.ECS.renderables[it].glyph
+		fg := m.game.ECS.renderables[it].fg
+		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
 		entries = append(entries, ui.MenuEntry{
-			Text: ui.Text(string(r) + " - " + name),
+			Text: stt.WithText(string(r) + " - @k" + string(glyph) + "@N " + name),
 			Keys: []gruid.Key{gruid.Key(r)},
 		})
 		r++
