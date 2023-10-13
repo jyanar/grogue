@@ -65,6 +65,14 @@ func NewECS() *ECS {
 	return ecs
 }
 
+func (ecs *ECS) Initialize() {
+	for _, e := range ecs.entities {
+		ecs.PerceptionSystem.Update(e)
+		ecs.AISystem.Update(e)
+		ecs.FOVSystem.Update(e)
+	}
+}
+
 // Iterates through each entity
 func (ecs *ECS) Update() {
 	for _, e := range ecs.entities {
@@ -73,6 +81,9 @@ func (ecs *ECS) Update() {
 		ecs.BumpSystem.Update(e)
 		ecs.FOVSystem.Update(e)
 	}
+	// TODO deathsystem should be triggered immediately, not at the end of
+	// everyone's turn. doesn't make sense for a goblin to be "dead" and then
+	// hit the player one more time before he's processed
 	for _, e := range ecs.entities {
 		ecs.DeathSystem.Update(e)
 	}

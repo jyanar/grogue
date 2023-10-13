@@ -55,8 +55,6 @@ func (g *game) NewHealthPotion() int {
 	)
 }
 
-// Useful for debugging that corpses pathing bug
-// 2023 Sep 18 observed a corpse, goblin, player, and troll standing on the same tile.
 func (g *game) NewCorpse() int {
 	return g.ECS.Create(
 		Name{"corpse"},
@@ -71,6 +69,6 @@ func (g *game) NewBlood(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"blood"},
 		Position{p},
-		Renderable{glyph: '.', fg: ColorBlood, bg: ColorBlood, order: ROFloor},
+		Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
 	)
 }

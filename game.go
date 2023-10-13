@@ -22,7 +22,7 @@ func (g *game) Initialize() {
 	g.SpawnEnemies()
 	g.PlaceItems()
 	// g.SpawnCorpses()
-	g.ECS.Update()
+	g.ECS.Initialize()
 }
 
 // InFOV returns true if p is in the field of view of an entity with FOV. We only
