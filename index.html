@@ -3,7 +3,11 @@
 <head>
 	<style>
 		body {
+			color: white;
 			background-color: black;
+		}
+		table {
+			text-align: center;
 		}
 	</style>
 <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
@@ -12,6 +16,7 @@
 <!--<link rel="stylesheet" type="text/css" href="style.css" />-->
 </head>
 <body>
+<center>
 <script src="wasm_exec.js"></script>
 <!--<script src="screenfull.min.js"></script>-->
 <div id="appdiv">
@@ -49,5 +54,34 @@ WebAssembly.instantiateStreaming(fetch(wasmfile), go.importObject).then((result)
 	console.error(err);
 });
 </script>
+<h2>↓</h2>
+<h3>keys</h3>
+<table>
+	<tr>
+		<td>arrow keys/vim keys/numpad</td>
+		<td>navigation</td>
+	</tr>
+	<tr>
+		<td>g</td>
+		<td>pick up item</td>
+	</tr>
+	<tr>
+		<td>i</td>
+		<td>use item</td>
+	</tr>
+	<tr>
+		<td>d</td>
+		<td>drop item</td>
+	</tr>
+	<tr>
+		<td>x</td>
+		<td>examine</td>
+	</tr>
+	<tr>
+		<td>m</td>
+		<td>view message log</td>
+	</tr>
+</table>
+</center>
 </body>
 </html>

@@ -1,5 +1,4 @@
 [ ] blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
-[ ] general animation system
 [ ] corpses made up of body parts?
 [ ] throw potions
 [ ] other entities can pick up items
@@ -13,6 +12,7 @@
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
 
 done
+[x] general animation system
 [x] switch to per-entity turns rather than per-system turns
 [x] fix pathing, so enemies do not hit each other during normal ambulation
 [x] upon death, all items in inventory are dropped
