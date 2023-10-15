@@ -10,6 +10,7 @@
 
 [ ] unified message logging system
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
+[ ] inventory should not be accessible when player is dead
 
 done
 [x] general animation system

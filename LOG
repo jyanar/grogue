@@ -1,0 +1,13 @@
+13 October 2023
+===============
+
+A productive week. 
+* Made the perception be computed using an FOV, just as is done for the player.
+  Previously monsters would just check whether the player was X number of tiles
+  away, and if so, would start pathing towards them. Computing the list of
+  perceived entities using an FOV makes it such that you can lose them if you
+  turn a corner.
+* Inventory is now dropped on death.
+* Switched to a per-entity update instead of per-system update.
+* Inventory menu shows glyph and color of item. Just a nice QoL improvement.
+* Added animations! None implemented yet, but the ability to add them is there.

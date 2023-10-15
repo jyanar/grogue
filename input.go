@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/anaseto/gruid"
 )
 
@@ -46,17 +44,6 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	// Waiting
 	case ".":
 		m.action = action{Type: ActionWait, Delta: pdelta.Shift(0, 0)}
-
-	case "a":
-		// Let's execute the animation!
-		m.animation = &Animation{
-			frames: []AnimationFrame{
-				AnimationFrame{duration: 1000 * time.Millisecond, framecells: []gruid.FrameCell{gruid.FrameCell{gruid.Cell{}.WithRune('T'), gruid.Point{10, 10}}}},
-				AnimationFrame{duration: 1000 * time.Millisecond, framecells: []gruid.FrameCell{gruid.FrameCell{gruid.Cell{}.WithRune('U'), gruid.Point{10, 10}}}},
-				AnimationFrame{duration: 1000 * time.Millisecond, framecells: []gruid.FrameCell{gruid.FrameCell{gruid.Cell{}.WithRune('H'), gruid.Point{10, 10}}}},
-			},
-		}
-		m.action = action{Type: ActionAnimate}
 
 	// Quitting
 	case gruid.KeyEscape, "q":

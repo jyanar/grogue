@@ -62,7 +62,9 @@ func (s *BumpSystem) Update(e int) {
 		}
 		if health_target.hp <= 0 {
 			health_target.hp = 0
-			s.ecs.AddComponent(target, Death{}) // Entity marked for death.
+			// Process entity through DeathSystem.
+			s.ecs.AddComponent(target, Death{})
+			s.ecs.DeathSystem.Update(target)
 		}
 	} else {
 		s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})

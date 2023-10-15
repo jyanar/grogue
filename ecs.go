@@ -80,11 +80,6 @@ func (ecs *ECS) Update() {
 		ecs.AISystem.Update(e)
 		ecs.BumpSystem.Update(e)
 		ecs.FOVSystem.Update(e)
-	}
-	// TODO deathsystem should be triggered immediately, not at the end of
-	// everyone's turn. doesn't make sense for a goblin to be "dead" and then
-	// hit the player one more time before he's processed
-	for _, e := range ecs.entities {
 		ecs.DeathSystem.Update(e)
 	}
 }
