@@ -26,7 +26,7 @@ func (m *model) OpenInventory(title string) {
 	// We create a new menu widget for the inventory window.
 	m.inventory = ui.NewMenu(ui.MenuConfig{
 		Grid:    gruid.NewGrid(40, MapHeight),
-		Box:     &ui.Box{Title: ui.Text(title)},
+		Box:     &ui.Box{Title: ui.Text(title).WithStyle(gruid.Style{}.WithFg(ColorPlayer))},
 		Entries: entries,
 	})
 }
@@ -74,9 +74,14 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
 		// Delete the item!
 		g.ECS.Delete(item)
+		return nil
 	}
 	return nil
 }
+
+// func (g *game) InventoryActivateWithTarget(entity, itemidx int) error {
+// 	item := g.ECS.inventories[entity].items[itemidx]
+// }
 
 func (g *game) InventoryRemove(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]

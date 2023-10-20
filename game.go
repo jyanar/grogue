@@ -17,7 +17,7 @@ func (g *game) Initialize() {
 	g.ECS = NewECS()
 	g.ECS.Map = g.Map
 	// Place player on a random floor.
-	g.NewPlayer()
+	g.NewPlayer(g.FreeFloorTile())
 	// Spawn enemies, place items, and advance a tick.
 	g.SpawnEnemies()
 	g.PlaceItems()
@@ -52,9 +52,9 @@ func (g *game) SpawnEnemies() {
 	for i := 0; i < MonstersToSpawn; i++ {
 		switch {
 		case g.Map.Rand.Intn(100) < 80:
-			g.NewGoblin()
+			g.NewGoblin(g.FreeFloorTile())
 		default:
-			g.NewTroll()
+			g.NewTroll(g.FreeFloorTile())
 		}
 	}
 }
@@ -64,20 +64,14 @@ const PotionsToPlace = 5
 // Places potions and other items throughout the map during gen.
 func (g *game) PlaceItems() {
 	for i := 0; i < PotionsToPlace; i++ {
-		g.ECS.Create(
-			Name{"health potion"},
-			Renderable{glyph: '!', fg: ColorHealthPotion, order: ROItem},
-			Collectible{},
-			Consumable{hp: 5},
-			Position{g.FreeFloorTile()},
-		)
+		g.NewHealthPotion(g.Map.RandomFloor())
 	}
 }
 
 func (g *game) SpawnCorpses() {
 	const corpsesToSpawn = 10
 	for i := 0; i < corpsesToSpawn; i++ {
-		g.NewCorpse()
+		g.NewCorpse(g.Map.RandomFloor())
 	}
 }
 

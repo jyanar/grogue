@@ -1,6 +1,7 @@
 [ ] blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
 [ ] corpses made up of body parts?
 [ ] throw potions
+[ ] staffs, ranged attacks
 [ ] other entities can pick up items
    To implement this, we would want to have a setup where during a turn, an entity decides what action they want to take. Turn taking can be like so:
       1. Perceive entities around you.
@@ -11,6 +12,7 @@
 [ ] unified message logging system
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
 [ ] inventory should not be accessible when player is dead
+[ ] when selecting where to path, enemies should use far away locations on map (could use djikstra map for this)
 
 done
 [x] general animation system

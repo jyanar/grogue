@@ -5,10 +5,10 @@ package main
 
 import "github.com/anaseto/gruid"
 
-func (g *game) NewPlayer() int {
+func (g *game) NewPlayer(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"player"},
-		Position{g.FreeFloorTile()},
+		Position{p},
 		Renderable{glyph: '@', fg: ColorPlayer, order: ROActor},
 		Health{hp: 18, maxhp: 18},
 		Damage{5},
@@ -19,10 +19,10 @@ func (g *game) NewPlayer() int {
 	)
 }
 
-func (g *game) NewGoblin() int {
+func (g *game) NewGoblin(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"goblin"},
-		Position{g.FreeFloorTile()},
+		Position{p},
 		Renderable{glyph: 'g', fg: ColorMonster, order: ROActor},
 		Health{hp: 10, maxhp: 10},
 		Damage{2},
@@ -32,10 +32,10 @@ func (g *game) NewGoblin() int {
 	)
 }
 
-func (g *game) NewTroll() int {
+func (g *game) NewTroll(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"troll"},
-		Position{g.FreeFloorTile()},
+		Position{p},
 		Renderable{glyph: 'T', fg: ColorTroll, order: ROActor},
 		Health{hp: 20, maxhp: 20},
 		Damage{5},
@@ -45,7 +45,7 @@ func (g *game) NewTroll() int {
 	)
 }
 
-func (g *game) NewHealthPotion() int {
+func (g *game) NewHealthPotion(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"health potion"},
 		Position{g.FreeFloorTile()},
@@ -55,10 +55,10 @@ func (g *game) NewHealthPotion() int {
 	)
 }
 
-func (g *game) NewCorpse() int {
+func (g *game) NewCorpse(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"corpse"},
-		Position{g.Map.RandomFloor()},
+		Position{p},
 		Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse},
 		Collectible{},
 		Consumable{hp: 2},
