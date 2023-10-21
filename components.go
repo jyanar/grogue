@@ -94,9 +94,12 @@ type LogEntry struct {
 	Dups  int         // consecutive duplicates of same message
 }
 
-// Entities with this component can be consumed, to replenish HP.
-type Consumable struct {
-	hp int
+// Entities with this component are consumed on use.
+type Consumable struct{}
+
+// Entities with this component provide healing when used.
+type Healing struct {
+	amount int
 }
 
 // Entities with this component can be picked up and placed in inventory.
@@ -111,4 +114,24 @@ type Inventory struct {
 // Entities with this component will perform an action.
 type Action struct {
 	action actionType
+}
+
+// Entities with this component can be thrown.
+type Throwable struct{}
+
+// Entities with this component can be used for ranged attacks. e.g. staffs.
+type Ranged struct {
+	Range int
+}
+
+// // Entities with this component can be used for ranged attacks. e.g. staffs.
+// type Zappable struct {
+// 	Range int
+// }
+
+// Entities with this component have an area of effect which is activated when
+// it is zapped (such as in the case of staffs) or thrown (such as in the case
+// of potions)
+type AreaOfEffect struct {
+	Radius int
 }

@@ -66,15 +66,15 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]
 	item_name := g.ECS.names[item].string
 	entity_name := g.ECS.names[entity].string
-	if g.ECS.HasComponent(item, Consumable{}) {
-		// Use the potion!
-		g.ECS.healths[entity].hp += g.ECS.consumables[item].hp
+	// Item can provide healing. Apply healing.
+	if g.ECS.HasComponent(item, Healing{}) {
+		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
 		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
-		// Delete from inventory.
+	}
+	// Item was consumable, so we delete from inventory.
+	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
-		// Delete the item!
 		g.ECS.Delete(item)
-		return nil
 	}
 	return nil
 }

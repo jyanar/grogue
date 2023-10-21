@@ -124,7 +124,8 @@ func (s *DeathSystem) Update(e int) {
 	s.ecs.AddComponent(e, Name{name + " corpse"})
 	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: fg, order: ROCorpse})
 	s.ecs.AddComponent(e, Collectible{})
-	s.ecs.AddComponent(e, Consumable{hp: 2})
+	s.ecs.AddComponent(e, Consumable{})
+	s.ecs.AddComponent(e, Healing{amount: 2})
 	// Drop everything in inventory
 	if s.ecs.HasComponent(e, Inventory{}) {
 		for _, item := range s.ecs.inventories[e].items {

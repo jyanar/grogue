@@ -51,7 +51,8 @@ func (g *game) NewHealthPotion(p gruid.Point) int {
 		Position{g.FreeFloorTile()},
 		Renderable{glyph: '!', fg: ColorHealthPotion, order: ROItem},
 		Collectible{},
-		Consumable{hp: 5},
+		Consumable{},
+		Healing{amount: 5},
 	)
 }
 
@@ -61,7 +62,8 @@ func (g *game) NewCorpse(p gruid.Point) int {
 		Position{p},
 		Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse},
 		Collectible{},
-		Consumable{hp: 2},
+		Consumable{},
+		Healing{amount: 2},
 	)
 }
 

@@ -25,6 +25,7 @@ type ECS struct {
 	ais          map[int]*AI
 	logentries   map[int]*LogEntry
 	consumables  map[int]*Consumable
+	healings     map[int]*Healing
 	collectibles map[int]*Collectible
 	inventories  map[int]*Inventory
 	// Systems
@@ -54,6 +55,7 @@ func NewECS() *ECS {
 		ais:          make(map[int]*AI),
 		logentries:   make(map[int]*LogEntry),
 		consumables:  make(map[int]*Consumable),
+		healings:     make(map[int]*Healing),
 		collectibles: make(map[int]*Collectible),
 		inventories:  make(map[int]*Inventory),
 	}
@@ -117,6 +119,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.logentries[idx] = &c
 		case Consumable:
 			ecs.consumables[idx] = &c
+		case Healing:
+			ecs.healings[idx] = &c
 		case Collectible:
 			ecs.collectibles[idx] = &c
 		case Inventory:
@@ -163,6 +167,7 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.ais, entity)
 	delete(ecs.logentries, entity)
 	delete(ecs.consumables, entity)
+	delete(ecs.healings, entity)
 	delete(ecs.collectibles, entity)
 	delete(ecs.inventories, entity)
 }
@@ -208,6 +213,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.logentries[entity] = &c
 	case Consumable:
 		ecs.consumables[entity] = &c
+	case Healing:
+		ecs.healings[entity] = &c
 	case Collectible:
 		ecs.collectibles[entity] = &c
 	case Inventory:
@@ -277,6 +284,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case Consumable:
 		if ecs.consumables[entity] != nil {
+			return true
+		}
+	case Healing:
+		if ecs.healings[entity] != nil {
 			return true
 		}
 	case Collectible:
@@ -398,6 +409,9 @@ func (ecs *ECS) printDebug(e int) {
 	}
 	if ecs.consumables[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.consumables[e], ecs.consumables[e])
+	}
+	if ecs.healings[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.healings[e], ecs.healings[e])
 	}
 	if ecs.collectibles[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.collectibles[e], ecs.collectibles[e])
