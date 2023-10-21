@@ -71,6 +71,13 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
 		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
 	}
+	// Item has ranged effect.
+	// What we would like:
+	// 	Move into modeTargeting, select an entity, and then activate spell at
+	//    the target location.
+	if g.ECS.HasComponent(item, Ranged{}) {
+		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+	}
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)

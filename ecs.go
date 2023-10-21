@@ -28,6 +28,7 @@ type ECS struct {
 	healings     map[int]*Healing
 	collectibles map[int]*Collectible
 	inventories  map[int]*Inventory
+	rangeds      map[int]*Ranged
 	// Systems
 	PerceptionSystem
 	AISystem
@@ -58,6 +59,7 @@ func NewECS() *ECS {
 		healings:     make(map[int]*Healing),
 		collectibles: make(map[int]*Collectible),
 		inventories:  make(map[int]*Inventory),
+		rangeds:      make(map[int]*Ranged),
 	}
 	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
 	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
@@ -125,6 +127,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.collectibles[idx] = &c
 		case Inventory:
 			ecs.inventories[idx] = &c
+		case Ranged:
+			ecs.rangeds[idx] = &c
 		}
 	}
 	ecs.nextID += 1
@@ -219,6 +223,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.collectibles[entity] = &c
 	case Inventory:
 		ecs.inventories[entity] = &c
+	case Ranged:
+		ecs.rangeds[entity] = &c
 	}
 }
 
@@ -296,6 +302,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case Inventory:
 		if ecs.inventories[entity] != nil {
+			return true
+		}
+	case Ranged:
+		if ecs.rangeds[entity] != nil {
 			return true
 		}
 	}
@@ -418,5 +428,8 @@ func (ecs *ECS) printDebug(e int) {
 	}
 	if ecs.inventories[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.inventories[e], ecs.inventories[e])
+	}
+	if ecs.rangeds[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.rangeds[e], ecs.rangeds[e])
 	}
 }

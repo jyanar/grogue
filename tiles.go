@@ -22,19 +22,22 @@ import (
 // Available colors. These are set to appropriate RGB values by the theme.
 const (
 	ColorFOV gruid.Color = iota + 1
+	ColorTarget
 	ColorPlayer
 	ColorMonster
 	ColorTroll
+
 	ColorCorpse
 	ColorHealthPotion
+	ColorScroll
+	ColorBlood
+
+	ColorLog
 	ColorLogPlayerAttack
 	ColorLogMonsterAttack
 	ColorLogSpecial
-	ColorLog
 	ColorStatusHealthy
 	ColorStatusWounded
-	ColorTarget
-	ColorBlood
 )
 
 // A list of available themes.
@@ -106,6 +109,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		case ColorTroll:
 			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
 		case ColorHealthPotion:
+			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+		case ColorScroll:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
 		case ColorLogPlayerAttack, ColorStatusHealthy:
 			fg = image.NewUniform(color.RGBA{0x75, 0xb9, 0x38, 255})

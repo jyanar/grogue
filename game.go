@@ -20,7 +20,8 @@ func (g *game) Initialize() {
 	g.NewPlayer(g.FreeFloorTile())
 	// Spawn enemies, place items, and advance a tick.
 	g.SpawnEnemies()
-	g.PlaceItems()
+	g.SpawnPotions()
+	g.SpawnScrolls()
 	// g.SpawnCorpses()
 	g.ECS.Initialize()
 }
@@ -62,9 +63,17 @@ func (g *game) SpawnEnemies() {
 const PotionsToPlace = 5
 
 // Places potions and other items throughout the map during gen.
-func (g *game) PlaceItems() {
+func (g *game) SpawnPotions() {
 	for i := 0; i < PotionsToPlace; i++ {
-		g.NewHealthPotion(g.Map.RandomFloor())
+		g.NewHealthPotion(g.FreeFloorTile())
+	}
+}
+
+const ScrollsToPlace = 5
+
+func (g *game) SpawnScrolls() {
+	for i := 0; i < ScrollsToPlace; i++ {
+		g.NewScroll(g.FreeFloorTile())
 	}
 }
 

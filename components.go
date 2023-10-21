@@ -111,6 +111,11 @@ type Inventory struct {
 	items []int // A list of entities.
 }
 
+// Entities with this component can be used for ranged attacks. e.g. staffs.
+type Ranged struct {
+	Range int
+}
+
 // Entities with this component will perform an action.
 type Action struct {
 	action actionType
@@ -118,11 +123,6 @@ type Action struct {
 
 // Entities with this component can be thrown.
 type Throwable struct{}
-
-// Entities with this component can be used for ranged attacks. e.g. staffs.
-type Ranged struct {
-	Range int
-}
 
 // // Entities with this component can be used for ranged attacks. e.g. staffs.
 // type Zappable struct {
@@ -133,5 +133,5 @@ type Ranged struct {
 // it is zapped (such as in the case of staffs) or thrown (such as in the case
 // of potions)
 type AreaOfEffect struct {
-	Radius int
+	radius int
 }
