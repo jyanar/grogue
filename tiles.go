@@ -94,7 +94,7 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 		}
 
 	case ThemeNoir:
-		fg = image.NewUniform(color.RGBA{100, 100, 100, 255})
+		fg = image.NewUniform(color.RGBA{80, 80, 80, 255})
 		bg = image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
 
 		switch c.Style.Fg {

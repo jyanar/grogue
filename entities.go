@@ -79,7 +79,7 @@ func (g *game) NewScroll(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"scroll"},
 		Position{p},
-		Renderable{glyph: '~', fg: ColorScroll, order: ROItem},
+		Renderable{glyph: '?', fg: ColorScroll, order: ROItem},
 		Collectible{},
 		Consumable{},
 		Ranged{Range: 6},
