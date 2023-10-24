@@ -7,7 +7,7 @@ import "github.com/anaseto/gruid"
 
 func (g *game) NewPlayer(p gruid.Point) int {
 	return g.ECS.Create(
-		Name{"player"},
+		Name{"you"},
 		Position{p},
 		Renderable{glyph: '@', fg: ColorPlayer, order: ROActor},
 		Health{hp: 18, maxhp: 18},

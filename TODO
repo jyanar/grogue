@@ -13,6 +13,7 @@
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
 [ ] inventory should not be accessible when player is dead
 [ ] when selecting where to path, enemies should use far away locations on map (could use djikstra map for this)
+[ ] energy system for movement and action taking
 
 done
 [x] general animation system

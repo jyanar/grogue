@@ -135,3 +135,9 @@ type Throwable struct{}
 type AreaOfEffect struct {
 	radius int
 }
+
+// Entities with this component will take damage.
+type DamageEffect struct {
+	source int
+	amount int
+}

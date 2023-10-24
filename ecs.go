@@ -11,61 +11,67 @@ type ECS struct {
 	nextID   int
 	Map      *Map
 	// Components
-	positions    map[int]*Position
-	renderables  map[int]*Renderable
-	names        map[int]*Name
-	inputs       map[int]*Input
-	bumps        map[int]*Bump
-	fovs         map[int]*FOV
-	obstructs    map[int]*Obstruct
-	healths      map[int]*Health
-	damages      map[int]*Damage
-	deaths       map[int]*Death
-	perceptions  map[int]*Perception
-	ais          map[int]*AI
-	logentries   map[int]*LogEntry
-	consumables  map[int]*Consumable
-	healings     map[int]*Healing
-	collectibles map[int]*Collectible
-	inventories  map[int]*Inventory
-	rangeds      map[int]*Ranged
+	positions     map[int]*Position
+	renderables   map[int]*Renderable
+	names         map[int]*Name
+	inputs        map[int]*Input
+	bumps         map[int]*Bump
+	fovs          map[int]*FOV
+	obstructs     map[int]*Obstruct
+	healths       map[int]*Health
+	damages       map[int]*Damage
+	deaths        map[int]*Death
+	perceptions   map[int]*Perception
+	ais           map[int]*AI
+	logentries    map[int]*LogEntry
+	consumables   map[int]*Consumable
+	healings      map[int]*Healing
+	collectibles  map[int]*Collectible
+	inventories   map[int]*Inventory
+	rangeds       map[int]*Ranged
+	damageeffects map[int][]DamageEffect
 	// Systems
 	PerceptionSystem
 	AISystem
 	BumpSystem
 	FOVSystem
 	DeathSystem
+	DamageEffectSystem
+	DebugSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
 // the callee is initializing that and will assign it right after this.
 func NewECS() *ECS {
 	ecs := &ECS{
-		nextID:       0,
-		positions:    make(map[int]*Position),
-		renderables:  make(map[int]*Renderable),
-		names:        make(map[int]*Name),
-		inputs:       make(map[int]*Input),
-		bumps:        make(map[int]*Bump),
-		fovs:         make(map[int]*FOV),
-		obstructs:    make(map[int]*Obstruct),
-		healths:      make(map[int]*Health),
-		damages:      make(map[int]*Damage),
-		deaths:       make(map[int]*Death),
-		perceptions:  make(map[int]*Perception),
-		ais:          make(map[int]*AI),
-		logentries:   make(map[int]*LogEntry),
-		consumables:  make(map[int]*Consumable),
-		healings:     make(map[int]*Healing),
-		collectibles: make(map[int]*Collectible),
-		inventories:  make(map[int]*Inventory),
-		rangeds:      make(map[int]*Ranged),
+		nextID:        0,
+		positions:     make(map[int]*Position),
+		renderables:   make(map[int]*Renderable),
+		names:         make(map[int]*Name),
+		inputs:        make(map[int]*Input),
+		bumps:         make(map[int]*Bump),
+		fovs:          make(map[int]*FOV),
+		obstructs:     make(map[int]*Obstruct),
+		healths:       make(map[int]*Health),
+		damages:       make(map[int]*Damage),
+		deaths:        make(map[int]*Death),
+		perceptions:   make(map[int]*Perception),
+		ais:           make(map[int]*AI),
+		logentries:    make(map[int]*LogEntry),
+		consumables:   make(map[int]*Consumable),
+		healings:      make(map[int]*Healing),
+		collectibles:  make(map[int]*Collectible),
+		inventories:   make(map[int]*Inventory),
+		rangeds:       make(map[int]*Ranged),
+		damageeffects: make(map[int][]DamageEffect),
 	}
 	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
 	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
 	ecs.BumpSystem = BumpSystem{ecs: ecs}
 	ecs.FOVSystem = FOVSystem{ecs: ecs}
 	ecs.DeathSystem = DeathSystem{ecs: ecs}
+	ecs.DamageEffectSystem = DamageEffectSystem{ecs: ecs}
+	ecs.DebugSystem = DebugSystem{ecs: ecs}
 	return ecs
 }
 
@@ -86,6 +92,7 @@ func (ecs *ECS) Update() {
 		ecs.FOVSystem.Update(e)
 		ecs.DeathSystem.Update(e)
 	}
+	// ecs.DebugSystem.Update()
 }
 
 func (ecs *ECS) Create(components ...any) int {
@@ -129,6 +136,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.inventories[idx] = &c
 		case Ranged:
 			ecs.rangeds[idx] = &c
+		case DamageEffect:
+			ecs.damageeffects[idx] = append(ecs.damageeffects[idx], c)
 		}
 	}
 	ecs.nextID += 1
@@ -174,6 +183,8 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.healings, entity)
 	delete(ecs.collectibles, entity)
 	delete(ecs.inventories, entity)
+	delete(ecs.rangeds, entity)
+	delete(ecs.damageeffects, entity)
 }
 
 func (ecs *ECS) Exists(entity int) bool {
@@ -225,6 +236,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.inventories[entity] = &c
 	case Ranged:
 		ecs.rangeds[entity] = &c
+	case DamageEffect:
+		ecs.damageeffects[entity] = append(ecs.damageeffects[entity], c)
 	}
 }
 
@@ -306,6 +319,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case Ranged:
 		if ecs.rangeds[entity] != nil {
+			return true
+		}
+	case DamageEffect:
+		if len(ecs.damageeffects[entity]) > 0 {
 			return true
 		}
 	}
@@ -431,5 +448,10 @@ func (ecs *ECS) printDebug(e int) {
 	}
 	if ecs.rangeds[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.rangeds[e], ecs.rangeds[e])
+	}
+	if len(ecs.damageeffects[e]) > 0 {
+		for _, de := range ecs.damageeffects[e] {
+			fmt.Printf("%v, %T\n", de, de)
+		}
 	}
 }

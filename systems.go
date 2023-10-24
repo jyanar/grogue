@@ -12,135 +12,6 @@ type System interface {
 	Update()
 }
 
-type BumpSystem struct {
-	ecs *ECS
-}
-
-func (s *BumpSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
-		return
-	}
-	// Get entity's bump and position data.
-	b := s.ecs.bumps[e]
-	p := s.ecs.positions[e]
-	dest := p.Point.Add(b.Point)
-	s.ecs.bumps[e] = nil // Consume bump component.
-	// Ignore movement to the same tile.
-	if b.X == 0 && b.Y == 0 {
-		return
-	}
-	// Let's attempt to move to dest.
-	if s.ecs.Map.Walkable(dest) {
-		// Check whether there are blocking entities at dest.
-		attackable := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
-		if len(attackable) == 0 {
-			p.Point = dest // No entity blocking the way, move to dest.
-			return
-		}
-		if len(attackable) > 1 {
-			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
-		}
-		// Attack entity at location.
-		target := attackable[0]
-		dmg_src := s.ecs.damages[e].int
-		name_src := s.ecs.names[e].string
-		name_target := s.ecs.names[target].string
-		health_target := s.ecs.healths[target]
-		msg := fmt.Sprintf("%s hits the %s for %d damage!", name_src, name_target, dmg_src)
-		msgcolor := ColorLogMonsterAttack
-		if e == 0 {
-			msgcolor = ColorLogPlayerAttack
-		}
-		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
-		health_target.hp -= dmg_src
-		if !s.ecs.BloodAt(dest) { // Add blood tile here.
-			s.ecs.Create(
-				Name{"blood"},
-				Position{dest},
-				Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
-			)
-		}
-		if health_target.hp <= 0 {
-			health_target.hp = 0
-			// Process entity through DeathSystem.
-			s.ecs.AddComponent(target, Death{})
-			s.ecs.DeathSystem.Update(target)
-		}
-	} else {
-		s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
-	}
-}
-
-type FOVSystem struct {
-	ecs *ECS
-}
-
-func (s *FOVSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
-		return
-	}
-	p := s.ecs.positions[e]
-	f := s.ecs.fovs[e]
-	if f.FOV == nil {
-		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
-	}
-	// We shift the FOV's range so that it will be centered on the position
-	// of the entity.
-	rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
-	f.FOV.SetRange(rg.Add(p.Point).Intersect(s.ecs.Map.Grid.Range()))
-	// We mark cells in field of view as explored. We use the symmetric shadow
-	// casting algorithm provided by the rl package.
-	passable := func(p gruid.Point) bool {
-		return s.ecs.Map.Grid.At(p) != Wall
-	}
-	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, passable, false) {
-		if paths.DistanceManhattan(point, p.Point) > f.LOS {
-			continue
-		}
-		if !s.ecs.Map.Explored[point] {
-			s.ecs.Map.Explored[point] = true
-		}
-	}
-}
-
-type DeathSystem struct {
-	ecs *ECS
-}
-
-func (s *DeathSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, Death{}) {
-		return
-	}
-	name := s.ecs.names[e].string
-	fg := s.ecs.renderables[e].fg
-	s.ecs.obstructs[e] = nil   // No longer blocking.
-	s.ecs.perceptions[e] = nil // No longer perceiving.
-	s.ecs.ais[e] = nil         // No longer pathing.
-	s.ecs.bumps[e] = nil
-	s.ecs.inputs[e] = nil
-	s.ecs.damages[e] = nil
-	// s.ecs.healths[e] = nil
-	s.ecs.deaths[e] = nil // Consume the death component.
-	s.ecs.AddComponent(e, Name{name + " corpse"})
-	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: fg, order: ROCorpse})
-	s.ecs.AddComponent(e, Collectible{})
-	s.ecs.AddComponent(e, Consumable{})
-	s.ecs.AddComponent(e, Healing{amount: 2})
-	// Drop everything in inventory
-	if s.ecs.HasComponent(e, Inventory{}) {
-		for _, item := range s.ecs.inventories[e].items {
-			s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
-			// r := s.ecs.renderables[item]
-			// s.ecs.AddComponent(item, Renderable{r.glyph, r.fg, r.bg, ROActor})
-		}
-		s.ecs.inventories[e] = nil
-	}
-	s.ecs.Create(LogEntry{
-		Text:  fmt.Sprintf("%s has died!", name),
-		Color: ColorLogMonsterAttack,
-	})
-}
-
 type PerceptionSystem struct {
 	ecs *ECS
 }
@@ -179,7 +50,7 @@ func (s *PerceptionSystem) Update(e int) {
 	// Check if player is within perceived entities, and switch to appropriate state.
 	for _, other := range per.perceived {
 		name_other := s.ecs.names[other].string
-		if name_other == "player" && s.ecs.HasComponent(e, AI{}) {
+		if name_other == "you" && s.ecs.HasComponent(e, AI{}) {
 			s.ecs.ais[e].state = CSHunting
 			break
 		} else {
@@ -248,6 +119,168 @@ func (s *AISystem) Update(e int) {
 	q := path[1]
 	// Move entity to first position in the path.
 	s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
+}
+
+type BumpSystem struct {
+	ecs *ECS
+}
+
+func (s *BumpSystem) Update(e int) {
+	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
+		return
+	}
+	// Get entity's bump and position data.
+	b := s.ecs.bumps[e]
+	p := s.ecs.positions[e]
+	dest := p.Point.Add(b.Point)
+	s.ecs.bumps[e] = nil // Consume bump component.
+	// Ignore movement to the same tile.
+	if b.X == 0 && b.Y == 0 {
+		return
+	}
+	// Let's attempt to move to dest.
+	if s.ecs.Map.Walkable(dest) {
+		// Check whether there are blocking entities at dest.
+		attackable_entities := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
+		if len(attackable_entities) == 0 {
+			p.Point = dest // No entity blocking the way, move to dest.
+			return
+		}
+		if len(attackable_entities) > 1 {
+			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
+		}
+		// Attack entity at location.
+		target_entity := attackable_entities[0]
+		attack_power := s.ecs.damages[e].int
+		s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
+		s.ecs.DamageEffectSystem.Update(target_entity)
+	} else {
+		s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
+	}
+}
+
+type DamageEffectSystem struct {
+	ecs *ECS
+}
+
+func (s *DamageEffectSystem) Update(e int) {
+	if !s.ecs.HasComponents(e, DamageEffect{}, Health{}) {
+		s.ecs.damageeffects[e] = []DamageEffect{}
+		return
+	}
+	health := s.ecs.healths[e]
+	for _, de := range s.ecs.damageeffects[e] {
+		health.hp -= de.amount
+		name_attacker := s.ecs.names[de.source].string
+		name_receiver := s.ecs.names[e].string
+		var msg string
+		if de.source == 0 {
+			msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
+		} else {
+			if e == 0 {
+				msg = fmt.Sprintf("The %s mauls you!", name_attacker)
+			} else {
+				msg = fmt.Sprintf("The %s hits the %s.", name_attacker, name_receiver)
+			}
+		}
+		msgcolor := ColorLogPlayerAttack
+		if e == 0 {
+			msgcolor = ColorLogMonsterAttack
+		}
+		if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
+			s.ecs.Create(
+				Name{"blood"},
+				Position{s.ecs.positions[e].Point},
+				Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
+			)
+		}
+		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+		if health.hp <= 0 {
+			health.hp = 0
+			// Process entity through DeathSystem
+			s.ecs.AddComponent(e, Death{})
+			s.ecs.DeathSystem.Update(e)
+		}
+	}
+	s.ecs.damageeffects[e] = []DamageEffect{}
+}
+
+type FOVSystem struct {
+	ecs *ECS
+}
+
+func (s *FOVSystem) Update(e int) {
+	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
+		return
+	}
+	p := s.ecs.positions[e]
+	f := s.ecs.fovs[e]
+	if f.FOV == nil {
+		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
+	}
+	// We shift the FOV's range so that it will be centered on the position
+	// of the entity.
+	rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
+	f.FOV.SetRange(rg.Add(p.Point).Intersect(s.ecs.Map.Grid.Range()))
+	// We mark cells in field of view as explored. We use the symmetric shadow
+	// casting algorithm provided by the rl package.
+	passable := func(p gruid.Point) bool {
+		return s.ecs.Map.Grid.At(p) != Wall
+	}
+	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, passable, false) {
+		if paths.DistanceManhattan(point, p.Point) > f.LOS {
+			continue
+		}
+		if !s.ecs.Map.Explored[point] {
+			s.ecs.Map.Explored[point] = true
+		}
+	}
+}
+
+type DeathSystem struct {
+	ecs *ECS
+}
+
+func (s *DeathSystem) Update(e int) {
+	if !s.ecs.HasComponents(e, Death{}) {
+		return
+	}
+	name := s.ecs.names[e].string
+	fg := s.ecs.renderables[e].fg
+	s.ecs.obstructs[e] = nil   // No longer blocking.
+	s.ecs.perceptions[e] = nil // No longer perceiving.
+	s.ecs.ais[e] = nil         // No longer pathing.
+	s.ecs.bumps[e] = nil
+	s.ecs.inputs[e] = nil
+	s.ecs.damages[e] = nil
+	s.ecs.rangeds[e] = nil
+	s.ecs.damageeffects[e] = nil
+	// s.ecs.healths[e] = nil
+	s.ecs.deaths[e] = nil // Consume the death component.
+	if e == 0 {
+		s.ecs.AddComponent(e, Name{"your corpse"})
+	} else {
+		s.ecs.AddComponent(e, Name{name + " corpse"})
+	}
+	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: fg, order: ROCorpse})
+	s.ecs.AddComponent(e, Collectible{})
+	s.ecs.AddComponent(e, Consumable{})
+	s.ecs.AddComponent(e, Healing{amount: 2})
+	// Drop everything in inventory
+	if s.ecs.HasComponent(e, Inventory{}) {
+		for _, item := range s.ecs.inventories[e].items {
+			s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
+		}
+		s.ecs.inventories[e] = nil
+	}
+	msg := fmt.Sprintf("%s has died!", name)
+	if e == 0 {
+		msg = "You have died!"
+	}
+	s.ecs.Create(LogEntry{
+		Text:  msg,
+		Color: ColorLogMonsterAttack,
+	})
 }
 
 type DebugSystem struct {

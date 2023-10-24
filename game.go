@@ -94,11 +94,15 @@ func (g *game) PickupItem() (ok bool) {
 		for _, i := range g.ECS.EntitiesAt(p) {
 			if i != e && g.ECS.HasComponent(i, Collectible{}) {
 				// There is an item here that is collectible! Place a reference to it
-				// in e's inventory and remove both its Position and Renderable components.
+				// in e's inventory and remove its Position component.
 				ok = true
-				name := g.ECS.names[e].string
-				itemName := g.ECS.names[i].string
-				g.Logf("%s picks up %s.", ColorLogSpecial, name, itemName)
+				entity_name := g.ECS.names[e].string
+				item_name := g.ECS.names[i].string
+				if e == 0 {
+					g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
+				} else {
+					g.Logf("%s picks up %s.", ColorLogSpecial, entity_name, item_name)
+				}
 				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
 				g.ECS.positions[i] = nil
 			}
