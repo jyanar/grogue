@@ -1,7 +1,5 @@
 # grogue
 
-Compling for web:
-```
-cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .
-GOOS=js GOARCH=wasm go build -o app.wasm .
-```
+A roguelike written in Go, using the [gruid](https://codeberg.org/anaseto/gruid) library.
+
+*[playable here](https://yanar.org/grogue)*
