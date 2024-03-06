@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/anaseto/gruid"
@@ -86,6 +85,7 @@ func NewModel(gd gruid.Grid) *model {
 			Box:  &ui.Box{},
 		}),
 		pr: paths.NewPathRange(gd.Range()),
+		// animation: &Animation{},
 	}
 }
 
@@ -116,28 +116,23 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			switch msg {
 			case true:
 				// Animation is ongoing, pop the next frame.
-				if len(m.animation.frames) > 1 {
-					m.animation.frames = m.animation.frames[1:]
-					return gruid.Cmd(func() gruid.Msg {
-						t := time.NewTimer(m.animation.frames[0].duration)
-						<-t.C
-						return msgAnimation(true)
-					})
-				} else {
-					return gruid.Cmd(func() gruid.Msg {
-						return msgAnimation(false)
-					})
+				if !m.game.ECS.animation.Done() {
+					d := m.game.ECS.animation.frames[0].duration
+					m.game.ECS.animation.frames = m.game.ECS.animation.frames[1:]
+					return m.game.ECS.animation.animCmdContinue(d)
 				}
+				// Otherwise, end the animation.
+				return m.game.ECS.animation.animCmdEnd()
 			case false:
 				// Animation finished. Return control to modeNormal.
-				m.animation = nil
+				m.game.ECS.animation.frames = nil
 				m.mode = modeNormal
 				return nil
 			}
 
 		case gruid.MsgKeyDown:
 			// Interrupt animation and go back to modeNormal.
-			m.animation = nil
+			m.game.ECS.animation = nil
 			m.mode = modeNormal
 			return nil
 		}
@@ -319,7 +314,7 @@ func (m *model) Draw() gruid.Grid {
 	m.DrawLog(loggrid)
 	m.DrawStatus(statusgrid)
 
-	if m.mode == modeAnimation {
+	if m.mode == modeAnimation && !m.game.ECS.animation.Done() {
 		m.DrawAnimation(mapgrid)
 	}
 
@@ -341,7 +336,7 @@ func (m *model) DrawTarget(gd gruid.Grid) {
 
 // DrawLog draws the last two lines of the log.
 func (m *model) DrawLog(gd gruid.Grid) {
-	j := 1
+	j := 2
 	for i := len(m.game.Log) - 1; i >= 0; i-- {
 		if j < 0 {
 			break
@@ -415,7 +410,7 @@ func (m *model) DrawNames(gd gruid.Grid) {
 
 func (m *model) DrawAnimation(gd gruid.Grid) {
 	// Iterate over all framecells of the current frame, and draw.
-	for _, fc := range m.animation.frames[0].framecells {
+	for _, fc := range m.game.ECS.animation.frames[0].framecells {
 		p := fc.P
 		c := fc.Cell
 		gd.Set(p, c)

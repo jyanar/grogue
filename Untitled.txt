@@ -1,0 +1,69 @@
+Okay so let's imagine that we are writing an event-based ECS for the roguelike.
+
+We could, besides having a component that holds the data for each thing, also
+have an onEvent method defined for each one:
+
+type Health struct {
+	hp, maxhp int
+}
+
+How could we set up a system for events without breaking the ECS?
+
+Approach 1: no components for damage delivery
+--------------------------------------------- 
+
+The system that attacks is in charge of computing whether the a given attack
+will actually effect damage on an entity, and if so, update the entity then and
+there. If the attack causes HP to drop below 0, add a Death component to the
+entity. This is the most boneheaded way to go about implementing this. The issue
+is that eventually it will no longer scale too well.
+
+Approach 2: adding DamageEffect components to the attacked entity
+----------------------------------------------------------------- We could have
+a component called DamageEffect which gets added to the other entity. In fact it
+could instead be:
+
+	damageeffects: map[int]e[]DamageEffect{}
+
+====
+
+Okay, so animations. A few constraints:
+
+* Only one animation is playing at any given time. This means we can have a
+field in the model containing the animation. Having it in the model as opposed
+to the game struct means that we can even fill this with anything else we want:
+a loading screen animation, etc.
+
+* There needs to be some way for the Systems to trigger an animation. I can
+think of a few approaches:
+
+Approach 1: ecs.Update() returns gruid.Effect
+---------------------------------------------
+
+Change system methods to Update(e int) gruid.Effect -- generally, this is nil.
+But we can trigger things if this is ever not nil, such as animations. This
+would look something like:
+
+func (ecs *ECS) Update() gruid.Effect {
+	... eff = ecs.PerceptionSystem.Update(e) if eff != nil {
+		return eff
+	}
+}
+
+Approach 2: we instantiate Animation components in the ECS
+----------------------------------------------------------
+
+Another way is to create Animation components that get instantiated whenever an
+animation needs to play. We would need to constantly check to see if entities
+with animation components exist, and if so, we trigger an animation.
+
+
+
+
+
+
+
+
+
+
+

@@ -7,9 +7,10 @@ import (
 )
 
 type ECS struct {
-	entities []int
-	nextID   int
-	Map      *Map
+	entities  []int
+	nextID    int
+	Map       *Map
+	animation *Animation
 	// Components
 	positions     map[int]*Position
 	renderables   map[int]*Renderable

@@ -1,0 +1,76 @@
+A model that does not use messages
+
+Without messages, how do we handle turn-to-turn communication? In this case, there
+is no msg.KeyDown -- everything instead gets added as an entity (for example, an
+input entity) -- targeting is itself also an entity, with certain components that
+are specific for targeting (such as a radius, colors, particular z-order, etc) and
+turn to turn we add keyboard input components to this entity (the player itself
+lacks an input component during targeting, so it does not get moved) and additionally
+we would need a way of making sure that other entities are not able to make movement.
+
+So for this we could have a system which itself calls other systems? Basically, it
+checks whether there is an entity with a paused component or something like that,
+and while that is active we only allow that entity to perform actions.
+
+In the context of targeting, it goes something like this:
+
+* Player opens inventory, selects throw potion
+* We add an entity called targeting with a Targeting, Input, Radius, Renderable components, etc
+* We have a system called TargetingSystem which checks whether an entity with Targeting exists.
+* If it detects an entity with Targeting, then we enter the special model mode called modeTargeting.
+* Within modeTargeting, we iterate over all entities with Targeting/Input components and forward
+keypresses to only those entities. An "ESC" keypress deletes these entities. Also, need to make sure
+that animation works somehow. A blinking target reticle for example.
+* We could ensure that there is always animation being rendered frame to frame. This would require
+a continuous Update function instead of the gruid framework where we need to pass messages and such.
+* Assuming we had something like a continuous Update function, we could simply iterate over all
+entities with Animated components. An animated component can contain multiple Renderable components,
+and a timer value or a list of timers. These tell us how long each frame (i.e., each Renderable) should
+be displayed for. Lastly, it also carries an index value that tells us which frame the Animation is in.
+During each Update() we check whether more time has elapsed than the current frame length for each Animated
+component, and if it has then we advance the index to the next frame for that particular Animated component.
+Then in the Draw function we simply iterate over all Renderables and draw them to the screen.
+   * Note, we could either have a separate Renderable{} and Animated{} component, or we could simply stuff
+   all data necessary for animations into Renderable{}.
+
+* NOTE for gruid, is there a way of forcing a 60fps framerate using the Msg stuff? Using all this gruid.Cmd
+gruid.Effect gruid.Msg stuff.
+
+Well currently things get called like this at the end of the Update() function:
+   //...
+   m.handleAction()
+}
+
+// handleAction updates the model in response to current recorded last action.
+func (m *model) handleAction() gruid.Effect {
+	switch m.action.Type {
+	case ActionMovement:
+		m.game.PlayerPos = m.game.PlayerPos.Add(m.action.Delta)
+	case ActionQuit:
+		// for now, just terminate with gruid End command: this will
+		// have to be updated later when implementing saving.
+		return gruid.End()
+
+   // Could we add this?
+   case ActionNone:
+      return NextFrame()
+   
+   }
+   return nil
+}
+
+// This waits a frame and then advances
+func NextFrame() Cmd {
+   return func() Msg {
+      return msgEnd{}
+}
+
+nextFrame()
+nextFrame()
+nextFrame()
+// User presses "l" to move right
+case ActionMovement:
+   m.game.PlayerPos = m.game.PlayerPos.Add(m.action.Delta)
+nextFrame()
+nextFrame()
+

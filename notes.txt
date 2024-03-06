@@ -42,4 +42,6 @@ entities first set a path, then all entities execute their path (thus causing
 them to bump into one another). Another example is that if a monster is within
 fighting distance, but you move to another tile that is also within fighting
 distance, the monster moves to your previous tile instead of just attacking you.
-This is bad because it makes the AI seem dumb.
+This is bad because it makes the AI seem dumb. Instead, iterating over entities
+ensures that turn taking is respected: entity A performs perception, movement,
+attacks, etc., then entity B does the same, then entity C, etc.

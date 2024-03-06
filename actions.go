@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -77,11 +75,13 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionAnimate:
 		m.mode = modeAnimation
-		return gruid.Cmd(func() gruid.Msg {
-			t := time.NewTimer(m.animation.frames[0].duration)
-			<-t.C
-			return msgAnimation(true)
-		})
+		return m.game.ECS.animation.animCmdStart()
 	}
+
+	if m.game.ECS.animation != nil && !m.game.ECS.animation.Done() {
+		m.mode = modeAnimation
+		return m.game.ECS.animation.animCmdStart()
+	}
+
 	return nil
 }

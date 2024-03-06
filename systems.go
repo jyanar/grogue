@@ -201,6 +201,8 @@ func (s *DamageEffectSystem) Update(e int) {
 			s.ecs.AddComponent(e, Death{})
 			s.ecs.DeathSystem.Update(e)
 		}
+		// Trigger animation
+		// s.ecs.animation = NewAttackedAnimation(s.ecs.positions[e].Point)
 	}
 	s.ecs.damageeffects[e] = []DamageEffect{}
 }
@@ -281,6 +283,8 @@ func (s *DeathSystem) Update(e int) {
 		Text:  msg,
 		Color: ColorLogMonsterAttack,
 	})
+	// Trigger animation
+	s.ecs.animation = NewDeathAnimation(s.ecs.positions[e].Point, s.ecs.Map)
 }
 
 type DebugSystem struct {

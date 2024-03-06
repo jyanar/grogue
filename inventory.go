@@ -3,6 +3,8 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -69,15 +71,19 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	// Item can provide healing. Apply healing.
 	if g.ECS.HasComponent(item, Healing{}) {
 		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
-		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+		if entity == 0 {
+			g.Logf("You use the %s.", ColorLogSpecial, item_name)
+		} else {
+			g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+		}
 	}
 	// Item has ranged effect.
 	// What we would like:
 	// 	Move into modeTargeting, select an entity, and then activate spell at
 	//    the target location.
-	if g.ECS.HasComponent(item, Ranged{}) {
-		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
-	}
+	// if g.ECS.HasComponent(item, Ranged{}) {
+	// 	g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+	// }
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
@@ -86,9 +92,31 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	return nil
 }
 
-// func (g *game) InventoryActivateWithTarget(entity, itemidx int) error {
-// 	item := g.ECS.inventories[entity].items[itemidx]
-// }
+func (g *game) InventoryActivateWithTarget(entity, itemidx int, targ *gruid.Point) error {
+	entity_name := g.ECS.names[entity]
+	inv := g.ECS.inventories[entity]
+	if len(inv.items) <= itemidx {
+		return errors.New("Empty slot.")
+	}
+	item := inv.items[itemidx]
+	item_name := g.ECS.names[item]
+	if g.ECS.HasComponent(item, Healing{}) {
+		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
+		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+	}
+	if g.ECS.HasComponents(item, Ranged{}, Damage{}) {
+		// Let's attack the entity at target
+		target_entity := g.ECS.EntitiesAt(*targ)[0]
+		g.ECS.healths[target_entity].hp -= g.ECS.damages[item].int
+
+		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
+
+	}
+
+	return nil
+
+	// item := g.ECS.inventories[entity].items[itemidx]
+}
 
 func (g *game) InventoryRemove(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]
