@@ -23,9 +23,7 @@ const (
 
 // Entities with this component can be rendered.
 type Renderable struct {
-	glyph rune
-	fg    gruid.Color
-	bg    gruid.Color
+	cell  gruid.Cell
 	order renderOrder
 }
 
@@ -141,3 +139,22 @@ type DamageEffect struct {
 	source int
 	amount int
 }
+
+type CFrameCell struct {
+	r Renderable
+	p gruid.Point
+}
+
+type CAnimationFrame struct {
+	framecells []CFrameCell
+	nticks     int // Duration of animation, in ticks
+	itick      int // Current duration. Resets to duration when 0.
+}
+
+type CAnimation struct {
+	frames []CAnimationFrame
+	index  int
+	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
+}
+
+// I guess in this ca

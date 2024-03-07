@@ -1,29 +1,7 @@
-// This file defines the main model of the game: the Update function that
-// updates the model state in response to user input, and the Draw function,
-// which draw the final grid.
-//
-// That is, it fulfills the following interface:
-//
-//	  // Model contains the application's state.
-//	  type Model interface {
-//		  // Update is called when a message is received. Use it to update your
-//		  // model in response to messages and/or send commands or subscriptions.
-//		  // It is always called the first time with a MsgInit message.
-//		  Update(Msg) Effect
-//
-//		  // Draw is called after every Update. Use this function to draw the UI
-//		  // elements in a grid to be returned. If only parts of the grid are to
-//		  // be updated, you can return a smaller grid slice, or an empty grid
-//		  // slice to skip any drawing work. Note that the contents of the grid
-//		  // slice are then compared to the previous state at the same bounds,
-//		  // and only the changes are sent to the driver anyway.
-//		  Draw() Grid
-//	  }
-//
-
 package main
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -89,6 +67,23 @@ func NewModel(gd gruid.Grid) *model {
 	}
 }
 
+type msgTick struct{}
+
+func frameTicker() gruid.Sub {
+	return func(ctx context.Context, ch chan<- gruid.Msg) {
+		t := time.NewTicker(100 * time.Millisecond)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				ch <- msgTick{}
+			}
+		}
+	}
+}
+
 // Update implements gruid.Model.update. It handles keyboard and mouse input
 // messages and updates the model in response to them.
 func (m *model) Update(msg gruid.Msg) gruid.Effect {
@@ -102,12 +97,16 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 		case gruid.MsgInit:
 			m.game.Initialize()
+			return frameTicker()
 
 		case gruid.MsgKeyDown:
 			m.updateMsgKeyDown(msg)
 
 		case gruid.MsgMouse:
 			m.updateTargeting(msg)
+
+		case msgTick:
+			m.game.ECS.UpdateAnimation()
 		}
 
 	case modeAnimation:
@@ -299,18 +298,7 @@ func (m *model) Draw() gruid.Grid {
 	for _, e := range entitiesToDraw {
 		p := ECS.positions[e.entity]
 		r := ECS.renderables[e.entity]
-		c := mapgrid.At(p.Point)
-		fg, bg := c.Style.Fg, c.Style.Bg
-		if r.fg != gruid.ColorDefault {
-			fg = r.fg
-		}
-		if r.bg != gruid.ColorDefault {
-			bg = r.bg
-		}
-		mapgrid.Set(p.Point, gruid.Cell{
-			Rune:  r.glyph,
-			Style: gruid.Style{Fg: fg, Bg: bg},
-		})
+		mapgrid.Set(p.Point, r.cell)
 	}
 
 	// Draw target (if targeting), names, log, and status.
@@ -322,6 +310,9 @@ func (m *model) Draw() gruid.Grid {
 	if m.mode == modeAnimation {
 		m.DrawAnimation(mapgrid)
 	}
+
+	// Draw CAnimations
+	m.DrawCAnimation(mapgrid)
 
 	return m.grid
 }
@@ -419,5 +410,17 @@ func (m *model) DrawAnimation(gd gruid.Grid) {
 		p := fc.P
 		c := fc.Cell
 		gd.Set(p, c)
+	}
+}
+
+func (m *model) DrawCAnimation(gd gruid.Grid) {
+	// Iterate over all framecells of the current frame, and draw.
+	for _, e := range m.game.ECS.EntitiesWith(CAnimation{}) {
+		anim := m.game.ECS.animations[e]
+		for _, fc := range anim.frames[anim.index].framecells {
+			p := fc.p
+			r := fc.r
+			gd.Set(p, r.cell)
+		}
 	}
 }
