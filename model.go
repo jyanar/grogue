@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -14,18 +15,19 @@ import (
 )
 
 type model struct {
-	grid      gruid.Grid       // The drawing grid.
-	game      game             // The game state.
-	action    action           // The current UI action.
-	mode      mode             // The current UI mode.
-	log       *ui.Label        // Label for the log.
-	status    *ui.Label        // Label for the status.
-	desc      *ui.Label        // Label for position description.
-	viewer    *ui.Pager        // Message's history viewer.
-	inventory *ui.Menu         // Inventory menu.
-	pr        *paths.PathRange // Pathing algorithm.
-	target    targeting        // Mouse position.
-	animation *Animation       // The animation.
+	grid       gruid.Grid       // The drawing grid.
+	game       game             // The game state.
+	action     action           // The current UI action.
+	mode       mode             // The current UI mode.
+	log        *ui.Label        // Label for the log.
+	status     *ui.Label        // Label for the status.
+	desc       *ui.Label        // Label for position description.
+	viewer     *ui.Pager        // Message's history viewer.
+	inventory  *ui.Menu         // Inventory menu.
+	pr         *paths.PathRange // Pathing algorithm.
+	target     targeting        // Mouse position.
+	animation  *Animation       // The animation.
+	ianimation *InterruptibleAnimation
 }
 
 // targeting describes information related to examination or selection of
@@ -100,13 +102,41 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			return frameTicker()
 
 		case gruid.MsgKeyDown:
+			// Interrupt animation on any key press.
+			if m.ianimation != nil {
+				m.ianimation = nil
+			}
 			m.updateMsgKeyDown(msg)
 
 		case gruid.MsgMouse:
 			m.updateTargeting(msg)
 
 		case msgTick:
+			// Update background animations
 			m.game.ECS.UpdateAnimation()
+			// Update interruptible animation
+			if m.ianimation != nil {
+				log.Println("Updating interruptible animation!!")
+				// Advance animation by a single tick.
+				anim := m.ianimation
+				anim.frames[anim.index].itick++
+
+				// If the current frame has expired, move to the next frame.
+				if anim.frames[anim.index].itick >= anim.frames[anim.index].nticks {
+					anim.frames[anim.index].itick = 0
+					anim.index++
+				}
+
+				// If the current animation has expired, remove it from the ECS or restart.
+				if anim.index >= len(anim.frames) {
+					anim.index = 0
+					if anim.repeat == 0 {
+						m.ianimation = nil
+					} else if anim.repeat > 0 {
+						anim.repeat--
+					}
+				}
+			}
 		}
 
 	case modeAnimation:
@@ -311,8 +341,9 @@ func (m *model) Draw() gruid.Grid {
 		m.DrawAnimation(mapgrid)
 	}
 
-	// Draw CAnimations
+	// Draw background and player-triggered animations
 	m.DrawCAnimation(mapgrid)
+	m.DrawIAnimation(mapgrid)
 
 	return m.grid
 }
@@ -417,6 +448,18 @@ func (m *model) DrawCAnimation(gd gruid.Grid) {
 	// Iterate over all framecells of the current frame, and draw.
 	for _, e := range m.game.ECS.EntitiesWith(CAnimation{}) {
 		anim := m.game.ECS.animations[e]
+		for _, fc := range anim.frames[anim.index].framecells {
+			p := fc.p
+			r := fc.r
+			gd.Set(p, r.cell)
+		}
+	}
+}
+
+func (m *model) DrawIAnimation(gd gruid.Grid) {
+	// Iterate over all framecells of the current frame, and draw.
+	if m.ianimation != nil {
+		anim := m.ianimation
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r

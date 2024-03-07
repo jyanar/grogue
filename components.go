@@ -157,4 +157,6 @@ type CAnimation struct {
 	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
 }
 
-// I guess in this ca
+type InterruptibleAnimation struct {
+	CAnimation
+}

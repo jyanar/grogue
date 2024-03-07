@@ -137,3 +137,35 @@ func (g *game) NewExampleAnimation(p gruid.Point) int {
 		},
 	)
 }
+
+func NewExampleIAnimation(p gruid.Point) *InterruptibleAnimation {
+	return &InterruptibleAnimation{
+		CAnimation{
+			index: 0,
+			frames: []CAnimationFrame{
+				{
+					framecells: []CFrameCell{
+						{Renderable{cell: gruid.Cell{Rune: '1', Style: gruid.Style{Fg: ColorBlood}}, order: ROActor}, p},
+					},
+					itick:  0,
+					nticks: 1,
+				},
+				{
+					framecells: []CFrameCell{
+						{Renderable{cell: gruid.Cell{Rune: '0', Style: gruid.Style{Fg: ColorPlayer}}, order: ROActor}, p},
+					},
+					itick:  0,
+					nticks: 1,
+				},
+				{
+					framecells: []CFrameCell{
+						{Renderable{cell: gruid.Cell{Rune: 'P', Style: gruid.Style{Fg: ColorTroll}}, order: ROActor}, p},
+					},
+					itick:  0,
+					nticks: 1,
+				},
+			},
+			repeat: 20,
+		},
+	}
+}

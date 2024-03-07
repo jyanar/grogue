@@ -25,6 +25,7 @@ const (
 	ActionDrop                    // Drop an item.
 	ActionExamine                 // Examine the map.
 	ActionAnimate                 // Execute an animation.
+	ActionIAnimate                // Start an interruptible animation.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -82,6 +83,9 @@ func (m *model) handleAction() gruid.Effect {
 			<-t.C
 			return msgAnimation(true)
 		})
+
+	case ActionIAnimate:
+		m.ianimation = NewExampleIAnimation(m.game.ECS.positions[0].Point)
 	}
 	return nil
 }
