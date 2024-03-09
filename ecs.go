@@ -22,6 +22,7 @@ type ECS struct {
 	damages       map[int]*Damage
 	deaths        map[int]*Death
 	perceptions   map[int]*Perception
+	visibles      map[int]*Visible
 	ais           map[int]*AI
 	logentries    map[int]*LogEntry
 	consumables   map[int]*Consumable
@@ -58,6 +59,7 @@ func NewECS() *ECS {
 		damages:       make(map[int]*Damage),
 		deaths:        make(map[int]*Death),
 		perceptions:   make(map[int]*Perception),
+		visibles:      make(map[int]*Visible),
 		ais:           make(map[int]*AI),
 		logentries:    make(map[int]*LogEntry),
 		consumables:   make(map[int]*Consumable),
@@ -132,6 +134,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.deaths[idx] = &c
 		case Perception:
 			ecs.perceptions[idx] = &c
+		case Visible:
+			ecs.visibles[idx] = &c
 		case AI:
 			ecs.ais[idx] = &c
 		case LogEntry:
@@ -189,6 +193,7 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.damages, entity)
 	delete(ecs.deaths, entity)
 	delete(ecs.perceptions, entity)
+	delete(ecs.visibles, entity)
 	delete(ecs.ais, entity)
 	delete(ecs.logentries, entity)
 	delete(ecs.consumables, entity)
@@ -235,6 +240,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.deaths[entity] = &c
 	case Perception:
 		ecs.perceptions[entity] = &c
+	case Visible:
+		ecs.visibles[entity] = &c
 	case AI:
 		ecs.ais[entity] = &c
 	case LogEntry:
@@ -306,6 +313,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case Perception:
 		if ecs.perceptions[entity] != nil {
+			return true
+		}
+	case Visible:
+		if ecs.visibles[entity] != nil {
 			return true
 		}
 	case AI:
@@ -446,6 +457,9 @@ func (ecs *ECS) printDebug(e int) {
 	}
 	if ecs.perceptions[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
+	}
+	if ecs.visibles[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.visibles[e], ecs.visibles[e])
 	}
 	if ecs.ais[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])

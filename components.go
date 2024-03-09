@@ -27,6 +27,14 @@ type Renderable struct {
 	order renderOrder
 }
 
+func (r Renderable) LacksBg() bool {
+	return r.cell.Style.Bg == ColorNone
+}
+
+func (r Renderable) HasBg() bool {
+	return r.cell.Style.Bg != ColorNone
+}
+
 type Name struct {
 	string
 }
@@ -68,6 +76,9 @@ type Perception struct {
 	FOV       *rl.FOV // Effective FOV, which can be affected by occlusion.
 	perceived []int   // List of perceived entities.
 }
+
+// Entities with this component are visible to those with Perception.
+type Visible struct{}
 
 // I don't like this iota business. Prefer enums like this:
 type creatureState string
@@ -146,17 +157,13 @@ type CFrameCell struct {
 }
 
 type CAnimationFrame struct {
-	framecells []CFrameCell
-	nticks     int // Duration of animation, in ticks
 	itick      int // Current duration. Resets to duration when 0.
+	nticks     int // Duration of animation, in ticks
+	framecells []CFrameCell
 }
 
 type CAnimation struct {
-	frames []CAnimationFrame
 	index  int
 	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
-}
-
-type InterruptibleAnimation struct {
-	CAnimation
+	frames []CAnimationFrame
 }

@@ -36,7 +36,7 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 	}
-	for _, other := range s.ecs.EntitiesWith(Position{}) {
+	for _, other := range s.ecs.EntitiesWith(Position{}, Visible{}) {
 		// Ignore self.
 		if other == e {
 			continue
@@ -159,6 +159,7 @@ func (s *BumpSystem) Update(e int) {
 	}
 }
 
+// Processes damage effects on entities with health components.
 type DamageEffectSystem struct {
 	ecs *ECS
 }
@@ -188,10 +189,15 @@ func (s *DamageEffectSystem) Update(e int) {
 			msgcolor = ColorLogMonsterAttack
 		}
 		if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
+			// s.ecs.Create(
+			// 	Name{"blood"},
+			// 	Position{s.ecs.positions[e].Point},
+			// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
+			// )
 			s.ecs.Create(
 				Name{"blood"},
 				Position{s.ecs.positions[e].Point},
-				Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
+				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
 			)
 		}
 		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})

@@ -306,6 +306,9 @@ func (m *model) Draw() gruid.Grid {
 		mapgrid.Set(it.P(), c)
 	}
 
+	// Draw background animations
+	m.DrawCAnimation(mapgrid)
+
 	// Collect entities to draw.
 	type tup struct {
 		entity int
@@ -328,7 +331,11 @@ func (m *model) Draw() gruid.Grid {
 	for _, e := range entitiesToDraw {
 		p := ECS.positions[e.entity]
 		r := ECS.renderables[e.entity]
-		mapgrid.Set(p.Point, r.cell)
+		c := gruid.Cell{Rune: r.cell.Rune, Style: r.cell.Style}
+		if r.LacksBg() {
+			c.Style.Bg = mapgrid.At(p.Point).Style.Bg
+		}
+		mapgrid.Set(p.Point, c)
 	}
 
 	// Draw target (if targeting), names, log, and status.
@@ -342,7 +349,6 @@ func (m *model) Draw() gruid.Grid {
 	}
 
 	// Draw background and player-triggered animations
-	m.DrawCAnimation(mapgrid)
 	m.DrawIAnimation(mapgrid)
 
 	return m.grid
@@ -451,7 +457,9 @@ func (m *model) DrawCAnimation(gd gruid.Grid) {
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r
-			gd.Set(p, r.cell)
+			if m.game.Map.Explored[p] && m.game.InFOV(p) {
+				gd.Set(p, r.cell)
+			}
 		}
 	}
 }
