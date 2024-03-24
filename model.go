@@ -139,38 +139,6 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			}
 		}
 
-	case modeAnimation:
-		switch msg := msg.(type) {
-		case msgAnimation:
-			switch msg {
-			case true:
-				// Animation is ongoing, pop the next frame.
-				if len(m.animation.frames) > 1 {
-					m.animation.frames = m.animation.frames[1:]
-					return gruid.Cmd(func() gruid.Msg {
-						t := time.NewTimer(m.animation.frames[0].duration)
-						<-t.C
-						return msgAnimation(true)
-					})
-				} else {
-					return gruid.Cmd(func() gruid.Msg {
-						return msgAnimation(false)
-					})
-				}
-			case false:
-				// Animation finished. Return control to modeNormal.
-				m.animation = nil
-				m.mode = modeNormal
-				return nil
-			}
-
-		case gruid.MsgKeyDown:
-			// Interrupt animation and go back to modeNormal.
-			m.animation = nil
-			m.mode = modeNormal
-			return nil
-		}
-
 	case modeMessageViewer:
 		m.viewer.Update(msg) // e.g., scrolling.
 		if m.viewer.Action() == ui.PagerQuit {

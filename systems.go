@@ -268,7 +268,7 @@ func (s *DeathSystem) Update(e int) {
 	} else {
 		s.ecs.AddComponent(e, Name{name + " corpse"})
 	}
-	s.ecs.AddComponent(e, Renderable{cell: gruid.Cell{Rune: '%', Style: gruid.Style{Fg: fg}}, order: ROCorpse})
+	s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
 	s.ecs.AddComponent(e, Collectible{})
 	s.ecs.AddComponent(e, Consumable{})
 	s.ecs.AddComponent(e, Healing{amount: 2})
