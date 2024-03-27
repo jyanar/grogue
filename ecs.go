@@ -98,7 +98,7 @@ func (ecs *ECS) Update() {
 		ecs.FOVSystem.Update(e)
 		ecs.DeathSystem.Update(e)
 	}
-	ecs.DebugSystem.Update()
+	// ecs.DebugSystem.Update()
 }
 
 func (ecs *ECS) UpdateAnimation() {

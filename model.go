@@ -52,7 +52,6 @@ const (
 	modeInventoryDrop                 // Browsing inventory, in order to drop an item.
 	modeExamination                   // Keyboard map examination mode.
 	modeTargeting
-	modeAnimation
 )
 
 func NewModel(gd gruid.Grid) *model {
@@ -311,10 +310,6 @@ func (m *model) Draw() gruid.Grid {
 	m.DrawNames(mapgrid)
 	m.DrawLog(loggrid)
 	m.DrawStatus(statusgrid)
-
-	if m.mode == modeAnimation {
-		m.DrawAnimation(mapgrid)
-	}
 
 	// Draw background and player-triggered animations
 	m.DrawIAnimation(mapgrid)

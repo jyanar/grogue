@@ -29,9 +29,9 @@ func (g *game) Initialize() {
 	g.SpawnPotions()
 	g.SpawnScrolls()
 	// g.SpawnCorpses()
-	pp := g.ECS.positions[0].Point
-	g.NewExampleAnimation(pp.Add(gruid.Point{X: 1, Y: 0}))
-	g.NewWaterTile(pp.Add(gruid.Point{X: 2, Y: 0}))
+	// pp := g.ECS.positions[0].Point
+	// g.NewExampleAnimation(pp.Add(gruid.Point{X: 1, Y: 0}))
+	// g.NewWaterTile(pp.Add(gruid.Point{X: 2, Y: 0}))
 	g.ECS.Initialize()
 }
 
