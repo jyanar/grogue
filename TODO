@@ -1,3 +1,8 @@
+[x] background and interruptible animations
+[ ] refactor rest of codebase for background and interruptible animations
+[ ]
+
+
 [ ] blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
 [ ] corpses made up of body parts?
 [ ] throw potions

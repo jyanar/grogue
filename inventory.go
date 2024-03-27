@@ -14,8 +14,9 @@ func (m *model) OpenInventory(title string) {
 	r := 'a'
 	for _, it := range inv.items {
 		name := m.game.ECS.names[it].string
-		glyph := m.game.ECS.renderables[it].glyph
-		fg := m.game.ECS.renderables[it].fg
+		// glyph := m.game.ECS.renderables[it].glyph
+		glyph := m.game.ECS.renderables[it].cell.Rune
+		fg := m.game.ECS.renderables[it].cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
 		entries = append(entries, ui.MenuEntry{
 			Text: stt.WithText(string(r) + " - @k" + string(glyph) + "@N " + name),
@@ -62,22 +63,24 @@ func (m *model) updateInventory(msg gruid.Msg) {
 
 const ErrNoShow = "ErrNoShow"
 
+// TODO Better log messages
 func (g *game) InventoryActivate(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]
 	item_name := g.ECS.names[item].string
 	entity_name := g.ECS.names[entity].string
+	var prefix string
+	if entity == 0 {
+		prefix = "You use the"
+	} else {
+		prefix = entity_name + " uses the"
+	}
+	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
+
 	// Item can provide healing. Apply healing.
 	if g.ECS.HasComponent(item, Healing{}) {
 		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
-		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
 	}
-	// Item has ranged effect.
-	// What we would like:
-	// 	Move into modeTargeting, select an entity, and then activate spell at
-	//    the target location.
-	if g.ECS.HasComponent(item, Ranged{}) {
-		g.Logf("%s uses %s.", ColorLogSpecial, entity_name, item_name)
-	}
+	// TODO Ranged effects
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)

@@ -23,10 +23,16 @@ const (
 
 // Entities with this component can be rendered.
 type Renderable struct {
-	glyph rune
-	fg    gruid.Color
-	bg    gruid.Color
+	cell  gruid.Cell
 	order renderOrder
+}
+
+func (r Renderable) LacksBg() bool {
+	return r.cell.Style.Bg == ColorNone
+}
+
+func (r Renderable) HasBg() bool {
+	return r.cell.Style.Bg != ColorNone
 }
 
 type Name struct {
@@ -70,6 +76,9 @@ type Perception struct {
 	FOV       *rl.FOV // Effective FOV, which can be affected by occlusion.
 	perceived []int   // List of perceived entities.
 }
+
+// Entities with this component are visible to those with Perception.
+type Visible struct{}
 
 // I don't like this iota business. Prefer enums like this:
 type creatureState string
@@ -140,4 +149,21 @@ type AreaOfEffect struct {
 type DamageEffect struct {
 	source int
 	amount int
+}
+
+type CFrameCell struct {
+	r Renderable
+	p gruid.Point
+}
+
+type CAnimationFrame struct {
+	itick      int // Current duration. Resets to duration when 0.
+	nticks     int // Duration of animation, in ticks
+	framecells []CFrameCell
+}
+
+type CAnimation struct {
+	index  int
+	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
+	frames []CAnimationFrame
 }

@@ -21,7 +21,8 @@ import (
 
 // Available colors. These are set to appropriate RGB values by the theme.
 const (
-	ColorFOV gruid.Color = iota + 1
+	ColorNone gruid.Color = iota + 1
+	ColorFOV
 	ColorTarget
 	ColorPlayer
 	ColorMonster
@@ -31,6 +32,8 @@ const (
 	ColorHealthPotion
 	ColorScroll
 	ColorBlood
+	ColorWater1
+	ColorWater2
 
 	ColorLog
 	ColorLogPlayerAttack
@@ -39,6 +42,28 @@ const (
 	ColorStatusHealthy
 	ColorStatusWounded
 )
+
+// const (
+// 	ColorFOV     = "ColorFOV"
+// 	ColorTarget  = "ColorTarget"
+// 	ColorPlayer  = "ColorPlayer"
+// 	ColorMonster = "ColorMonster"
+// 	ColorTroll   = "ColorTroll"
+
+// 	ColorCorpse       = "ColorCorpse"
+// 	ColorHealthPotion = "ColorHealthPotion"
+// 	ColorScroll       = "ColorScroll"
+// 	ColorBlood        = "ColorBlood"
+// 	ColorWater1       = "ColorWater1"
+// 	ColorWater2       = "ColorWater2"
+
+// 	ColorLog              = "ColorLog"
+// 	ColorLogPlayerAttack  = "ColorLogPlayerAttack"
+// 	ColorLogMonsterAttack = "ColorLogMonsterAttack"
+// 	ColorLogSpecial       = "ColorLogSpecial"
+// 	ColorStatusHealthy    = "ColorStatusHealthy"
+// 	ColorStatusWounded    = "ColorStatusWounded"
+// )
 
 // A list of available themes.
 const (
@@ -82,6 +107,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{0xed, 0x86, 0x49, 255})
 		case ColorLogSpecial:
 			fg = image.NewUniform(color.RGBA{0xf2, 0x75, 0xbe, 255})
+		case ColorWater1:
+			fg = image.NewUniform(color.RGBA{148, 148, 255, 255})
 		}
 
 		switch c.Style.Bg {
@@ -91,6 +118,8 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{0x75, 0x75, 0x00, 255})
+		case ColorWater1:
+			bg = image.NewUniform(color.RGBA{107, 107, 255, 255})
 		}
 
 	case ThemeNoir:
@@ -118,6 +147,10 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
 		case ColorLogSpecial:
 			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
+		case ColorWater1:
+			fg = image.NewUniform(color.RGBA{148, 148, 255, 255})
+		case ColorWater2:
+			fg = image.NewUniform(color.RGBA{107, 107, 255, 255})
 		}
 
 		switch c.Style.Bg {
@@ -125,6 +158,10 @@ func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
 			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
 		case ColorTarget:
 			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
+		case ColorWater1:
+			bg = image.NewUniform(color.RGBA{107, 107, 255, 255})
+		case ColorWater2:
+			bg = image.NewUniform(color.RGBA{148, 148, 255, 255})
 		}
 
 		switch c.Style.Attrs { // If you want to invert fg and bg

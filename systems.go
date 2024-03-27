@@ -36,7 +36,7 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 	}
-	for _, other := range s.ecs.EntitiesWith(Position{}) {
+	for _, other := range s.ecs.EntitiesWith(Position{}, Visible{}) {
 		// Ignore self.
 		if other == e {
 			continue
@@ -159,6 +159,7 @@ func (s *BumpSystem) Update(e int) {
 	}
 }
 
+// Processes damage effects on entities with health components.
 type DamageEffectSystem struct {
 	ecs *ECS
 }
@@ -188,10 +189,15 @@ func (s *DamageEffectSystem) Update(e int) {
 			msgcolor = ColorLogMonsterAttack
 		}
 		if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
+			// s.ecs.Create(
+			// 	Name{"blood"},
+			// 	Position{s.ecs.positions[e].Point},
+			// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
+			// )
 			s.ecs.Create(
 				Name{"blood"},
 				Position{s.ecs.positions[e].Point},
-				Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
+				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
 			)
 		}
 		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
@@ -246,7 +252,7 @@ func (s *DeathSystem) Update(e int) {
 		return
 	}
 	name := s.ecs.names[e].string
-	fg := s.ecs.renderables[e].fg
+	fg := s.ecs.renderables[e].cell.Style.Fg
 	s.ecs.obstructs[e] = nil   // No longer blocking.
 	s.ecs.perceptions[e] = nil // No longer perceiving.
 	s.ecs.ais[e] = nil         // No longer pathing.
@@ -262,7 +268,7 @@ func (s *DeathSystem) Update(e int) {
 	} else {
 		s.ecs.AddComponent(e, Name{name + " corpse"})
 	}
-	s.ecs.AddComponent(e, Renderable{glyph: '%', fg: fg, order: ROCorpse})
+	s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
 	s.ecs.AddComponent(e, Collectible{})
 	s.ecs.AddComponent(e, Consumable{})
 	s.ecs.AddComponent(e, Healing{amount: 2})
@@ -281,6 +287,38 @@ func (s *DeathSystem) Update(e int) {
 		Text:  msg,
 		Color: ColorLogMonsterAttack,
 	})
+}
+
+type AnimationSystem struct {
+	ecs *ECS
+}
+
+// Updates all CAnimation objects in the ECS forward a tick.
+func (s *AnimationSystem) Update(e int) {
+
+	if !s.ecs.HasComponent(e, CAnimation{}) {
+		return
+	}
+
+	// Advance animation by a single tick.
+	anim := s.ecs.animations[e]
+	anim.frames[anim.index].itick++
+
+	// If the current frame has expired, move to the next frame.
+	if anim.frames[anim.index].itick >= anim.frames[anim.index].nticks {
+		anim.frames[anim.index].itick = 0
+		anim.index++
+	}
+
+	// If the current animation has expired, remove it from the ECS or restart.
+	if anim.index >= len(anim.frames) {
+		anim.index = 0
+		if anim.repeat == 0 {
+			s.ecs.Delete(e)
+		} else if anim.repeat > 0 {
+			anim.repeat--
+		}
+	}
 }
 
 type DebugSystem struct {

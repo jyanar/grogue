@@ -22,6 +22,7 @@ type ECS struct {
 	damages       map[int]*Damage
 	deaths        map[int]*Death
 	perceptions   map[int]*Perception
+	visibles      map[int]*Visible
 	ais           map[int]*AI
 	logentries    map[int]*LogEntry
 	consumables   map[int]*Consumable
@@ -30,6 +31,7 @@ type ECS struct {
 	inventories   map[int]*Inventory
 	rangeds       map[int]*Ranged
 	damageeffects map[int][]DamageEffect
+	animations    map[int]*CAnimation
 	// Systems
 	PerceptionSystem
 	AISystem
@@ -38,6 +40,7 @@ type ECS struct {
 	DeathSystem
 	DamageEffectSystem
 	DebugSystem
+	AnimationSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -56,6 +59,7 @@ func NewECS() *ECS {
 		damages:       make(map[int]*Damage),
 		deaths:        make(map[int]*Death),
 		perceptions:   make(map[int]*Perception),
+		visibles:      make(map[int]*Visible),
 		ais:           make(map[int]*AI),
 		logentries:    make(map[int]*LogEntry),
 		consumables:   make(map[int]*Consumable),
@@ -64,6 +68,7 @@ func NewECS() *ECS {
 		inventories:   make(map[int]*Inventory),
 		rangeds:       make(map[int]*Ranged),
 		damageeffects: make(map[int][]DamageEffect),
+		animations:    make(map[int]*CAnimation),
 	}
 	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
 	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
@@ -71,6 +76,7 @@ func NewECS() *ECS {
 	ecs.FOVSystem = FOVSystem{ecs: ecs}
 	ecs.DeathSystem = DeathSystem{ecs: ecs}
 	ecs.DamageEffectSystem = DamageEffectSystem{ecs: ecs}
+	ecs.AnimationSystem = AnimationSystem{ecs: ecs}
 	ecs.DebugSystem = DebugSystem{ecs: ecs}
 	return ecs
 }
@@ -93,6 +99,12 @@ func (ecs *ECS) Update() {
 		ecs.DeathSystem.Update(e)
 	}
 	// ecs.DebugSystem.Update()
+}
+
+func (ecs *ECS) UpdateAnimation() {
+	for _, e := range ecs.EntitiesWith(CAnimation{}) {
+		ecs.AnimationSystem.Update(e)
+	}
 }
 
 func (ecs *ECS) Create(components ...any) int {
@@ -122,6 +134,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.deaths[idx] = &c
 		case Perception:
 			ecs.perceptions[idx] = &c
+		case Visible:
+			ecs.visibles[idx] = &c
 		case AI:
 			ecs.ais[idx] = &c
 		case LogEntry:
@@ -138,6 +152,8 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.rangeds[idx] = &c
 		case DamageEffect:
 			ecs.damageeffects[idx] = append(ecs.damageeffects[idx], c)
+		case CAnimation:
+			ecs.animations[idx] = &c
 		}
 	}
 	ecs.nextID += 1
@@ -177,6 +193,7 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.damages, entity)
 	delete(ecs.deaths, entity)
 	delete(ecs.perceptions, entity)
+	delete(ecs.visibles, entity)
 	delete(ecs.ais, entity)
 	delete(ecs.logentries, entity)
 	delete(ecs.consumables, entity)
@@ -185,6 +202,7 @@ func (ecs *ECS) Delete(entity int) {
 	delete(ecs.inventories, entity)
 	delete(ecs.rangeds, entity)
 	delete(ecs.damageeffects, entity)
+	delete(ecs.animations, entity)
 }
 
 func (ecs *ECS) Exists(entity int) bool {
@@ -222,6 +240,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.deaths[entity] = &c
 	case Perception:
 		ecs.perceptions[entity] = &c
+	case Visible:
+		ecs.visibles[entity] = &c
 	case AI:
 		ecs.ais[entity] = &c
 	case LogEntry:
@@ -238,6 +258,8 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.rangeds[entity] = &c
 	case DamageEffect:
 		ecs.damageeffects[entity] = append(ecs.damageeffects[entity], c)
+	case CAnimation:
+		ecs.animations[entity] = &c
 	}
 }
 
@@ -293,6 +315,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if ecs.perceptions[entity] != nil {
 			return true
 		}
+	case Visible:
+		if ecs.visibles[entity] != nil {
+			return true
+		}
 	case AI:
 		if ecs.ais[entity] != nil {
 			return true
@@ -323,6 +349,10 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		}
 	case DamageEffect:
 		if len(ecs.damageeffects[entity]) > 0 {
+			return true
+		}
+	case CAnimation:
+		if ecs.animations[entity] != nil {
 			return true
 		}
 	}
@@ -428,6 +458,9 @@ func (ecs *ECS) printDebug(e int) {
 	if ecs.perceptions[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
 	}
+	if ecs.visibles[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.visibles[e], ecs.visibles[e])
+	}
 	if ecs.ais[e] != nil {
 		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
 	}
@@ -453,5 +486,8 @@ func (ecs *ECS) printDebug(e int) {
 		for _, de := range ecs.damageeffects[e] {
 			fmt.Printf("%v, %T\n", de, de)
 		}
+	}
+	if ecs.animations[e] != nil {
+		fmt.Printf("%v, %T\n", ecs.animations[e], ecs.animations[e])
 	}
 }

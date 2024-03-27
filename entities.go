@@ -5,11 +5,30 @@ package main
 
 import "github.com/anaseto/gruid"
 
+// func (g *game) NewBaseCreature(p gruid.Point) int {
+// 	return g.ECS.Create(
+// 		Position{p},
+// 		Visible{},
+// 		Inventory{},
+// 		Obstruct{},
+// 	)
+// }
+
+// Convenience methods
+func NewRenderable(r rune, fg, bg gruid.Color, order renderOrder) Renderable {
+	return Renderable{cell: gruid.Cell{Rune: r, Style: gruid.Style{Fg: fg, Bg: bg}}, order: order}
+}
+
+func NewRenderableNoBg(Rune rune, fg gruid.Color, order renderOrder) Renderable {
+	return Renderable{cell: gruid.Cell{Rune: Rune, Style: gruid.Style{Fg: fg, Bg: ColorNone}}, order: order}
+}
+
 func (g *game) NewPlayer(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"you"},
 		Position{p},
-		Renderable{glyph: '@', fg: ColorPlayer, order: ROActor},
+		Visible{},
+		NewRenderableNoBg('@', ColorPlayer, ROActor),
 		Health{hp: 18, maxhp: 18},
 		Damage{5},
 		FOV{LOS: 20},
@@ -23,7 +42,8 @@ func (g *game) NewGoblin(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"goblin"},
 		Position{p},
-		Renderable{glyph: 'g', fg: ColorMonster, order: ROActor},
+		Visible{},
+		NewRenderableNoBg('g', ColorMonster, ROActor),
 		Health{hp: 10, maxhp: 10},
 		Damage{2},
 		Perception{LOS: 8},
@@ -36,7 +56,8 @@ func (g *game) NewTroll(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"troll"},
 		Position{p},
-		Renderable{glyph: 'T', fg: ColorTroll, order: ROActor},
+		Visible{},
+		NewRenderableNoBg('T', ColorTroll, ROActor),
 		Health{hp: 20, maxhp: 20},
 		Damage{5},
 		Perception{LOS: 6},
@@ -49,7 +70,8 @@ func (g *game) NewHealthPotion(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"health potion"},
 		Position{g.FreeFloorTile()},
-		Renderable{glyph: '!', fg: ColorHealthPotion, order: ROItem},
+		Visible{},
+		NewRenderableNoBg('!', ColorHealthPotion, ROItem),
 		Collectible{},
 		Consumable{},
 		Healing{amount: 5},
@@ -60,7 +82,8 @@ func (g *game) NewCorpse(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"corpse"},
 		Position{p},
-		Renderable{glyph: '%', fg: ColorCorpse, order: ROCorpse},
+		Visible{},
+		NewRenderableNoBg('%', ColorCorpse, ROCorpse),
 		Collectible{},
 		Consumable{},
 		Healing{amount: 2},
@@ -70,8 +93,9 @@ func (g *game) NewCorpse(p gruid.Point) int {
 func (g *game) NewBlood(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"blood"},
+		Visible{},
 		Position{p},
-		Renderable{glyph: '.', fg: ColorBlood, order: ROFloor},
+		NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
 	)
 }
 
@@ -79,11 +103,47 @@ func (g *game) NewScroll(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"scroll"},
 		Position{p},
-		Renderable{glyph: '?', fg: ColorScroll, order: ROItem},
+		Visible{},
+		NewRenderableNoBg('?', ColorScroll, ROItem),
 		Collectible{},
 		Consumable{},
 		Ranged{Range: 6},
 		Damage{5},
 		AreaOfEffect{radius: 3},
+	)
+}
+
+func (g *game) NewWaterTile(p gruid.Point) int {
+	return g.ECS.Create(
+		Name{"water"},
+		Visible{},
+		Position{p},
+		// NewRenderable('~', ColorWater1, ColorWater1, ROFloor),
+		CAnimation{
+			index:  0,
+			repeat: -1,
+			frames: []CAnimationFrame{
+				{
+					itick:  0,
+					nticks: 5,
+					framecells: []CFrameCell{
+						{
+							r: NewRenderable('~', ColorWater1, ColorWater1, ROFloor),
+							p: p,
+						},
+					},
+				},
+				{
+					itick:  0,
+					nticks: 7,
+					framecells: []CFrameCell{
+						{
+							r: NewRenderable('~', ColorWater2, ColorWater2, ROFloor),
+							p: p,
+						},
+					},
+				},
+			},
+		},
 	)
 }

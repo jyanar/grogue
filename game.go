@@ -11,6 +11,12 @@ type game struct {
 	Log []LogEntry
 }
 
+const (
+	MonstersToSpawn = 6
+	ScrollsToPlace  = 5
+	PotionsToPlace  = 5
+)
+
 func (g *game) Initialize() {
 	// Initialize map and ECS.
 	g.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})
@@ -23,6 +29,9 @@ func (g *game) Initialize() {
 	g.SpawnPotions()
 	g.SpawnScrolls()
 	// g.SpawnCorpses()
+	// pp := g.ECS.positions[0].Point
+	// g.NewExampleAnimation(pp.Add(gruid.Point{X: 1, Y: 0}))
+	// g.NewWaterTile(pp.Add(gruid.Point{X: 2, Y: 0}))
 	g.ECS.Initialize()
 }
 
@@ -47,8 +56,6 @@ func (g *game) Pathable(p gruid.Point) bool {
 	return false
 }
 
-const MonstersToSpawn = 6
-
 func (g *game) SpawnEnemies() {
 	for i := 0; i < MonstersToSpawn; i++ {
 		switch {
@@ -60,16 +67,12 @@ func (g *game) SpawnEnemies() {
 	}
 }
 
-const PotionsToPlace = 5
-
 // Places potions and other items throughout the map during gen.
 func (g *game) SpawnPotions() {
 	for i := 0; i < PotionsToPlace; i++ {
 		g.NewHealthPotion(g.FreeFloorTile())
 	}
 }
-
-const ScrollsToPlace = 5
 
 func (g *game) SpawnScrolls() {
 	for i := 0; i < ScrollsToPlace; i++ {
