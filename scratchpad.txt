@@ -1,0 +1,87 @@
+* How to implement ranged functionality? This can range from staffs/spells to
+even throwing potions and any other items. Ideally, much of this would share
+the same code. Let's list out all of the sorts of functionality we'd like to
+support:
+   - Area-of-effect at site of explosion. Where the potion lands / staff zaps.
+      == There should be an AreaOfEffect component that we can attach to 
+         staffs or potions. This gets triggered if the staff gets zapped or the
+         potion gets thrown. And, it gets visualized when you're targeting.
+   - A Zappable or Throwable component, (zappable for the staffs, throwable for
+     items such as potions -- should all items be throwable?). Perhaps long-term
+     an item is throwable if you pass a strength check. But for now just add
+     "Throwable" component to things.
+   - `z` for zapping the staff?
+   - There's a default AOE for all potions (but perhaps some, such as fire, will
+   have slightly larger AOE).
+   - `t` for throwing items
+   - Could have, for staffs, an `Ammo` component -- this is what we attach
+   the AOE to. That way, when we press `t` to throw a staff, we do not end up
+   using the AOE associated with the ammo itself.
+
+How would the zapping itself function? We have:
+
+type Zappable struct {
+   ammoType AmmoType // FireZap, IceZap, etc.
+   charges  int      // Number of charges left in the staff.
+}
+
+FireZap
+
+-> press `z`
+-> show list of items with zappable
+-> select one
+-> show targeting information, allow user to target an area. show the AOE.
+-> FireZap is an entity with: Damage{}, Fire{}, ...
+-> IceZap is an entity with: Damage{}, Ice{}, ...
+
+Good resource:
+   https://bfnightly.bracketproductions.com/rustbook/chapter_10.html
+
+Since RLTK takes a components based approach. For them, it is something pretty
+simple:
+
+fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437(')'),
+            fg: RGB::named(rltk::CYAN),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2
+        })
+        .with(Name{ name : "Magic Missile Scroll".to_string() })
+        .with(Item{})
+        .with(Consumable{})
+        .with(Ranged{ range: 6 })
+        .with(InflictsDamage{ damage: 8 })
+        .build();
+
+So Item{}, Consumable{}, Ranged{}, InflictsDamage{}, AreaOfEffect{}.
+
+-- Item{} means it can be used
+-- Consumable{} means it's used up when used
+-- Ranged{} means it can target things far away
+-- InflictsDamage{} means that it will damage entities with Health{}
+-- AreaOfEffect{} means that on use, it will affect some area with some effect
+
+Right now we can just stick to:
+
+-- Consumable{}
+-- Ranged{}
+-- Damage{}
+-- AreaOfEffect{}
+
+================================================================================
+
+Gore system:
+* When entity A attacks entity B, there is some probability that the attack lands
+on a particular body part and the relevant body part sails off. Like in DF. However,
+there needs to be a way of ensuring that this is more likely to happen for small
+body parts than large ones. i.e., it is more likely for a finger or an ear to be
+torn off than it is for an entire leg. And certain weapons are simply not going to
+have the necessary damage rating to be able to cause certain body parts to fall off.
+   * This could be like so: if damage a weapon inflicts is higher than some threshold,
+   then we probabilistically roll for body parts to come flying off. different parts
+   will have different probabilities.
+
+

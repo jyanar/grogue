@@ -136,6 +136,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 					}
 				}
 			}
+			log.Println("UPDATING AFTER MSG TICK")
 		}
 
 	case modeMessageViewer:
@@ -200,6 +201,12 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 			p = p.Shift(-1, 1)
 		case "n":
 			p = p.Shift(1, 1)
+
+		case gruid.KeyEnter:
+			if m.mode == modeExamination {
+				break
+			}
+			m.activateTarget(p)
 
 		case gruid.KeyEscape, "q":
 			m.mode = modeNormal

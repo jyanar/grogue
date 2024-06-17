@@ -3,6 +3,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -14,7 +16,6 @@ func (m *model) OpenInventory(title string) {
 	r := 'a'
 	for _, it := range inv.items {
 		name := m.game.ECS.names[it].string
-		// glyph := m.game.ECS.renderables[it].glyph
 		glyph := m.game.ECS.renderables[it].cell.Rune
 		fg := m.game.ECS.renderables[it].cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
@@ -51,6 +52,17 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		case modeInventoryDrop:
 			err = m.game.InventoryRemove(0, n)
 		case modeInventoryActivate:
+			// Check whether the given item has a ranged component
+			item_idx := m.game.ECS.inventories[0].items[n]
+			if m.game.ECS.HasComponent(item_idx, Ranged{}) {
+				m.target = targeting{
+					pos:    m.game.ECS.positions[0].Point.Shift(1, 1),
+					radius: 2,
+					item:   item_idx,
+				}
+				m.mode = modeTargeting
+				return
+			}
 			err = m.game.InventoryActivate(0, n)
 		}
 		if err != nil {
@@ -59,6 +71,29 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		m.game.ECS.Update()
 		m.mode = modeNormal
 	}
+}
+
+func (m *model) activateTarget(p gruid.Point) {
+	log.Println("Activating target at point p!")
+	log.Println(p)
+	// Check if there is an entity here capable of taking damage
+	item := m.target.item
+	item_dmg := m.game.ECS.damages[item].int
+	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
+		for _, e := range entities {
+			m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
+		}
+	}
+	m.target.path = nil
+	m.target.pos = gruid.Point{0, 0}
+	m.mode = modeNormal
+	// Get rid of item in inventory
+	if m.game.ECS.HasComponent(item, Consumable{}) {
+		m.game.ECS.inventories[0].items = remove(m.game.ECS.inventories[0].items, item)
+		m.game.ECS.Delete(item)
+	}
+	m.game.ECS.Update()
+	// Can we force the game to re-render now?
 }
 
 const ErrNoShow = "ErrNoShow"
@@ -75,12 +110,13 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 		prefix = entity_name + " uses the"
 	}
 	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
-
 	// Item can provide healing. Apply healing.
 	if g.ECS.HasComponent(item, Healing{}) {
 		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
 	}
 	// TODO Ranged effects
+	// if g.ECS.HasComponent(item, Ranged{}) {
+	// }
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
