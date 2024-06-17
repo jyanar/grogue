@@ -92,10 +92,12 @@ func (ecs *ECS) Initialize() {
 // Iterates through each entity
 func (ecs *ECS) Update() {
 	for _, e := range ecs.entities {
+		ecs.DamageEffectSystem.Update(e)
 		ecs.PerceptionSystem.Update(e)
 		ecs.AISystem.Update(e)
 		ecs.BumpSystem.Update(e)
 		ecs.FOVSystem.Update(e)
+		ecs.DamageEffectSystem.Update(e)
 		ecs.DeathSystem.Update(e)
 	}
 	// ecs.DebugSystem.Update()

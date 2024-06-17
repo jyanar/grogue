@@ -25,7 +25,7 @@ type model struct {
 	viewer     *ui.Pager        // Message's history viewer.
 	inventory  *ui.Menu         // Inventory menu.
 	pr         *paths.PathRange // Pathing algorithm.
-	target     targeting        // Mouse position.
+	target     *targeting       // Mouse position.
 	animation  *Animation       // The animation.
 	ianimation *InterruptibleAnimation
 }
@@ -136,6 +136,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 					}
 				}
 			}
+			log.Println("UPDATING AFTER MSG TICK")
 		}
 
 	case modeMessageViewer:
@@ -176,6 +177,9 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 // messages.
 func (m *model) updateTargeting(msg gruid.Msg) {
 	maprg := gruid.NewRange(0, 0, UIWidth, UIHeight)
+	if m.target == nil {
+		m.target = &targeting{}
+	}
 	if !m.target.pos.In(maprg) {
 		m.target.pos = m.game.ECS.positions[0].Point.Add(maprg.Min)
 	}
@@ -201,13 +205,21 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		case "n":
 			p = p.Shift(1, 1)
 
+		case gruid.KeyEnter:
+			if m.mode == modeExamination {
+				break
+			}
+			m.activateTarget(p)
+
 		case gruid.KeyEscape, "q":
 			m.mode = modeNormal
-			m.target = targeting{}
+			m.target = nil
 			return
 		}
 
-		m.target.pos = p.Add(maprg.Min)
+		if m.target != nil {
+			m.target.pos = p.Add(maprg.Min)
+		}
 
 	case gruid.MsgMouse:
 		switch msg.Action {
@@ -221,9 +233,11 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 
 	// We only compute the full path if the player is still alive.
 	if m.game.ECS.PlayerDead() {
-		m.target.path = []gruid.Point{m.target.pos}
+		m.target = nil
 	} else {
-		m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
+		if m.target != nil {
+			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
+		}
 	}
 }
 
@@ -324,6 +338,9 @@ const (
 
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {
+	if m.target == nil {
+		return
+	}
 	for _, p := range m.target.path {
 		c := gd.At(p)
 		gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
@@ -363,7 +380,7 @@ func (m *model) DrawStatus(gd gruid.Grid) {
 // if it is in the map.
 func (m *model) DrawNames(gd gruid.Grid) {
 	maprg := gruid.NewRange(0, 2, UIWidth, UIHeight-1)
-	if !m.target.pos.In(maprg) {
+	if m.target == nil || !m.target.pos.In(maprg) {
 		return
 	}
 	p := m.target.pos

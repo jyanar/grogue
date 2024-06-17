@@ -71,6 +71,9 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionExamine:
 		m.mode = modeExamination
+		if m.target == nil {
+			m.target = &targeting{}
+		}
 		m.target.pos = m.game.ECS.positions[0].Point.Shift(2, 2)
 
 	case ActionIAnimate:
