@@ -55,7 +55,7 @@ func (m *model) updateInventory(msg gruid.Msg) {
 			// Check whether the given item has a ranged component
 			item_idx := m.game.ECS.inventories[0].items[n]
 			if m.game.ECS.HasComponent(item_idx, Ranged{}) {
-				m.target = targeting{
+				m.target = &targeting{
 					pos:    m.game.ECS.positions[0].Point.Shift(1, 1),
 					radius: 2,
 					item:   item_idx,
@@ -84,8 +84,7 @@ func (m *model) activateTarget(p gruid.Point) {
 			m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
 		}
 	}
-	m.target.path = nil
-	m.target.pos = gruid.Point{0, 0}
+	m.target = nil
 	m.mode = modeNormal
 	// Get rid of item in inventory
 	if m.game.ECS.HasComponent(item, Consumable{}) {
