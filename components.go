@@ -151,19 +151,19 @@ type DamageEffect struct {
 	amount int
 }
 
-type CFrameCell struct {
+type FrameCell struct {
 	r Renderable
 	p gruid.Point
 }
 
-type CAnimationFrame struct {
+type Frame struct {
 	itick      int // Current duration. Resets to duration when 0.
 	nticks     int // Duration of animation, in ticks
-	framecells []CFrameCell
+	framecells []FrameCell
 }
 
-type CAnimation struct {
+type Animation struct {
 	index  int
 	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
-	frames []CAnimationFrame
+	frames []Frame
 }

@@ -26,8 +26,7 @@ type model struct {
 	inventory  *ui.Menu         // Inventory menu.
 	pr         *paths.PathRange // Pathing algorithm.
 	target     *targeting       // Mouse position.
-	animation  *Animation       // The animation.
-	ianimation *InterruptibleAnimation
+	ianimation *Animation       // Interruptible animation.
 }
 
 // targeting describes information related to examination or selection of
@@ -288,7 +287,7 @@ func (m *model) Draw() gruid.Grid {
 	}
 
 	// Draw background animations
-	m.DrawCAnimation(mapgrid)
+	m.DrawBackgroundAnimations(mapgrid)
 
 	// Collect entities to draw.
 	type tup struct {
@@ -326,7 +325,7 @@ func (m *model) Draw() gruid.Grid {
 	m.DrawStatus(statusgrid)
 
 	// Draw background and player-triggered animations
-	m.DrawIAnimation(mapgrid)
+	m.DrawInterruptibleAnimation(mapgrid)
 
 	return m.grid
 }
@@ -421,18 +420,10 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	m.desc.Draw(slice)
 }
 
-func (m *model) DrawAnimation(gd gruid.Grid) {
-	// Iterate over all framecells of the current frame, and draw.
-	for _, fc := range m.animation.frames[0].framecells {
-		p := fc.P
-		c := fc.Cell
-		gd.Set(p, c)
-	}
-}
-
-func (m *model) DrawCAnimation(gd gruid.Grid) {
-	// Iterate over all framecells of the current frame, and draw.
-	for _, e := range m.game.ECS.EntitiesWith(CAnimation{}) {
+// Animations such as lava, water, torches. This function iterates over all such
+// entities and draws them. See AnimationSystem to see how these are updated.
+func (m *model) DrawBackgroundAnimations(gd gruid.Grid) {
+	for _, e := range m.game.ECS.EntitiesWith(Animation{}) {
 		anim := m.game.ECS.animations[e]
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
@@ -444,7 +435,11 @@ func (m *model) DrawCAnimation(gd gruid.Grid) {
 	}
 }
 
-func (m *model) DrawIAnimation(gd gruid.Grid) {
+// Interruptible animations are generally those which can be interrupted by
+// player input. For example, a potion exploding, or the player throwing
+// something, etc. Only one interruptible animation can be active at any point
+// in time.
+func (m *model) DrawInterruptibleAnimation(gd gruid.Grid) {
 	// Iterate over all framecells of the current frame, and draw.
 	if m.ianimation != nil {
 		anim := m.ianimation

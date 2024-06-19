@@ -293,10 +293,10 @@ type AnimationSystem struct {
 	ecs *ECS
 }
 
-// Updates all CAnimation objects in the ECS forward a tick.
+// Updates all Animation objects in the ECS forward a tick.
 func (s *AnimationSystem) Update(e int) {
 
-	if !s.ecs.HasComponent(e, CAnimation{}) {
+	if !s.ecs.HasComponent(e, Animation{}) {
 		return
 	}
 

@@ -31,7 +31,7 @@ type ECS struct {
 	inventories   map[int]*Inventory
 	rangeds       map[int]*Ranged
 	damageeffects map[int][]DamageEffect
-	animations    map[int]*CAnimation
+	animations    map[int]*Animation
 	// Systems
 	PerceptionSystem
 	AISystem
@@ -68,7 +68,7 @@ func NewECS() *ECS {
 		inventories:   make(map[int]*Inventory),
 		rangeds:       make(map[int]*Ranged),
 		damageeffects: make(map[int][]DamageEffect),
-		animations:    make(map[int]*CAnimation),
+		animations:    make(map[int]*Animation),
 	}
 	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
 	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
@@ -104,7 +104,7 @@ func (ecs *ECS) Update() {
 }
 
 func (ecs *ECS) UpdateAnimation() {
-	for _, e := range ecs.EntitiesWith(CAnimation{}) {
+	for _, e := range ecs.EntitiesWith(Animation{}) {
 		ecs.AnimationSystem.Update(e)
 	}
 }
@@ -154,7 +154,7 @@ func (ecs *ECS) Create(components ...any) int {
 			ecs.rangeds[idx] = &c
 		case DamageEffect:
 			ecs.damageeffects[idx] = append(ecs.damageeffects[idx], c)
-		case CAnimation:
+		case Animation:
 			ecs.animations[idx] = &c
 		}
 	}
@@ -260,7 +260,7 @@ func (ecs *ECS) AddComponent(entity int, component any) {
 		ecs.rangeds[entity] = &c
 	case DamageEffect:
 		ecs.damageeffects[entity] = append(ecs.damageeffects[entity], c)
-	case CAnimation:
+	case Animation:
 		ecs.animations[entity] = &c
 	}
 }
@@ -353,7 +353,7 @@ func (ecs *ECS) HasComponent(entity int, component any) bool {
 		if len(ecs.damageeffects[entity]) > 0 {
 			return true
 		}
-	case CAnimation:
+	case Animation:
 		if ecs.animations[entity] != nil {
 			return true
 		}

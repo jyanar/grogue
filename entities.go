@@ -119,14 +119,14 @@ func (g *game) NewWaterTile(p gruid.Point) int {
 		Visible{},
 		Position{p},
 		// NewRenderable('~', ColorWater1, ColorWater1, ROFloor),
-		CAnimation{
+		Animation{
 			index:  0,
 			repeat: -1,
-			frames: []CAnimationFrame{
+			frames: []Frame{
 				{
 					itick:  0,
 					nticks: 5,
-					framecells: []CFrameCell{
+					framecells: []FrameCell{
 						{
 							r: NewRenderable('~', ColorWater1, ColorWater1, ROFloor),
 							p: p,
@@ -136,7 +136,7 @@ func (g *game) NewWaterTile(p gruid.Point) int {
 				{
 					itick:  0,
 					nticks: 7,
-					framecells: []CFrameCell{
+					framecells: []FrameCell{
 						{
 							r: NewRenderable('~', ColorWater2, ColorWater2, ROFloor),
 							p: p,
