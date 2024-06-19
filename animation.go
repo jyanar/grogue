@@ -43,6 +43,27 @@ func (g *game) NewExampleAnimation(p gruid.Point) int {
 	)
 }
 
+func NewThrowAnimation(r Renderable, path []gruid.Point) Animation {
+	a := Animation{
+		index:  0,
+		repeat: 0,
+		frames: []Frame{},
+	}
+	for i := 0; i < len(path); i++ {
+		a.frames = append(a.frames, Frame{
+			itick:  0,
+			nticks: 1,
+			framecells: []FrameCell{
+				{
+					r: r,
+					p: path[i],
+				},
+			},
+		})
+	}
+	return a
+}
+
 func NewExampleIAnimation(p gruid.Point) *Animation {
 	return &Animation{
 		index:  0,
