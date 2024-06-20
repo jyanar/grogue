@@ -1,7 +1,14 @@
+17 June 2024
+============
+
+Ranged attacks (scrolls, throwing items at enemies, etc) counts as the player's
+turn and thus allows other entities to then move. This is how Brogue handles it.
+To make this clearer, there should be an animation for every ranged attack.
+
+
 13 October 2023
 ===============
 
-A productive week. 
 * Made the perception be computed using an FOV, just as is done for the player.
   Previously monsters would just check whether the player was X number of tiles
   away, and if so, would start pathing towards them. Computing the list of

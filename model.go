@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -32,10 +31,10 @@ type model struct {
 // targeting describes information related to examination or selection of
 // particular positions in the map.
 type targeting struct {
-	pos    gruid.Point
-	path   []gruid.Point
-	item   int
-	radius int
+	pos    gruid.Point   // Current position of the target.
+	path   []gruid.Point // Path from the player to the target.
+	item   int           // Item that is currently selected.
+	radius int           // Radius of target selection.
 }
 
 // mode describes distinct kinds of modes for the UI. It is used to send user
@@ -49,6 +48,7 @@ const (
 	modeMessageViewer                 // Currently viewing messages.
 	modeInventoryActivate             // Browsing inventory, in order to use an item.
 	modeInventoryDrop                 // Browsing inventory, in order to drop an item.
+	modeInventoryThrow                // Browsing inventory, in order to throw an item.
 	modeExamination                   // Keyboard map examination mode.
 	modeTargeting
 )
@@ -71,7 +71,7 @@ type msgTick struct{}
 
 func frameTicker() gruid.Sub {
 	return func(ctx context.Context, ch chan<- gruid.Msg) {
-		t := time.NewTicker(100 * time.Millisecond)
+		t := time.NewTicker(60 * time.Millisecond)
 		defer t.Stop()
 		for {
 			select {
@@ -135,7 +135,6 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 					}
 				}
 			}
-			log.Println("UPDATING AFTER MSG TICK")
 		}
 
 	case modeMessageViewer:
@@ -145,7 +144,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 		}
 		return nil
 
-	case modeInventoryActivate, modeInventoryDrop:
+	case modeInventoryActivate, modeInventoryDrop, modeInventoryThrow:
 		m.updateInventory(msg)
 		return nil
 
@@ -226,7 +225,10 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 			m.target.pos = msg.P.Shift(-1, -1)
 
 		case gruid.MouseMain:
-			fmt.Printf("Mouse click at: %v\n", msg.P)
+			if m.mode == modeExamination {
+				break
+			}
+			m.activateTarget(p)
 		}
 	}
 
@@ -257,7 +259,7 @@ func (m *model) Draw() gruid.Grid {
 	}
 
 	// Render the inventory, if that's the mode we're in.
-	if m.mode == modeInventoryActivate || m.mode == modeInventoryDrop {
+	if m.mode == modeInventoryActivate || m.mode == modeInventoryDrop || m.mode == modeInventoryThrow {
 		m.grid.Copy(m.inventory.Draw())
 		return m.grid
 	}

@@ -21,6 +21,7 @@ const (
 	ActionInventory               // Open inventory.
 	ActionPickup                  // Pick up an item.
 	ActionDrop                    // Drop an item.
+	ActionThrow                   // Throw an item.
 	ActionExamine                 // Examine the map.
 	ActionIAnimate                // Start an interruptible animation.
 )
@@ -47,6 +48,11 @@ func (m *model) handleAction() gruid.Effect {
 	case ActionDrop:
 		m.OpenInventory("Drop item")
 		m.mode = modeInventoryDrop
+		m.game.CollectMessages()
+
+	case ActionThrow:
+		m.OpenInventory("Throw item")
+		m.mode = modeInventoryThrow
 		m.game.CollectMessages()
 
 	case ActionPickup:

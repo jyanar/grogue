@@ -3,8 +3,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/anaseto/gruid"
 	"github.com/anaseto/gruid/ui"
 )
@@ -48,9 +46,21 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		// using enter or clicking on it).
 		n := m.inventory.Active()
 		var err error
+
 		switch m.mode {
 		case modeInventoryDrop:
 			err = m.game.InventoryRemove(0, n)
+
+		case modeInventoryThrow:
+			item_idx := m.game.ECS.inventories[0].items[n]
+			m.target = &targeting{
+				pos:    m.game.ECS.positions[0].Point.Shift(1, 1),
+				radius: 2,
+				item:   item_idx,
+			}
+			m.mode = modeTargeting
+			return
+
 		case modeInventoryActivate:
 			// Check whether the given item has a ranged component
 			item_idx := m.game.ECS.inventories[0].items[n]
@@ -65,25 +75,30 @@ func (m *model) updateInventory(msg gruid.Msg) {
 			}
 			err = m.game.InventoryActivate(0, n)
 		}
+
 		if err != nil {
 			m.game.Logf(err.Error(), ColorLogSpecial)
 		}
+
 		m.game.ECS.Update()
 		m.mode = modeNormal
 	}
 }
 
 func (m *model) activateTarget(p gruid.Point) {
-	log.Println("Activating target at point p!")
-	log.Println(p)
-	// Check if there is an entity here capable of taking damage
 	item := m.target.item
-	item_dmg := m.game.ECS.damages[item].int
-	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
-		for _, e := range entities {
-			m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
+	// Check if there is an entity here capable of taking damage
+	if m.game.ECS.HasComponent(item, Damage{}) {
+		item_dmg := m.game.ECS.damages[item].int
+		if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
+			for _, e := range entities {
+				m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
+			}
 		}
 	}
+	// Add animation
+	m.ianimation = NewThrowAnimation(*m.game.ECS.renderables[item], m.target.path)
+	// Go back to normal mode
 	m.target = nil
 	m.mode = modeNormal
 	// Get rid of item in inventory
@@ -92,7 +107,6 @@ func (m *model) activateTarget(p gruid.Point) {
 		m.game.ECS.Delete(item)
 	}
 	m.game.ECS.Update()
-	// Can we force the game to re-render now?
 }
 
 const ErrNoShow = "ErrNoShow"
@@ -113,9 +127,6 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	if g.ECS.HasComponent(item, Healing{}) {
 		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
 	}
-	// TODO Ranged effects
-	// if g.ECS.HasComponent(item, Ranged{}) {
-	// }
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
 		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
@@ -123,10 +134,6 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	}
 	return nil
 }
-
-// func (g *game) InventoryActivateWithTarget(entity, itemidx int) error {
-// 	item := g.ECS.inventories[entity].items[itemidx]
-// }
 
 func (g *game) InventoryRemove(entity, itemidx int) error {
 	item := g.ECS.inventories[entity].items[itemidx]

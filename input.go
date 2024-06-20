@@ -7,7 +7,6 @@ import (
 func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 
 	m.target = nil
-	// m.target.path = nil // Remove path highlighting.
 
 	pdelta := gruid.Point{}
 	switch msg.Key {
@@ -40,6 +39,8 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		m.action = action{Type: ActionInventory}
 	case "d":
 		m.action = action{Type: ActionDrop}
+	case "t":
+		m.action = action{Type: ActionThrow}
 	case "g":
 		m.action = action{Type: ActionPickup}
 	case "x":
