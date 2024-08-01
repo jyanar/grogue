@@ -114,10 +114,13 @@ const ErrNoShow = "ErrNoShow"
 
 // TODO Better log messages
 func (g *game) InventoryActivate(entity, itemidx int) error {
-
-	item := g.ECS.inventories[entity].items[itemidx]
-	item_name := g.ECS.names[item].string
-	entity_name := g.ECS.names[entity].string
+	iC, _ := g.ECS.GetComponent(entity, Inventory{})
+	inventory := iC.(Inventory)
+	item := inventory.items[itemidx]
+	nC, _ := g.ECS.GetComponent(item, Name{})
+	item_name := nC.(Name).string
+	pnC, _ := g.ECS.GetComponent(entity, Name{})
+	entity_name := pnC.(Name).string
 	var prefix string
 	if entity == 0 {
 		prefix = "You use the"
@@ -127,15 +130,20 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
 	// Item can provide healing. Apply healing.
 	if g.ECS.HasComponent(item, Healing{}) {
-		g.ECS.healths[entity].hp += g.ECS.healings[item].amount
+		healthsC, _ := g.ECS.GetComponent(entity, Health{})
+		healingC, _ := g.ECS.GetComponent(item, Healing{})
+		health := healthsC.(Health)
+		healing := healingC.(Healing)
+		health.hp += healing.amount
+		g.ECS.AddComponent(entity, health)
 	}
 	// TODO Ranged effects
 	// if g.ECS.HasComponent(item, Ranged{}) {
 	// }
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item, Consumable{}) {
-		g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
-		g.ECS.Delete(item)
+		// g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
+		// g.ECS.Delete(item)
 	}
 	return nil
 }
@@ -145,14 +153,14 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 // }
 
 func (g *game) InventoryRemove(entity, itemidx int) error {
-	item := g.ECS.inventories[entity].items[itemidx]
-	item_name := g.ECS.names[item].string
-	entity_name := g.ECS.names[entity].string
-	// Add Position component back to the item.
-	pos := g.ECS.positions[entity].Point
-	g.ECS.AddComponent(item, Position{pos})
-	// Remove item from inventory
-	g.Logf("%s drops %s", ColorLogSpecial, entity_name, item_name)
-	g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
+	// item := g.ECS.inventories[entity].items[itemidx]
+	// item_name := g.ECS.names[item].string
+	// entity_name := g.ECS.names[entity].string
+	// // Add Position component back to the item.
+	// pos := g.ECS.positions[entity].Point
+	// g.ECS.AddComponent(item, Position{pos})
+	// // Remove item from inventory
+	// g.Logf("%s drops %s", ColorLogSpecial, entity_name, item_name)
+	// g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
 	return nil
 }

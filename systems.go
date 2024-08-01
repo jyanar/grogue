@@ -20,8 +20,10 @@ func (s *PerceptionSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, Perception{}) {
 		return
 	}
-	pos := s.ecs.positions[e]
-	per := s.ecs.perceptions[e]
+	posC, _ := s.ecs.GetComponent(e, Position{})
+	perC, _ := s.ecs.GetComponent(e, Perception{})
+	pos := posC.(Position)
+	per := perC.(Perception)
 	per.perceived = []int{}
 	if per.FOV == nil {
 		per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
@@ -42,19 +44,26 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 		// If other entity is within perceptive radius, add to perceived list.
-		pos_other := s.ecs.positions[other]
+		posC, _ := s.ecs.GetComponent(other, Position{})
+		pos_other := posC.(Position)
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
 	}
 	// Check if player is within perceived entities, and switch to appropriate state.
 	for _, other := range per.perceived {
-		name_other := s.ecs.names[other].string
+		nameOtherC, _ := s.ecs.GetComponent(other, Name{})
+		name_other := nameOtherC.(Name).string
 		if name_other == "you" && s.ecs.HasComponent(e, AI{}) {
-			s.ecs.ais[e].state = CSHunting
+			aiC, _ := s.ecs.GetComponent(e, AI{})
+			ai := aiC.(AI)
+			ai.state = CSHunting
+			s.ecs.AddComponent(e, ai)
 			break
 		} else {
-			s.ecs.ais[e].state = CSWandering
+			aiC, _ := s.ecs.GetComponent(e, AI{})
+			ai := aiC.(AI)
+			ai.state = CSWandering
 		}
 	}
 }
@@ -93,8 +102,10 @@ func (s *AISystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, AI{}) {
 		return
 	}
-	ai := s.ecs.ais[e]
-	pos := s.ecs.positions[e]
+	aiC, _ := s.ecs.GetComponent(e, AI{})
+	posC, _ := s.ecs.GetComponent(e, Position{})
+	ai := aiC.(AI)
+	pos := posC.(Position)
 	switch ai.state {
 	case CSSleeping:
 		// Do nothing, the entity is asleep!
@@ -106,13 +117,18 @@ func (s *AISystem) Update(e int) {
 				f := s.ecs.Map.RandomFloor()
 				if f != pos.Point {
 					ai.dest = &f
+					s.ecs.AddComponent(e, ai)
 					break
 				}
 			}
 		}
 	case CSHunting:
 		// Set destination to be the player.
-		ai.dest = &s.ecs.positions[0].Point
+		// ai.dest = &s.ecs.positions[0].Point
+		ppC, _ := s.ecs.GetComponent(0, Position{})
+		pp := ppC.(Position)
+		ai.dest = &pp.Point
+		s.ecs.AddComponent(e, ai)
 	}
 	// Compute path to ai.dest.
 	path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
@@ -129,11 +145,12 @@ func (s *BumpSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
 		return
 	}
-	// Get entity's bump and position data.
-	b := s.ecs.bumps[e]
-	p := s.ecs.positions[e]
+	bC, _ := s.ecs.GetComponent(e, Bump{})
+	pC, _ := s.ecs.GetComponent(e, Position{})
+	b := bC.(Bump)
+	p := pC.(Position)
 	dest := p.Point.Add(b.Point)
-	s.ecs.bumps[e] = nil // Consume bump component.
+	s.ecs.RemoveComponent(e, Bump{})
 	// Ignore movement to the same tile.
 	if b.X == 0 && b.Y == 0 {
 		return
@@ -150,8 +167,10 @@ func (s *BumpSystem) Update(e int) {
 			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
 		}
 		// Attack entity at location.
+		dmgC, _ := s.ecs.GetComponent(e, Damage{})
+		dmg := dmgC.(Damage)
 		target_entity := attackable_entities[0]
-		attack_power := s.ecs.damages[e].int
+		attack_power := dmg.int
 		s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
 		s.ecs.DamageEffectSystem.Update(target_entity)
 	} else {
@@ -166,49 +185,49 @@ type DamageEffectSystem struct {
 
 func (s *DamageEffectSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, DamageEffect{}, Health{}) {
-		s.ecs.damageeffects[e] = []DamageEffect{}
+		// s.ecs.damageeffects[e] = []DamageEffect{}
 		return
 	}
-	health := s.ecs.healths[e]
-	for _, de := range s.ecs.damageeffects[e] {
-		health.hp -= de.amount
-		name_attacker := s.ecs.names[de.source].string
-		name_receiver := s.ecs.names[e].string
-		var msg string
-		if de.source == 0 {
-			msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
-		} else {
-			if e == 0 {
-				msg = fmt.Sprintf("The %s mauls you!", name_attacker)
-			} else {
-				msg = fmt.Sprintf("The %s hits the %s.", name_attacker, name_receiver)
-			}
-		}
-		msgcolor := ColorLogPlayerAttack
-		if e == 0 {
-			msgcolor = ColorLogMonsterAttack
-		}
-		if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
-			// s.ecs.Create(
-			// 	Name{"blood"},
-			// 	Position{s.ecs.positions[e].Point},
-			// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
-			// )
-			s.ecs.Create(
-				Name{"blood"},
-				Position{s.ecs.positions[e].Point},
-				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
-			)
-		}
-		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
-		if health.hp <= 0 {
-			health.hp = 0
-			// Process entity through DeathSystem
-			s.ecs.AddComponent(e, Death{})
-			s.ecs.DeathSystem.Update(e)
-		}
-	}
-	s.ecs.damageeffects[e] = []DamageEffect{}
+	// health := s.ecs.healths[e]
+	// for _, de := range s.ecs.damageeffects[e] {
+	// 	health.hp -= de.amount
+	// 	name_attacker := s.ecs.names[de.source].string
+	// 	name_receiver := s.ecs.names[e].string
+	// 	var msg string
+	// 	if de.source == 0 {
+	// 		msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
+	// 	} else {
+	// 		if e == 0 {
+	// 			msg = fmt.Sprintf("The %s mauls you!", name_attacker)
+	// 		} else {
+	// 			msg = fmt.Sprintf("The %s hits the %s.", name_attacker, name_receiver)
+	// 		}
+	// 	}
+	// 	msgcolor := ColorLogPlayerAttack
+	// 	if e == 0 {
+	// 		msgcolor = ColorLogMonsterAttack
+	// 	}
+	// 	if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
+	// 		// s.ecs.Create(
+	// 		// 	Name{"blood"},
+	// 		// 	Position{s.ecs.positions[e].Point},
+	// 		// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
+	// 		// )
+	// 		s.ecs.Create(
+	// 			Name{"blood"},
+	// 			Position{s.ecs.positions[e].Point},
+	// 			NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
+	// 		)
+	// 	}
+	// 	s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+	// 	if health.hp <= 0 {
+	// 		health.hp = 0
+	// 		// Process entity through DeathSystem
+	// 		s.ecs.AddComponent(e, Death{})
+	// 		s.ecs.DeathSystem.Update(e)
+	// 	}
+	// }
+	// s.ecs.damageeffects[e] = []DamageEffect{}
 }
 
 type FOVSystem struct {
@@ -219,8 +238,10 @@ func (s *FOVSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
 		return
 	}
-	p := s.ecs.positions[e]
-	f := s.ecs.fovs[e]
+	pC, _ := s.ecs.GetComponent(e, Position{})
+	fC, _ := s.ecs.GetComponent(e, FOV{})
+	p := pC.(Position)
+	f := fC.(FOV)
 	if f.FOV == nil {
 		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
 	}
@@ -228,6 +249,7 @@ func (s *FOVSystem) Update(e int) {
 	// of the entity.
 	rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
 	f.FOV.SetRange(rg.Add(p.Point).Intersect(s.ecs.Map.Grid.Range()))
+	s.ecs.AddComponent(e, f)
 	// We mark cells in field of view as explored. We use the symmetric shadow
 	// casting algorithm provided by the rl package.
 	passable := func(p gruid.Point) bool {
@@ -251,42 +273,42 @@ func (s *DeathSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Death{}) {
 		return
 	}
-	name := s.ecs.names[e].string
-	fg := s.ecs.renderables[e].cell.Style.Fg
-	s.ecs.obstructs[e] = nil   // No longer blocking.
-	s.ecs.perceptions[e] = nil // No longer perceiving.
-	s.ecs.ais[e] = nil         // No longer pathing.
-	s.ecs.bumps[e] = nil
-	s.ecs.inputs[e] = nil
-	s.ecs.damages[e] = nil
-	s.ecs.rangeds[e] = nil
-	s.ecs.damageeffects[e] = nil
-	// s.ecs.healths[e] = nil
-	s.ecs.deaths[e] = nil // Consume the death component.
-	if e == 0 {
-		s.ecs.AddComponent(e, Name{"your corpse"})
-	} else {
-		s.ecs.AddComponent(e, Name{name + " corpse"})
-	}
-	s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
-	s.ecs.AddComponent(e, Collectible{})
-	s.ecs.AddComponent(e, Consumable{})
-	s.ecs.AddComponent(e, Healing{amount: 2})
-	// Drop everything in inventory
-	if s.ecs.HasComponent(e, Inventory{}) {
-		for _, item := range s.ecs.inventories[e].items {
-			s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
-		}
-		s.ecs.inventories[e] = nil
-	}
-	msg := fmt.Sprintf("%s has died!", name)
-	if e == 0 {
-		msg = "You have died!"
-	}
-	s.ecs.Create(LogEntry{
-		Text:  msg,
-		Color: ColorLogMonsterAttack,
-	})
+	// name := s.ecs.names[e].string
+	// fg := s.ecs.renderables[e].cell.Style.Fg
+	// s.ecs.obstructs[e] = nil   // No longer blocking.
+	// s.ecs.perceptions[e] = nil // No longer perceiving.
+	// s.ecs.ais[e] = nil         // No longer pathing.
+	// s.ecs.bumps[e] = nil
+	// s.ecs.inputs[e] = nil
+	// s.ecs.damages[e] = nil
+	// s.ecs.rangeds[e] = nil
+	// s.ecs.damageeffects[e] = nil
+	// // s.ecs.healths[e] = nil
+	// s.ecs.deaths[e] = nil // Consume the death component.
+	// if e == 0 {
+	// 	s.ecs.AddComponent(e, Name{"your corpse"})
+	// } else {
+	// 	s.ecs.AddComponent(e, Name{name + " corpse"})
+	// }
+	// s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
+	// s.ecs.AddComponent(e, Collectible{})
+	// s.ecs.AddComponent(e, Consumable{})
+	// s.ecs.AddComponent(e, Healing{amount: 2})
+	// // Drop everything in inventory
+	// if s.ecs.HasComponent(e, Inventory{}) {
+	// 	for _, item := range s.ecs.inventories[e].items {
+	// 		s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
+	// 	}
+	// 	s.ecs.inventories[e] = nil
+	// }
+	// msg := fmt.Sprintf("%s has died!", name)
+	// if e == 0 {
+	// 	msg = "You have died!"
+	// }
+	// s.ecs.Create(LogEntry{
+	// 	Text:  msg,
+	// 	Color: ColorLogMonsterAttack,
+	// })
 }
 
 type AnimationSystem struct {
@@ -301,7 +323,8 @@ func (s *AnimationSystem) Update(e int) {
 	}
 
 	// Advance animation by a single tick.
-	anim := s.ecs.animations[e]
+	aC, _ := s.ecs.GetComponent(e, Animation{})
+	anim := aC.(Animation)
 	anim.frames[anim.index].itick++
 
 	// If the current frame has expired, move to the next frame.
