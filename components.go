@@ -5,6 +5,8 @@ import (
 	"github.com/anaseto/gruid/rl"
 )
 
+type Component interface{}
+
 // An entity position, defined as an X, Y coordinate.
 type Position struct {
 	gruid.Point
