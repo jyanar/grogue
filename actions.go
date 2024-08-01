@@ -74,10 +74,16 @@ func (m *model) handleAction() gruid.Effect {
 		if m.target == nil {
 			m.target = &targeting{}
 		}
-		m.target.pos = m.game.ECS.positions[0].Point.Shift(2, 2)
+		p, hasPos := m.game.ECS.GetComponent(0, Position{})
+		if hasPos {
+			m.target.pos = p.(Position).Point.Shift(2, 2)
+		}
 
 	case ActionIAnimate:
-		m.ianimation = NewExampleIAnimation(m.game.ECS.positions[0].Point)
+		p, hasPos := m.game.ECS.GetComponent(0, Position{})
+		if hasPos {
+			m.ianimation = NewExampleIAnimation(p.(Position).Point)
+		}
 	}
 	return nil
 }

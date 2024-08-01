@@ -39,10 +39,11 @@ func (g *game) Initialize() {
 // keep cells within maxLOS manhattan distance from the source entity.
 func (g *game) InFOV(p gruid.Point) bool {
 	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
-		pp := g.ECS.positions[e].Point
-		los := g.ECS.fovs[e].LOS
-		fov := g.ECS.fovs[e].FOV
-		if fov.Visible(p) && paths.DistanceManhattan(pp, p) <= los {
+		pp, _ := g.ECS.GetComponent(e, Position{})
+		f, _ := g.ECS.GetComponent(e, FOV{})
+		pos := pp.(Position)
+		fov := f.(FOV)
+		if fov.FOV.Visible(p) && paths.DistanceManhattan(pos.Point, p) <= fov.LOS {
 			return true
 		}
 	}
@@ -93,21 +94,30 @@ func (g *game) PickupItem() (ok bool) {
 	ok = false
 	for _, e := range g.ECS.EntitiesWith(Input{}, Inventory{}) {
 		// Check if e is standing over a collectible item.
-		p := g.ECS.positions[e].Point
+		pos, _ := g.ECS.GetComponent(e, Position{})
+		p := pos.(Position).Point
 		for _, i := range g.ECS.EntitiesAt(p) {
 			if i != e && g.ECS.HasComponent(i, Collectible{}) {
 				// There is an item here that is collectible! Place a reference to it
 				// in e's inventory and remove its Position component.
 				ok = true
-				entity_name := g.ECS.names[e].string
-				item_name := g.ECS.names[i].string
+				n, _ := g.ECS.GetComponent(e, Name{})
+				in, _ := g.ECS.GetComponent(i, Name{})
+				entity_name := n.(Name).string
+				item_name := in.(Name).string
 				if e == 0 {
 					g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
 				} else {
 					g.Logf("%s picks up %s.", ColorLogSpecial, entity_name, item_name)
 				}
-				g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
-				g.ECS.positions[i] = nil
+
+				inventory, _ := g.ECS.GetComponent(e, Inventory{})
+				inv := inventory.(Inventory)
+				inv.items = append(inv.items, i)
+				g.ECS.AddComponent(e, inv)
+				g.ECS.RemoveComponent(i, Position{})
+				// g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
+				// g.ECS.positions[i] = nil
 			}
 		}
 	}

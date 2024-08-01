@@ -11,13 +11,17 @@ import (
 
 func (m *model) OpenInventory(title string) {
 	// Build list of entries in player inventory.
-	inv := m.game.ECS.inventories[0]
+	iC, _ := m.game.ECS.GetComponent(0, Inventory{})
+	inv := iC.(Inventory)
 	entries := []ui.MenuEntry{}
 	r := 'a'
 	for _, it := range inv.items {
-		name := m.game.ECS.names[it].string
-		glyph := m.game.ECS.renderables[it].cell.Rune
-		fg := m.game.ECS.renderables[it].cell.Style.Fg
+		nC, _ := m.game.ECS.GetComponent(it, Name{})
+		rC, _ := m.game.ECS.GetComponent(it, Renderable{})
+		name := nC.(Name).string
+		renderable := rC.(Renderable)
+		glyph := renderable.cell.Rune
+		fg := renderable.cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
 		entries = append(entries, ui.MenuEntry{
 			Text: stt.WithText(string(r) + " - @k" + string(glyph) + "@N " + name),
@@ -53,10 +57,16 @@ func (m *model) updateInventory(msg gruid.Msg) {
 			err = m.game.InventoryRemove(0, n)
 		case modeInventoryActivate:
 			// Check whether the given item has a ranged component
-			item_idx := m.game.ECS.inventories[0].items[n]
+			// item_idx := m.game.ECS.inventories[0].items[n]
+			iC, _ := m.game.ECS.GetComponent(0, Inventory{})
+			inv := iC.(Inventory)
+			item_idx := inv.items[n]
+
 			if m.game.ECS.HasComponent(item_idx, Ranged{}) {
+				pC, _ := m.game.ECS.GetComponent(0, Position{})
+				p := pC.(Position).Point
 				m.target = &targeting{
-					pos:    m.game.ECS.positions[0].Point.Shift(1, 1),
+					pos:    p.Shift(1, 1),
 					radius: 2,
 					item:   item_idx,
 				}
@@ -78,7 +88,9 @@ func (m *model) activateTarget(p gruid.Point) {
 	log.Println(p)
 	// Check if there is an entity here capable of taking damage
 	item := m.target.item
-	item_dmg := m.game.ECS.damages[item].int
+	// item_dmg := m.game.ECS.damages[item].int
+	dmg, _ := m.game.ECS.GetComponent(item, Damage{})
+	item_dmg := dmg.(Damage).int
 	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
 		for _, e := range entities {
 			m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
@@ -88,7 +100,10 @@ func (m *model) activateTarget(p gruid.Point) {
 	m.mode = modeNormal
 	// Get rid of item in inventory
 	if m.game.ECS.HasComponent(item, Consumable{}) {
-		m.game.ECS.inventories[0].items = remove(m.game.ECS.inventories[0].items, item)
+		iC, _ := m.game.ECS.GetComponent(0, Inventory{})
+		inv := iC.(Inventory)
+		inv.items = remove(inv.items, item)
+		m.game.ECS.AddComponent(0, inv)
 		m.game.ECS.Delete(item)
 	}
 	m.game.ECS.Update()
@@ -99,6 +114,7 @@ const ErrNoShow = "ErrNoShow"
 
 // TODO Better log messages
 func (g *game) InventoryActivate(entity, itemidx int) error {
+
 	item := g.ECS.inventories[entity].items[itemidx]
 	item_name := g.ECS.names[item].string
 	entity_name := g.ECS.names[entity].string

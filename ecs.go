@@ -115,7 +115,7 @@ func (ecs *ECS) Create(components ...any) int {
 	idx := ecs.nextID
 	ecs.entities = append(ecs.entities, idx)
 	for _, component := range components {
-		s.ecs.AddComponent(idx, component)
+		ecs.AddComponent(idx, component)
 	}
 	ecs.nextID++
 	return idx
@@ -184,6 +184,13 @@ func (ecs *ECS) GetComponent(entity int, component Component) (Component, bool) 
 	return nil, false
 }
 
+func (ecs *ECS) RemoveComponent(entity int, component Component) {
+	if _, ok := ecs.components[entity]; ok {
+		componentString := fmt.Sprintf("%T", component)
+		delete(ecs.components[entity], componentString)
+	}
+}
+
 func (ecs *ECS) HasComponent(entity int, component any) bool {
 	if _, ok := ecs.GetComponent(entity, component); ok {
 		return true
@@ -240,87 +247,111 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 		return false
 	}
 	for _, e := range entities {
-		// name := ecs.names[e].string
-		// if name == "blood" {
-		// 	return true
-		// }
+		n, hasName := ecs.GetComponent(e, Name{})
+		if hasName && n.(Name).string == "blood" {
+			return true
+		}
 	}
 	return false
 }
 
 func (ecs *ECS) PlayerDead() bool {
-	return ecs.names[0].string == "player corpse"
+	if _, ok := ecs.GetComponent(0, Death{}); ok {
+		return true
+	}
+	return false
 }
 
 func (ecs *ECS) printDebug(e int) {
 	fmt.Println("====================")
 	fmt.Printf("Entity: %d\n", e)
-	if ecs.bumps[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.bumps[e], ecs.bumps[e])
-	}
-	if ecs.positions[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.positions[e], ecs.positions[e])
-	}
-	if ecs.damages[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.damages[e], ecs.damages[e])
-	}
-	if ecs.deaths[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
-	}
-	if ecs.fovs[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.fovs[e], ecs.fovs[e])
-	}
-	if ecs.healths[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.healths[e], ecs.healths[e])
-	}
-	if ecs.inputs[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.inputs[e], ecs.inputs[e])
-	}
-	if ecs.names[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.names[e], ecs.names[e])
-	}
-	if ecs.obstructs[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.obstructs[e], ecs.obstructs[e])
-	}
-	if ecs.renderables[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.renderables[e], ecs.renderables[e])
-	}
-	if ecs.deaths[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
-	}
-	if ecs.perceptions[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
-	}
-	if ecs.visibles[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.visibles[e], ecs.visibles[e])
-	}
-	if ecs.ais[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
-	}
-	if ecs.logentries[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.logentries[e], ecs.logentries[e])
-	}
-	if ecs.consumables[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.consumables[e], ecs.consumables[e])
-	}
-	if ecs.healings[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.healings[e], ecs.healings[e])
-	}
-	if ecs.collectibles[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.collectibles[e], ecs.collectibles[e])
-	}
-	if ecs.inventories[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.inventories[e], ecs.inventories[e])
-	}
-	if ecs.rangeds[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.rangeds[e], ecs.rangeds[e])
-	}
-	if len(ecs.damageeffects[e]) > 0 {
-		for _, de := range ecs.damageeffects[e] {
-			fmt.Printf("%v, %T\n", de, de)
-		}
-	}
-	if ecs.animations[e] != nil {
-		fmt.Printf("%v, %T\n", ecs.animations[e], ecs.animations[e])
-	}
+	//	if ecs.bumps[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.bumps[e], ecs.bumps[e])
+	//	}
+	//
+	//	if ecs.positions[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.positions[e], ecs.positions[e])
+	//	}
+	//
+	//	if ecs.damages[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.damages[e], ecs.damages[e])
+	//	}
+	//
+	//	if ecs.deaths[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
+	//	}
+	//
+	//	if ecs.fovs[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.fovs[e], ecs.fovs[e])
+	//	}
+	//
+	//	if ecs.healths[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.healths[e], ecs.healths[e])
+	//	}
+	//
+	//	if ecs.inputs[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.inputs[e], ecs.inputs[e])
+	//	}
+	//
+	//	if ecs.names[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.names[e], ecs.names[e])
+	//	}
+	//
+	//	if ecs.obstructs[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.obstructs[e], ecs.obstructs[e])
+	//	}
+	//
+	//	if ecs.renderables[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.renderables[e], ecs.renderables[e])
+	//	}
+	//
+	//	if ecs.deaths[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.deaths[e], ecs.deaths[e])
+	//	}
+	//
+	//	if ecs.perceptions[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.perceptions[e], ecs.perceptions[e])
+	//	}
+	//
+	//	if ecs.visibles[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.visibles[e], ecs.visibles[e])
+	//	}
+	//
+	//	if ecs.ais[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.ais[e], ecs.ais[e])
+	//	}
+	//
+	//	if ecs.logentries[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.logentries[e], ecs.logentries[e])
+	//	}
+	//
+	//	if ecs.consumables[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.consumables[e], ecs.consumables[e])
+	//	}
+	//
+	//	if ecs.healings[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.healings[e], ecs.healings[e])
+	//	}
+	//
+	//	if ecs.collectibles[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.collectibles[e], ecs.collectibles[e])
+	//	}
+	//
+	//	if ecs.inventories[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.inventories[e], ecs.inventories[e])
+	//	}
+	//
+	//	if ecs.rangeds[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.rangeds[e], ecs.rangeds[e])
+	//	}
+	//
+	//	if len(ecs.damageeffects[e]) > 0 {
+	//		for _, de := range ecs.damageeffects[e] {
+	//			fmt.Printf("%v, %T\n", de, de)
+	//		}
+	//	}
+	//
+	//	if ecs.animations[e] != nil {
+	//		fmt.Printf("%v, %T\n", ecs.animations[e], ecs.animations[e])
+	//	}
 }
