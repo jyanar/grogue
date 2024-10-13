@@ -3,7 +3,9 @@
 
 package main
 
-import "github.com/anaseto/gruid"
+import (
+	"github.com/anaseto/gruid"
+)
 
 // func (g *game) NewBaseCreature(p gruid.Point) int {
 // 	return g.ECS.Create(
