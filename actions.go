@@ -40,9 +40,11 @@ func (m *model) handleAction() gruid.Effect {
 		m.game.CollectMessages()
 
 	case ActionInventory:
-		m.OpenInventory("Use item")
-		m.mode = modeInventoryActivate
-		m.game.CollectMessages()
+		if !m.game.ECS.PlayerDead() {
+			m.OpenInventory("Use item")
+			m.mode = modeInventoryActivate
+			m.game.CollectMessages()
+		}
 
 	case ActionDrop:
 		m.OpenInventory("Drop item")

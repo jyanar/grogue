@@ -418,7 +418,7 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 }
 
 func (ecs *ECS) PlayerDead() bool {
-	return ecs.names[0].string == "player corpse"
+	return ecs.healths[0].hp == 0
 }
 
 func (ecs *ECS) printDebug(e int) {
