@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -110,32 +109,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			m.updateTargeting(msg)
 
 		case msgTick:
-			// Update background animations
-			m.game.ECS.UpdateAnimation()
-			// Update interruptible animation
-			if m.ianimation != nil {
-				log.Println("Updating interruptible animation!!")
-				// Advance animation by a single tick.
-				anim := m.ianimation
-				anim.frames[anim.index].itick++
-
-				// If the current frame has expired, move to the next frame.
-				if anim.frames[anim.index].itick >= anim.frames[anim.index].nticks {
-					anim.frames[anim.index].itick = 0
-					anim.index++
-				}
-
-				// If the current animation has expired, remove it from the ECS or restart.
-				if anim.index >= len(anim.frames) {
-					anim.index = 0
-					if anim.repeat == 0 {
-						m.ianimation = nil
-					} else if anim.repeat > 0 {
-						anim.repeat--
-					}
-				}
-			}
-			log.Println("UPDATING AFTER MSG TICK")
+			m.handleMsgTick()
 		}
 
 	case modeMessageViewer:
