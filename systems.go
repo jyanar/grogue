@@ -16,15 +16,16 @@ type PerceptionSystem struct {
 	ecs *ECS
 }
 
+// Perception - allows entities with Perception{} and Position{} to perceive
+// other entities within their field of view. If the given entity has an AI
+// component (is a mob) and the player is within its field of view, it will
+// switch to the hunting state.
 func (s *PerceptionSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, Perception{}) {
 		return
 	}
-	posC, _ := s.ecs.GetComponent(e, Position{})
-	perC, _ := s.ecs.GetComponent(e, Perception{})
-	pos := posC.(Position)
-	per := perC.(Perception)
-	per.perceived = []int{}
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	per := s.ecs.GetComponentUnchecked(e, Perception{}).(Perception)
 	if per.FOV == nil {
 		per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
 	}
@@ -33,8 +34,8 @@ func (s *PerceptionSystem) Update(e int) {
 	passable := func(p gruid.Point) bool {
 		return s.ecs.Map.Grid.At(p) != Wall
 	}
-	for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, false) {
-		if paths.DistanceManhattan(point, pos.Point) > per.LOS {
+	for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, true) {
+		if paths.DistanceChebyshev(point, pos.Point) > per.LOS {
 			continue
 		}
 	}
@@ -44,26 +45,23 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 		// If other entity is within perceptive radius, add to perceived list.
-		posC, _ := s.ecs.GetComponent(other, Position{})
-		pos_other := posC.(Position)
+		pos_other := s.ecs.GetComponentUnchecked(other, Position{}).(Position)
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
 	}
 	// Check if player is within perceived entities, and switch to appropriate state.
 	for _, other := range per.perceived {
-		nameOtherC, _ := s.ecs.GetComponent(other, Name{})
-		name_other := nameOtherC.(Name).string
+		name_other := s.ecs.GetComponentUnchecked(other, Name{}).(Name).string
 		if name_other == "you" && s.ecs.HasComponent(e, AI{}) {
-			aiC, _ := s.ecs.GetComponent(e, AI{})
-			ai := aiC.(AI)
+			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
 			ai.state = CSHunting
 			s.ecs.AddComponent(e, ai)
 			break
 		} else {
-			aiC, _ := s.ecs.GetComponent(e, AI{})
-			ai := aiC.(AI)
+			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
 			ai.state = CSWandering
+			s.ecs.AddComponent(e, ai)
 		}
 	}
 }
@@ -102,10 +100,8 @@ func (s *AISystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, AI{}) {
 		return
 	}
-	aiC, _ := s.ecs.GetComponent(e, AI{})
-	posC, _ := s.ecs.GetComponent(e, Position{})
-	ai := aiC.(AI)
-	pos := posC.(Position)
+	ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
 	switch ai.state {
 	case CSSleeping:
 		// Do nothing, the entity is asleep!
@@ -124,9 +120,7 @@ func (s *AISystem) Update(e int) {
 		}
 	case CSHunting:
 		// Set destination to be the player.
-		// ai.dest = &s.ecs.positions[0].Point
-		ppC, _ := s.ecs.GetComponent(0, Position{})
-		pp := ppC.(Position)
+		pp := s.ecs.GetComponentUnchecked(0, Position{}).(Position)
 		ai.dest = &pp.Point
 		s.ecs.AddComponent(e, ai)
 	}
@@ -145,10 +139,8 @@ func (s *BumpSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
 		return
 	}
-	bC, _ := s.ecs.GetComponent(e, Bump{})
-	pC, _ := s.ecs.GetComponent(e, Position{})
-	b := bC.(Bump)
-	p := pC.(Position)
+	b := s.ecs.GetComponentUnchecked(e, Bump{}).(Bump)
+	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
 	dest := p.Point.Add(b.Point)
 	s.ecs.RemoveComponent(e, Bump{})
 	// Ignore movement to the same tile.
@@ -161,14 +153,14 @@ func (s *BumpSystem) Update(e int) {
 		attackable_entities := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
 		if len(attackable_entities) == 0 {
 			p.Point = dest // No entity blocking the way, move to dest.
+			s.ecs.AddComponent(e, p)
 			return
 		}
 		if len(attackable_entities) > 1 {
 			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
 		}
 		// Attack entity at location.
-		dmgC, _ := s.ecs.GetComponent(e, Damage{})
-		dmg := dmgC.(Damage)
+		dmg := s.ecs.GetComponentUnchecked(e, Damage{}).(Damage)
 		target_entity := attackable_entities[0]
 		attack_power := dmg.int
 		s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
@@ -234,14 +226,16 @@ type FOVSystem struct {
 	ecs *ECS
 }
 
+// Allows entities with FOV{} and Position{} to compute their field of view
+// and mark cells within that FOV as explored. Typically only the player has
+// this component, but other entities such as mobs can have them such as well,
+// such as when the player drinks a potion of telepathy.
 func (s *FOVSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
 		return
 	}
-	pC, _ := s.ecs.GetComponent(e, Position{})
-	fC, _ := s.ecs.GetComponent(e, FOV{})
-	p := pC.(Position)
-	f := fC.(FOV)
+	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	f := s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
 	if f.FOV == nil {
 		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
 	}
@@ -252,11 +246,11 @@ func (s *FOVSystem) Update(e int) {
 	s.ecs.AddComponent(e, f)
 	// We mark cells in field of view as explored. We use the symmetric shadow
 	// casting algorithm provided by the rl package.
-	passable := func(p gruid.Point) bool {
+	isnotwall := func(p gruid.Point) bool {
 		return s.ecs.Map.Grid.At(p) != Wall
 	}
-	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, passable, false) {
-		if paths.DistanceManhattan(point, p.Point) > f.LOS {
+	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, isnotwall, true) {
+		if paths.DistanceChebyshev(point, p.Point) > f.LOS {
 			continue
 		}
 		if !s.ecs.Map.Explored[point] {
@@ -323,8 +317,7 @@ func (s *AnimationSystem) Update(e int) {
 	}
 
 	// Advance animation by a single tick.
-	aC, _ := s.ecs.GetComponent(e, Animation{})
-	anim := aC.(Animation)
+	anim := s.ecs.GetComponentUnchecked(e, Animation{}).(Animation)
 	anim.frames[anim.index].itick++
 
 	// If the current frame has expired, move to the next frame.

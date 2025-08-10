@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/anaseto/gruid"
+	"github.com/k0kubun/pp/v3"
 )
 
 type ECS struct {
@@ -184,6 +185,15 @@ func (ecs *ECS) GetComponent(entity int, component Component) (Component, bool) 
 	return nil, false
 }
 
+func (ecs *ECS) GetComponentUnchecked(entity int, component Component) Component {
+	componentString := fmt.Sprintf("%T", component)
+	return ecs.components[entity][componentString]
+}
+
+func (ecs *ECS) GetComponentsFor(entity int) map[string]Component {
+	return ecs.components[entity]
+}
+
 func (ecs *ECS) RemoveComponent(entity int, component Component) {
 	if _, ok := ecs.components[entity]; ok {
 		componentString := fmt.Sprintf("%T", component)
@@ -263,8 +273,11 @@ func (ecs *ECS) PlayerDead() bool {
 }
 
 func (ecs *ECS) printDebug(e int) {
-	fmt.Println("====================")
 	fmt.Printf("Entity: %d\n", e)
+	pp.Print(ecs.GetComponentsFor(e))
+
+	// fmt.Println("====================")
+	// fmt.Printf("Entity: %d\n", e)
 	//	if ecs.bumps[e] != nil {
 	//		fmt.Printf("%v, %T\n", ecs.bumps[e], ecs.bumps[e])
 	//	}
