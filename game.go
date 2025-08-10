@@ -43,7 +43,7 @@ func (g *game) InFOV(p gruid.Point) bool {
 		f, _ := g.ECS.GetComponent(e, FOV{})
 		pos := pp.(Position)
 		fov := f.(FOV)
-		if fov.FOV.Visible(p) && paths.DistanceManhattan(pos.Point, p) <= fov.LOS {
+		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
 			return true
 		}
 	}
