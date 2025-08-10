@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/paths"
 )
 
 type game struct {
@@ -33,21 +32,6 @@ func (g *game) Initialize() {
 	// g.NewExampleAnimation(pp.Add(gruid.Point{X: 1, Y: 0}))
 	// g.NewWaterTile(pp.Add(gruid.Point{X: 2, Y: 0}))
 	g.ECS.Initialize()
-}
-
-// InFOV returns true if p is in the field of view of an entity with FOV. We only
-// keep cells within maxLOS manhattan distance from the source entity.
-func (g *game) InFOV(p gruid.Point) bool {
-	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
-		pp, _ := g.ECS.GetComponent(e, Position{})
-		f, _ := g.ECS.GetComponent(e, FOV{})
-		pos := pp.(Position)
-		fov := f.(FOV)
-		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
-			return true
-		}
-	}
-	return false
 }
 
 func (g *game) Pathable(p gruid.Point) bool {
