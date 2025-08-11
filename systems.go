@@ -161,10 +161,18 @@ func (s *BumpSystem) Update(e int) {
 		}
 		// Attack entity at location.
 		dmg := s.ecs.GetComponentUnchecked(e, Damage{}).(Damage)
+		if !s.ecs.HasComponent(attackable_entities[0], DamageEffects{}) {
+			s.ecs.AddComponent(attackable_entities[0], DamageEffects{effects: []DamageEffect{}})
+		}
+		dmgfx := s.ecs.GetComponentUnchecked(attackable_entities[0], DamageEffects{}).(DamageEffects)
 		target_entity := attackable_entities[0]
-		attack_power := dmg.int
-		s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
-		s.ecs.DamageEffectSystem.Update(target_entity)
+		// Add damage effect to the target entity
+		dmgfx.effects = append(dmgfx.effects, DamageEffect{source: e, amount: dmg.int})
+		s.ecs.AddComponent(target_entity, dmgfx)
+		s.ecs.AddComponent(e, p)
+
+		// s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
+		// s.ecs.DamageEffectSystem.Update(target_entity)
 	} else {
 		s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
 	}
@@ -176,50 +184,54 @@ type DamageEffectSystem struct {
 }
 
 func (s *DamageEffectSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, DamageEffect{}, Health{}) {
-		// s.ecs.damageeffects[e] = []DamageEffect{}
+	if !s.ecs.HasComponents(e, DamageEffects{}, Health{}) {
 		return
 	}
-	// health := s.ecs.healths[e]
-	// for _, de := range s.ecs.damageeffects[e] {
-	// 	health.hp -= de.amount
-	// 	name_attacker := s.ecs.names[de.source].string
-	// 	name_receiver := s.ecs.names[e].string
-	// 	var msg string
-	// 	if de.source == 0 {
-	// 		msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
-	// 	} else {
-	// 		if e == 0 {
-	// 			msg = fmt.Sprintf("The %s mauls you!", name_attacker)
-	// 		} else {
-	// 			msg = fmt.Sprintf("The %s hits the %s.", name_attacker, name_receiver)
-	// 		}
-	// 	}
-	// 	msgcolor := ColorLogPlayerAttack
-	// 	if e == 0 {
-	// 		msgcolor = ColorLogMonsterAttack
-	// 	}
-	// 	if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
-	// 		// s.ecs.Create(
-	// 		// 	Name{"blood"},
-	// 		// 	Position{s.ecs.positions[e].Point},
-	// 		// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
-	// 		// )
-	// 		s.ecs.Create(
-	// 			Name{"blood"},
-	// 			Position{s.ecs.positions[e].Point},
-	// 			NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
-	// 		)
-	// 	}
-	// 	s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
-	// 	if health.hp <= 0 {
-	// 		health.hp = 0
-	// 		// Process entity through DeathSystem
-	// 		s.ecs.AddComponent(e, Death{})
-	// 		s.ecs.DeathSystem.Update(e)
-	// 	}
-	// }
-	// s.ecs.damageeffects[e] = []DamageEffect{}
+	health := s.ecs.GetComponentUnchecked(e, Health{}).(Health)
+	dmgfx := s.ecs.GetComponentUnchecked(e, DamageEffects{}).(DamageEffects)
+	for _, de := range dmgfx.effects {
+		health.hp -= de.amount
+		name_attacker := s.ecs.GetComponentUnchecked(de.source, Name{}).(Name).string
+		name_receiver := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
+		var msg string
+		if de.source == 0 {
+			msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
+		} else {
+			if e == 0 {
+				msg = fmt.Sprintf("The %s mauls you!", name_attacker)
+			} else {
+				msg = fmt.Sprintf("The %s hits the %s.", name_attacker, name_receiver)
+			}
+		}
+		msgcolor := ColorLogPlayerAttack
+		if e == 0 {
+			msgcolor = ColorLogMonsterAttack
+		}
+		if !s.ecs.BloodAt(s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point) { // Add blood
+			s.ecs.Create(
+				Name{"blood"},
+				Position{s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point},
+				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
+			)
+		}
+		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
+		if health.hp <= 0 {
+			health.hp = 0
+			s.ecs.AddComponent(e, Death{})
+			// s.ecs.DeathSystem.Update(e)
+		}
+	}
+	s.ecs.RemoveComponent(e, DamageEffects{}) // Consume the damage effects.
+	s.ecs.AddComponent(e, health)             // Update health.
+	// s.printDebug(e) // Debugging output.
+	// Uncomment the following lines to print debug information.
+	// fmt.Printf("Entity: %d\n", e)
+	// fmt.Printf("Health: %d\n", health.hp)
+	// fmt.Printf("Damage Effects: %+v\n", dmgfx.effects)
+	// fmt.Println("Components:", s.ecs.GetComponentsFor(e))
+	// fmt.Println("====================")
+	// Uncomment the following lines to print debug information.
+	// s.printDebug(e) // Debugging output.
 }
 
 type FOVSystem struct {
@@ -282,42 +294,32 @@ func (s *DeathSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Death{}) {
 		return
 	}
-	// name := s.ecs.names[e].string
-	// fg := s.ecs.renderables[e].cell.Style.Fg
-	// s.ecs.obstructs[e] = nil   // No longer blocking.
-	// s.ecs.perceptions[e] = nil // No longer perceiving.
-	// s.ecs.ais[e] = nil         // No longer pathing.
-	// s.ecs.bumps[e] = nil
-	// s.ecs.inputs[e] = nil
-	// s.ecs.damages[e] = nil
-	// s.ecs.rangeds[e] = nil
-	// s.ecs.damageeffects[e] = nil
-	// // s.ecs.healths[e] = nil
-	// s.ecs.deaths[e] = nil // Consume the death component.
-	// if e == 0 {
-	// 	s.ecs.AddComponent(e, Name{"your corpse"})
-	// } else {
-	// 	s.ecs.AddComponent(e, Name{name + " corpse"})
-	// }
-	// s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
-	// s.ecs.AddComponent(e, Collectible{})
-	// s.ecs.AddComponent(e, Consumable{})
-	// s.ecs.AddComponent(e, Healing{amount: 2})
-	// // Drop everything in inventory
-	// if s.ecs.HasComponent(e, Inventory{}) {
-	// 	for _, item := range s.ecs.inventories[e].items {
-	// 		s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
-	// 	}
-	// 	s.ecs.inventories[e] = nil
-	// }
-	// msg := fmt.Sprintf("%s has died!", name)
-	// if e == 0 {
-	// 	msg = "You have died!"
-	// }
-	// s.ecs.Create(LogEntry{
-	// 	Text:  msg,
-	// 	Color: ColorLogMonsterAttack,
-	// })
+	name := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	var fov FOV
+	if e == 0 {
+		fov = s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
+	}
+	s.ecs.ClearAllComponents(e) // Clear all components of the entity.
+	s.ecs.AddComponents(e,
+		Name{name + " corpse"},
+		NewRenderableNoBg('%', ColorCorpse, ROCorpse),
+		Position{pos.Point},
+		Collectible{},
+		Consumable{},
+		Healing{amount: 2},
+		// TODO drop inventory items
+	)
+	msg := fmt.Sprintf("%s has died!", name)
+	if e == 0 {
+		msg = "You have died!"
+		s.ecs.AddComponent(e, Health{hp: 0})
+		s.ecs.AddComponent(e, fov)
+	}
+	s.ecs.Create(LogEntry{
+		Text:  msg,
+		Color: ColorLogMonsterAttack,
+	})
 }
 
 type AnimationSystem struct {

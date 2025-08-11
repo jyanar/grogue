@@ -153,6 +153,10 @@ type DamageEffect struct {
 	amount int
 }
 
+type DamageEffects struct {
+	effects []DamageEffect // A list of effects
+}
+
 type FrameCell struct {
 	r Renderable
 	p gruid.Point
