@@ -1,7 +1,5 @@
 [x] background and interruptible animations
 [ ] refactor rest of codebase for background and interruptible animations
-
-
 [ ] blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
 [ ] corpses made up of body parts?
 [ ] throw potions
@@ -15,11 +13,13 @@
 
 [ ] unified message logging system
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
-[ ] inventory should not be accessible when player is dead
 [ ] when selecting where to path, enemies should use far away locations on map (could use djikstra map for this)
 [ ] energy system for movement and action taking
+[ ] fix messages for eating, taking potions, etc.
 
 done
+[x] inventory should not be accessible when player is dead
+[x] background and interruptible animations
 [x] general animation system
 [x] switch to per-entity turns rather than per-system turns
 [x] fix pathing, so enemies do not hit each other during normal ambulation
