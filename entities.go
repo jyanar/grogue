@@ -74,7 +74,7 @@ func (g *game) NewTroll(p gruid.Point) int {
 func (g *game) NewHealthPotion(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"health potion"},
-		Position{g.FreeFloorTile()},
+		Position{p},
 		Visible{},
 		NewRenderableNoBg('!', ColorHealthPotion, ROItem),
 		Collectible{},
