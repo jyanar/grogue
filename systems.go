@@ -211,7 +211,7 @@ func (s *DamageEffectSystem) Update(e int) {
 			s.ecs.Create(
 				Name{"blood"},
 				Position{s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point},
-				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
+				NewRenderable('.', ColorCorpse, ColorBlood, ROFloor),
 			)
 		}
 		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})

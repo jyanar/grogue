@@ -135,7 +135,7 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 					}
 				}
 			}
-			log.Println("UPDATING AFTER MSG TICK")
+			// log.Println("UPDATING AFTER MSG TICK")
 		}
 
 	case modeMessageViewer:

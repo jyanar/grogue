@@ -54,7 +54,7 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		var err error
 		switch m.mode {
 		case modeInventoryDrop:
-			err = m.game.InventoryRemove(0, n)
+			err = m.game.InventoryDrop(0, n)
 		case modeInventoryActivate:
 			// Check whether the given item has a ranged component
 			// item_idx := m.game.ECS.inventories[0].items[n]
@@ -114,36 +114,26 @@ const ErrNoShow = "ErrNoShow"
 
 // TODO Better log messages
 func (g *game) InventoryActivate(entity, itemidx int) error {
-	iC, _ := g.ECS.GetComponent(entity, Inventory{})
-	inventory := iC.(Inventory)
-	item := inventory.items[itemidx]
-	nC, _ := g.ECS.GetComponent(item, Name{})
-	item_name := nC.(Name).string
-	pnC, _ := g.ECS.GetComponent(entity, Name{})
-	entity_name := pnC.(Name).string
-	var prefix string
-	if entity == 0 {
-		prefix = "You use the"
-	} else {
-		prefix = entity_name + " uses the"
-	}
-	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
+	inventory := g.ECS.GetComponentUnchecked(entity, Inventory{}).(Inventory)
+	item_id := inventory.items[itemidx]
+	item_name := g.ECS.GetComponentUnchecked(item_id, Name{}).(Name).string
+	g.Logf("You use the %s.", ColorLogSpecial, item_name)
 	// Item can provide healing. Apply healing.
-	if g.ECS.HasComponent(item, Healing{}) {
-		healthsC, _ := g.ECS.GetComponent(entity, Health{})
-		healingC, _ := g.ECS.GetComponent(item, Healing{})
-		health := healthsC.(Health)
-		healing := healingC.(Healing)
+	if g.ECS.HasComponent(item_id, Healing{}) {
+		health := g.ECS.GetComponentUnchecked(entity, Health{}).(Health)
+		healing := g.ECS.GetComponentUnchecked(item_id, Healing{}).(Healing)
 		health.hp += healing.amount
+		if health.hp > health.maxhp {
+			health.hp = health.maxhp
+		}
 		g.ECS.AddComponent(entity, health)
 	}
 	// TODO Ranged effects
-	// if g.ECS.HasComponent(item, Ranged{}) {
-	// }
 	// Item was consumable, so we delete from inventory.
-	if g.ECS.HasComponent(item, Consumable{}) {
-		// g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
-		// g.ECS.Delete(item)
+	if g.ECS.HasComponent(item_id, Consumable{}) {
+		inventory.items = remove(inventory.items, item_id)
+		g.ECS.AddComponent(entity, inventory)
+		g.ECS.Delete(item_id)
 	}
 	return nil
 }
@@ -152,15 +142,17 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 // 	item := g.ECS.inventories[entity].items[itemidx]
 // }
 
-func (g *game) InventoryRemove(entity, itemidx int) error {
-	// item := g.ECS.inventories[entity].items[itemidx]
-	// item_name := g.ECS.names[item].string
-	// entity_name := g.ECS.names[entity].string
-	// // Add Position component back to the item.
-	// pos := g.ECS.positions[entity].Point
-	// g.ECS.AddComponent(item, Position{pos})
-	// // Remove item from inventory
-	// g.Logf("%s drops %s", ColorLogSpecial, entity_name, item_name)
-	// g.ECS.inventories[entity].items = remove(g.ECS.inventories[entity].items, item)
+func (g *game) InventoryDrop(entity, itemidx int) error {
+	inventory := g.ECS.GetComponentUnchecked(entity, Inventory{}).(Inventory)
+	item_id := inventory.items[itemidx]
+	item_name := g.ECS.GetComponentUnchecked(item_id, Name{}).(Name).string
+	prefix := "You drop the "
+	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
+	// Remove item from inventory.
+	inventory.items = remove(inventory.items, item_id)
+	g.ECS.AddComponent(entity, inventory)
+	pos := g.ECS.GetComponentUnchecked(entity, Position{}).(Position).Point
+	// Add Position component back to the item.
+	g.ECS.AddComponent(item_id, Position{pos})
 	return nil
 }
