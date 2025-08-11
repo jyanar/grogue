@@ -154,7 +154,8 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		m.target = &targeting{}
 	}
 	if !m.target.pos.In(maprg) {
-		m.target.pos = m.game.ECS.positions[0].Point.Add(maprg.Min)
+		pos, _ := m.game.ECS.GetComponent(0, Position{})
+		m.target.pos = pos.(Position).Point.Add(maprg.Min)
 	}
 	p := m.target.pos
 	switch msg := msg.(type) {
@@ -209,7 +210,9 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 		m.target = nil
 	} else {
 		if m.target != nil {
-			m.target.path = m.pr.JPSPath(m.target.path, m.game.ECS.positions[0].Point, m.target.pos, m.game.Pathable, true)
+			p, _ := m.game.ECS.GetComponent(0, Position{})
+			pos := p.(Position)
+			m.target.path = m.pr.JPSPath(m.target.path, pos.Point, m.target.pos, m.game.Pathable, true)
 		}
 	}
 }
@@ -270,8 +273,10 @@ func (m *model) Draw() gruid.Grid {
 	}
 	entitiesToDraw := []tup{}
 	for _, e := range ECS.EntitiesWith(Position{}, Renderable{}) {
-		p := ECS.positions[e]
-		r := ECS.renderables[e]
+		pC, _ := ECS.GetComponent(e, Position{})
+		rC, _ := ECS.GetComponent(e, Renderable{})
+		p := pC.(Position)
+		r := rC.(Renderable)
 		// If entities is not in FOV, do not add them to list.
 		if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
 			continue
@@ -283,8 +288,10 @@ func (m *model) Draw() gruid.Grid {
 	})
 	// Draw entities.
 	for _, e := range entitiesToDraw {
-		p := ECS.positions[e.entity]
-		r := ECS.renderables[e.entity]
+		pC, _ := ECS.GetComponent(e.entity, Position{})
+		rC, _ := ECS.GetComponent(e.entity, Renderable{})
+		p := pC.(Position)
+		r := rC.(Renderable)
 		c := gruid.Cell{Rune: r.cell.Rune, Style: r.cell.Style}
 		if r.LacksBg() {
 			c.Style.Bg = mapgrid.At(p.Point).Style.Bg
@@ -341,7 +348,9 @@ func (m *model) DrawStatus(gd gruid.Grid) {
 	// Write the HP on top of that.
 	st := gruid.Style{Fg: ColorStatusHealthy}
 	st.Bg = ColorLogMonsterAttack
-	player_health := m.game.ECS.healths[0]
+	// player_health := m.game.ECS.healths[0]
+	ph, _ := m.game.ECS.GetComponent(0, Health{})
+	player_health := ph.(Health)
 	if player_health.hp < player_health.maxhp/2 {
 		st.Fg = ColorStatusWounded
 	}
@@ -360,12 +369,14 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
-		q := m.game.ECS.positions[e]
+		// q := m.game.ECS.positions[e]
+		qC, _ := m.game.ECS.GetComponent(e, Position{})
+		q := qC.(Position)
 		if q.Point != p || !m.game.InFOV(q.Point) {
 			continue
 		}
-		if name, ok := m.game.ECS.names[e]; ok {
-			names = append(names, name.string)
+		if name, ok := m.game.ECS.GetComponent(e, Name{}); ok {
+			names = append(names, name.(Name).string)
 		}
 	}
 	if len(names) == 0 {
@@ -398,7 +409,8 @@ func (m *model) DrawNames(gd gruid.Grid) {
 // entities and draws them. See AnimationSystem to see how these are updated.
 func (m *model) DrawBackgroundAnimations(gd gruid.Grid) {
 	for _, e := range m.game.ECS.EntitiesWith(Animation{}) {
-		anim := m.game.ECS.animations[e]
+		aC, _ := m.game.ECS.GetComponent(e, Animation{})
+		anim := aC.(Animation)
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r

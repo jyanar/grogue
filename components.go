@@ -5,6 +5,8 @@ import (
 	"github.com/anaseto/gruid/rl"
 )
 
+type Component interface{}
+
 // An entity position, defined as an X, Y coordinate.
 type Position struct {
 	gruid.Point
@@ -149,6 +151,10 @@ type AreaOfEffect struct {
 type DamageEffect struct {
 	source int
 	amount int
+}
+
+type DamageEffects struct {
+	effects []DamageEffect // A list of effects
 }
 
 type FrameCell struct {

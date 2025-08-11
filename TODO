@@ -1,3 +1,5 @@
+[x] background and interruptible animations
+[ ] refactor rest of codebase for background and interruptible animations
 [ ] blood fx system: attacking enemy could cause blood splatter. could also do something where corpses bleed out slowly (over a few ticks) and change the bg of surrounding tiles.
 [ ] corpses made up of body parts?
 [ ] throw potions
@@ -25,3 +27,12 @@ done
 [x] bug observed where player, corpse, and goblin were all standing on the same tile. pathing seems a bit wonky around corpses.
 [x] perception system upgraded to be like FOV system
 [x] can eat corpses?
+
+
+2024 10 13
+==========
+
+Trying to get the new general ECS up and running. But, it looks like things are
+getting stuck when we spawn goblins/trolls. It seems like there's something wrong
+with the way we're generating entities with Obstruct{} components.
+[x] entitiesat(p) bug causing us to always compare player position with itself

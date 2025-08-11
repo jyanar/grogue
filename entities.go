@@ -3,7 +3,9 @@
 
 package main
 
-import "github.com/anaseto/gruid"
+import (
+	"github.com/anaseto/gruid"
+)
 
 // func (g *game) NewBaseCreature(p gruid.Point) int {
 // 	return g.ECS.Create(
@@ -31,6 +33,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		NewRenderableNoBg('@', ColorPlayer, ROActor),
 		Health{hp: 18, maxhp: 18},
 		Damage{5},
+		DamageEffects{effects: []DamageEffect{}}, // Initialize with an empty list of effects
 		FOV{LOS: 20},
 		Inventory{},
 		Input{},
@@ -46,6 +49,7 @@ func (g *game) NewGoblin(p gruid.Point) int {
 		NewRenderableNoBg('g', ColorMonster, ROActor),
 		Health{hp: 10, maxhp: 10},
 		Damage{2},
+		DamageEffects{effects: []DamageEffect{}}, // Initialize with an empty list of effects
 		Perception{LOS: 8},
 		AI{state: CSWandering},
 		Obstruct{},
@@ -59,6 +63,7 @@ func (g *game) NewTroll(p gruid.Point) int {
 		Visible{},
 		NewRenderableNoBg('T', ColorTroll, ROActor),
 		Health{hp: 20, maxhp: 20},
+		DamageEffects{effects: []DamageEffect{}}, // Initialize with an empty list of effects
 		Damage{5},
 		Perception{LOS: 6},
 		AI{state: CSWandering},
@@ -69,7 +74,7 @@ func (g *game) NewTroll(p gruid.Point) int {
 func (g *game) NewHealthPotion(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"health potion"},
-		Position{g.FreeFloorTile()},
+		Position{p},
 		Visible{},
 		NewRenderableNoBg('!', ColorHealthPotion, ROItem),
 		Collectible{},

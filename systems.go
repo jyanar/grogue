@@ -16,13 +16,16 @@ type PerceptionSystem struct {
 	ecs *ECS
 }
 
+// Perception - allows entities with Perception{} and Position{} to perceive
+// other entities within their field of view. If the given entity has an AI
+// component (is a mob) and the player is within its field of view, it will
+// switch to the hunting state.
 func (s *PerceptionSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, Perception{}) {
 		return
 	}
-	pos := s.ecs.positions[e]
-	per := s.ecs.perceptions[e]
-	per.perceived = []int{}
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	per := s.ecs.GetComponentUnchecked(e, Perception{}).(Perception)
 	if per.FOV == nil {
 		per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
 	}
@@ -31,8 +34,8 @@ func (s *PerceptionSystem) Update(e int) {
 	passable := func(p gruid.Point) bool {
 		return s.ecs.Map.Grid.At(p) != Wall
 	}
-	for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, false) {
-		if paths.DistanceManhattan(point, pos.Point) > per.LOS {
+	for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, true) {
+		if paths.DistanceChebyshev(point, pos.Point) > per.LOS {
 			continue
 		}
 	}
@@ -42,19 +45,23 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 		// If other entity is within perceptive radius, add to perceived list.
-		pos_other := s.ecs.positions[other]
+		pos_other := s.ecs.GetComponentUnchecked(other, Position{}).(Position)
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
 	}
 	// Check if player is within perceived entities, and switch to appropriate state.
 	for _, other := range per.perceived {
-		name_other := s.ecs.names[other].string
+		name_other := s.ecs.GetComponentUnchecked(other, Name{}).(Name).string
 		if name_other == "you" && s.ecs.HasComponent(e, AI{}) {
-			s.ecs.ais[e].state = CSHunting
+			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+			ai.state = CSHunting
+			s.ecs.AddComponent(e, ai)
 			break
 		} else {
-			s.ecs.ais[e].state = CSWandering
+			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+			ai.state = CSWandering
+			s.ecs.AddComponent(e, ai)
 		}
 	}
 }
@@ -93,8 +100,8 @@ func (s *AISystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, AI{}) {
 		return
 	}
-	ai := s.ecs.ais[e]
-	pos := s.ecs.positions[e]
+	ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
 	switch ai.state {
 	case CSSleeping:
 		// Do nothing, the entity is asleep!
@@ -106,13 +113,16 @@ func (s *AISystem) Update(e int) {
 				f := s.ecs.Map.RandomFloor()
 				if f != pos.Point {
 					ai.dest = &f
+					s.ecs.AddComponent(e, ai)
 					break
 				}
 			}
 		}
 	case CSHunting:
 		// Set destination to be the player.
-		ai.dest = &s.ecs.positions[0].Point
+		pp := s.ecs.GetComponentUnchecked(0, Position{}).(Position)
+		ai.dest = &pp.Point
+		s.ecs.AddComponent(e, ai)
 	}
 	// Compute path to ai.dest.
 	path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
@@ -129,11 +139,10 @@ func (s *BumpSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
 		return
 	}
-	// Get entity's bump and position data.
-	b := s.ecs.bumps[e]
-	p := s.ecs.positions[e]
+	b := s.ecs.GetComponentUnchecked(e, Bump{}).(Bump)
+	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
 	dest := p.Point.Add(b.Point)
-	s.ecs.bumps[e] = nil // Consume bump component.
+	s.ecs.RemoveComponent(e, Bump{})
 	// Ignore movement to the same tile.
 	if b.X == 0 && b.Y == 0 {
 		return
@@ -144,16 +153,26 @@ func (s *BumpSystem) Update(e int) {
 		attackable_entities := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
 		if len(attackable_entities) == 0 {
 			p.Point = dest // No entity blocking the way, move to dest.
+			s.ecs.AddComponent(e, p)
 			return
 		}
 		if len(attackable_entities) > 1 {
 			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
 		}
 		// Attack entity at location.
+		dmg := s.ecs.GetComponentUnchecked(e, Damage{}).(Damage)
+		if !s.ecs.HasComponent(attackable_entities[0], DamageEffects{}) {
+			s.ecs.AddComponent(attackable_entities[0], DamageEffects{effects: []DamageEffect{}})
+		}
+		dmgfx := s.ecs.GetComponentUnchecked(attackable_entities[0], DamageEffects{}).(DamageEffects)
 		target_entity := attackable_entities[0]
-		attack_power := s.ecs.damages[e].int
-		s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
-		s.ecs.DamageEffectSystem.Update(target_entity)
+		// Add damage effect to the target entity
+		dmgfx.effects = append(dmgfx.effects, DamageEffect{source: e, amount: dmg.int})
+		s.ecs.AddComponent(target_entity, dmgfx)
+		s.ecs.AddComponent(e, p)
+
+		// s.ecs.AddComponent(target_entity, DamageEffect{source: e, amount: attack_power})
+		// s.ecs.DamageEffectSystem.Update(target_entity)
 	} else {
 		s.ecs.Create(LogEntry{Text: "The wall is firm and unyielding!", Color: ColorLogSpecial})
 	}
@@ -165,15 +184,15 @@ type DamageEffectSystem struct {
 }
 
 func (s *DamageEffectSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, DamageEffect{}, Health{}) {
-		s.ecs.damageeffects[e] = []DamageEffect{}
+	if !s.ecs.HasComponents(e, DamageEffects{}, Health{}) {
 		return
 	}
-	health := s.ecs.healths[e]
-	for _, de := range s.ecs.damageeffects[e] {
+	health := s.ecs.GetComponentUnchecked(e, Health{}).(Health)
+	dmgfx := s.ecs.GetComponentUnchecked(e, DamageEffects{}).(DamageEffects)
+	for _, de := range dmgfx.effects {
 		health.hp -= de.amount
-		name_attacker := s.ecs.names[de.source].string
-		name_receiver := s.ecs.names[e].string
+		name_attacker := s.ecs.GetComponentUnchecked(de.source, Name{}).(Name).string
+		name_receiver := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
 		var msg string
 		if de.source == 0 {
 			msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
@@ -188,39 +207,47 @@ func (s *DamageEffectSystem) Update(e int) {
 		if e == 0 {
 			msgcolor = ColorLogMonsterAttack
 		}
-		if !s.ecs.BloodAt(s.ecs.positions[e].Point) { // Add blood tile here.
-			// s.ecs.Create(
-			// 	Name{"blood"},
-			// 	Position{s.ecs.positions[e].Point},
-			// 	Renderable{cell: gruid.Cell{Rune: '.', Style: gruid.Style{Fg: ColorBlood}}, order: ROFloor},
-			// )
+		if !s.ecs.BloodAt(s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point) { // Add blood
 			s.ecs.Create(
 				Name{"blood"},
-				Position{s.ecs.positions[e].Point},
-				NewRenderable('.', ColorBlood, ColorBlood, ROFloor),
+				Position{s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point},
+				NewRenderable('.', ColorCorpse, ColorBlood, ROFloor),
 			)
 		}
 		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
 		if health.hp <= 0 {
 			health.hp = 0
-			// Process entity through DeathSystem
 			s.ecs.AddComponent(e, Death{})
-			s.ecs.DeathSystem.Update(e)
+			// s.ecs.DeathSystem.Update(e)
 		}
 	}
-	s.ecs.damageeffects[e] = []DamageEffect{}
+	s.ecs.RemoveComponent(e, DamageEffects{}) // Consume the damage effects.
+	s.ecs.AddComponent(e, health)             // Update health.
+	// s.printDebug(e) // Debugging output.
+	// Uncomment the following lines to print debug information.
+	// fmt.Printf("Entity: %d\n", e)
+	// fmt.Printf("Health: %d\n", health.hp)
+	// fmt.Printf("Damage Effects: %+v\n", dmgfx.effects)
+	// fmt.Println("Components:", s.ecs.GetComponentsFor(e))
+	// fmt.Println("====================")
+	// Uncomment the following lines to print debug information.
+	// s.printDebug(e) // Debugging output.
 }
 
 type FOVSystem struct {
 	ecs *ECS
 }
 
+// Allows entities with FOV{} and Position{} to compute their field of view
+// and mark cells within that FOV as explored. Typically only the player has
+// this component, but other entities such as mobs can have them such as well,
+// such as when the player drinks a potion of telepathy.
 func (s *FOVSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
 		return
 	}
-	p := s.ecs.positions[e]
-	f := s.ecs.fovs[e]
+	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	f := s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
 	if f.FOV == nil {
 		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
 	}
@@ -228,19 +255,35 @@ func (s *FOVSystem) Update(e int) {
 	// of the entity.
 	rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
 	f.FOV.SetRange(rg.Add(p.Point).Intersect(s.ecs.Map.Grid.Range()))
+	s.ecs.AddComponent(e, f)
 	// We mark cells in field of view as explored. We use the symmetric shadow
 	// casting algorithm provided by the rl package.
-	passable := func(p gruid.Point) bool {
+	isnotwall := func(p gruid.Point) bool {
 		return s.ecs.Map.Grid.At(p) != Wall
 	}
-	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, passable, false) {
-		if paths.DistanceManhattan(point, p.Point) > f.LOS {
+	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, isnotwall, true) {
+		if paths.DistanceChebyshev(point, p.Point) > f.LOS {
 			continue
 		}
 		if !s.ecs.Map.Explored[point] {
 			s.ecs.Map.Explored[point] = true
 		}
 	}
+}
+
+// InFOV returns true if p is in the field of view of an entity with FOV. We only
+// keep cells within maxLOS chebyshev distance from the source entity.
+func (g *game) InFOV(p gruid.Point) bool {
+	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
+		pp, _ := g.ECS.GetComponent(e, Position{})
+		f, _ := g.ECS.GetComponent(e, FOV{})
+		pos := pp.(Position)
+		fov := f.(FOV)
+		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
+			return true
+		}
+	}
+	return false
 }
 
 type DeathSystem struct {
@@ -251,37 +294,27 @@ func (s *DeathSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Death{}) {
 		return
 	}
-	name := s.ecs.names[e].string
-	fg := s.ecs.renderables[e].cell.Style.Fg
-	s.ecs.obstructs[e] = nil   // No longer blocking.
-	s.ecs.perceptions[e] = nil // No longer perceiving.
-	s.ecs.ais[e] = nil         // No longer pathing.
-	s.ecs.bumps[e] = nil
-	s.ecs.inputs[e] = nil
-	s.ecs.damages[e] = nil
-	s.ecs.rangeds[e] = nil
-	s.ecs.damageeffects[e] = nil
-	// s.ecs.healths[e] = nil
-	s.ecs.deaths[e] = nil // Consume the death component.
+	name := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
+	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	var fov FOV
 	if e == 0 {
-		s.ecs.AddComponent(e, Name{"your corpse"})
-	} else {
-		s.ecs.AddComponent(e, Name{name + " corpse"})
+		fov = s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
 	}
-	s.ecs.AddComponent(e, NewRenderableNoBg('%', fg, ROCorpse))
-	s.ecs.AddComponent(e, Collectible{})
-	s.ecs.AddComponent(e, Consumable{})
-	s.ecs.AddComponent(e, Healing{amount: 2})
-	// Drop everything in inventory
-	if s.ecs.HasComponent(e, Inventory{}) {
-		for _, item := range s.ecs.inventories[e].items {
-			s.ecs.AddComponent(item, Position{s.ecs.positions[e].Point})
-		}
-		s.ecs.inventories[e] = nil
-	}
+	s.ecs.ClearAllComponents(e) // Clear all components of the entity.
+	s.ecs.AddComponents(e,
+		Name{name + " corpse"},
+		NewRenderableNoBg('%', ColorCorpse, ROCorpse),
+		Position{pos.Point},
+		Collectible{},
+		Consumable{},
+		Healing{amount: 2},
+		// TODO drop inventory items
+	)
 	msg := fmt.Sprintf("%s has died!", name)
 	if e == 0 {
 		msg = "You have died!"
+		s.ecs.AddComponent(e, Health{hp: 0})
+		s.ecs.AddComponent(e, fov)
 	}
 	s.ecs.Create(LogEntry{
 		Text:  msg,
@@ -301,7 +334,7 @@ func (s *AnimationSystem) Update(e int) {
 	}
 
 	// Advance animation by a single tick.
-	anim := s.ecs.animations[e]
+	anim := s.ecs.GetComponentUnchecked(e, Animation{}).(Animation)
 	anim.frames[anim.index].itick++
 
 	// If the current frame has expired, move to the next frame.
