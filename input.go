@@ -50,7 +50,7 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 
 	// Waiting
 	case ".":
-		m.action = action{Type: ActionWait, Delta: gruid.Point{0, 0}}
+		m.action = action{Type: ActionWait}
 
 	// Quitting
 	case gruid.KeyEscape, "q":
