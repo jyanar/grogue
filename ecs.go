@@ -8,33 +8,10 @@ import (
 )
 
 type ECS struct {
-	entities []int
-	nextID   int
-	Map      *Map
-	// Components
+	entities   []int
+	nextID     int
+	Map        *Map
 	components map[int]map[string]Component
-	// positions     map[int]*Position
-	// renderables   map[int]*Renderable
-	// names         map[int]*Name
-	// inputs        map[int]*Input
-	// bumps         map[int]*Bump
-	// fovs          map[int]*FOV
-	// obstructs     map[int]*Obstruct
-	// healths       map[int]*Health
-	// damages       map[int]*Damage
-	// deaths        map[int]*Death
-	// perceptions   map[int]*Perception
-	// visibles      map[int]*Visible
-	// ais           map[int]*AI
-	// logentries    map[int]*LogEntry
-	// consumables   map[int]*Consumable
-	// healings      map[int]*Healing
-	// collectibles  map[int]*Collectible
-	// inventories   map[int]*Inventory
-	// rangeds       map[int]*Ranged
-	// damageeffects map[int][]DamageEffect
-	// animations    map[int]*Animation
-	// Systems
 	PerceptionSystem
 	AISystem
 	BumpSystem
@@ -51,27 +28,6 @@ func NewECS() *ECS {
 	ecs := &ECS{
 		nextID:     0,
 		components: make(map[int]map[string]Component),
-		// positions:     make(map[int]*Position),
-		// renderables:   make(map[int]*Renderable),
-		// names:         make(map[int]*Name),
-		// inputs:        make(map[int]*Input),
-		// bumps:         make(map[int]*Bump),
-		// fovs:          make(map[int]*FOV),
-		// obstructs:     make(map[int]*Obstruct),
-		// healths:       make(map[int]*Health),
-		// damages:       make(map[int]*Damage),
-		// deaths:        make(map[int]*Death),
-		// perceptions:   make(map[int]*Perception),
-		// visibles:      make(map[int]*Visible),
-		// ais:           make(map[int]*AI),
-		// logentries:    make(map[int]*LogEntry),
-		// consumables:   make(map[int]*Consumable),
-		// healings:      make(map[int]*Healing),
-		// collectibles:  make(map[int]*Collectible),
-		// inventories:   make(map[int]*Inventory),
-		// rangeds:       make(map[int]*Ranged),
-		// damageeffects: make(map[int][]DamageEffect),
-		// animations:    make(map[int]*Animation),
 	}
 	ecs.PerceptionSystem = PerceptionSystem{ecs: ecs}
 	ecs.AISystem = AISystem{ecs: ecs, aip: &aiPath{ecs: ecs}}
@@ -95,11 +51,12 @@ func (ecs *ECS) Initialize() {
 // Iterates through each entity
 func (ecs *ECS) Update() {
 	for _, e := range ecs.entities {
-		ecs.DamageEffectSystem.Update(e)
 		ecs.PerceptionSystem.Update(e)
 		ecs.AISystem.Update(e)
 		ecs.BumpSystem.Update(e)
 		ecs.FOVSystem.Update(e)
+	}
+	for _, e := range ecs.entities {
 		ecs.DamageEffectSystem.Update(e)
 		ecs.DeathSystem.Update(e)
 	}
@@ -198,6 +155,12 @@ func (ecs *ECS) RemoveComponent(entity int, component Component) {
 	if _, ok := ecs.components[entity]; ok {
 		componentString := fmt.Sprintf("%T", component)
 		delete(ecs.components[entity], componentString)
+	}
+}
+
+func (ecs *ECS) ClearAllComponents(entity int) {
+	if _, ok := ecs.components[entity]; ok {
+		ecs.components[entity] = make(map[string]Component)
 	}
 }
 
