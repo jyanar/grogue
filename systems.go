@@ -365,8 +365,10 @@ func (s *ConfusedSystem) Update(e int) {
 	}
 	conf := s.ecs.GetComponentUnchecked(e, Confused{}).(Confused)
 	conf.nticks--
+	s.ecs.AddComponent(e, conf)
 	if conf.nticks <= 0 {
 		s.ecs.RemoveComponent(e, Confused{})
+		s.ecs.Create(LogEntry{Text: "Your confusion fades.", Color: ColorLogSpecial})
 	} else {
 		// Randomly change bump direction, if entity has one.
 		if s.ecs.HasComponent(e, Bump{}) {
@@ -386,6 +388,6 @@ type DebugSystem struct {
 func (s *DebugSystem) Update() {
 	fmt.Println("+++++++++++++++++++++++++++++++ DEBUG ++++++++++++++++++++++++++++++++++++++++++")
 	for _, e := range s.ecs.entities {
-		s.ecs.printDebug(e)
+		s.ecs.printDebug(e, false)
 	}
 }

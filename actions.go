@@ -32,6 +32,7 @@ func (m *model) handleAction() gruid.Effect {
 		for _, e := range m.game.ECS.EntitiesWith(Input{}) {
 			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
+		m.game.ECS.printDebug(0, false)
 		m.game.ECS.Update()
 		m.game.CollectMessages()
 

@@ -20,6 +20,7 @@ type ECS struct {
 	DamageEffectSystem
 	DebugSystem
 	AnimationSystem
+	ConfusedSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -37,6 +38,7 @@ func NewECS() *ECS {
 	ecs.DamageEffectSystem = DamageEffectSystem{ecs: ecs}
 	ecs.AnimationSystem = AnimationSystem{ecs: ecs}
 	ecs.DebugSystem = DebugSystem{ecs: ecs}
+	ecs.ConfusedSystem = ConfusedSystem{ecs: ecs}
 	return ecs
 }
 
@@ -53,6 +55,7 @@ func (ecs *ECS) Update() {
 	for _, e := range ecs.entities {
 		ecs.PerceptionSystem.Update(e)
 		ecs.AISystem.Update(e)
+		ecs.ConfusedSystem.Update(e)
 		ecs.BumpSystem.Update(e)
 		ecs.FOVSystem.Update(e)
 	}
@@ -235,7 +238,15 @@ func (ecs *ECS) PlayerDead() bool {
 	return false
 }
 
-func (ecs *ECS) printDebug(e int) {
+func (ecs *ECS) printDebug(e int, showFOV bool) {
 	fmt.Printf("Entity: %d\n", e)
-	pp.Print(ecs.GetComponentsFor(e))
+	comps := ecs.GetComponentsFor(e)
+	comps_copy := make(map[string]Component, len(comps))
+	for k, v := range comps {
+		if !showFOV && k == "main.FOV" {
+			continue
+		}
+		comps_copy[k] = v
+	}
+	pp.Print(comps_copy)
 }
