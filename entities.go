@@ -38,6 +38,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		Inventory{},
 		Input{},
 		Obstruct{},
+		Confused{nticks: 5},
 	)
 }
 

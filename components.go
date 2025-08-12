@@ -173,3 +173,7 @@ type Animation struct {
 	repeat int // -1 for infinite, 0 for no repeat, n for n repeats
 	frames []Frame
 }
+
+type Confused struct {
+	nticks int
+}

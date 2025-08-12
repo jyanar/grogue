@@ -16,6 +16,17 @@ const (
 	PotionsToPlace  = 5
 )
 
+var Directions = []gruid.Point{
+	gruid.Point{X: 0, Y: -1},  // N
+	gruid.Point{X: 1, Y: 0},   // E
+	gruid.Point{X: 0, Y: 1},   // S
+	gruid.Point{X: -1, Y: 0},  // W
+	gruid.Point{X: 1, Y: -1},  // NE
+	gruid.Point{X: 1, Y: 1},   // SE
+	gruid.Point{X: -1, Y: -1}, // NW
+	gruid.Point{X: -1, Y: 1},  // SW
+}
+
 func (g *game) Initialize() {
 	// Initialize map and ECS.
 	g.Map = NewMap(gruid.Point{X: MapWidth, Y: MapHeight})

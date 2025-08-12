@@ -10,14 +10,11 @@
       2. Decide on goal: pathing towards player, fall asleep, pick up potion, wander. Add this action to the action queue.
       3. Execute goal, and deal with secondary effects: take damage/deal damage, etc.
       4. Death system.
-
 [ ] unified message logging system
 [ ] when hunting the player and the player turns around a corner, enemies should path towards the last known location of the player.
 [ ] when selecting where to path, enemies should use far away locations on map (could use djikstra map for this)
 [ ] energy system for movement and action taking
 [ ] fix messages for eating, taking potions, etc.
-
-done
 [x] inventory should not be accessible when player is dead
 [x] background and interruptible animations
 [x] general animation system

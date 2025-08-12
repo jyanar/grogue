@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"codeberg.org/anaseto/gruid"
 	"codeberg.org/anaseto/gruid/paths"
@@ -350,6 +351,29 @@ func (s *AnimationSystem) Update(e int) {
 			s.ecs.Delete(e)
 		} else if anim.repeat > 0 {
 			anim.repeat--
+		}
+	}
+}
+
+type ConfusedSystem struct {
+	ecs *ECS
+}
+
+func (s *ConfusedSystem) Update(e int) {
+	if !s.ecs.HasComponent(e, Confused{}) {
+		return
+	}
+	conf := s.ecs.GetComponentUnchecked(e, Confused{}).(Confused)
+	conf.nticks--
+	if conf.nticks <= 0 {
+		s.ecs.RemoveComponent(e, Confused{})
+	} else {
+		// Randomly change bump direction, if entity has one.
+		if s.ecs.HasComponent(e, Bump{}) {
+			bump := s.ecs.GetComponentUnchecked(e, Bump{}).(Bump)
+			// Randomly change the bump direction.
+			bump.Point = Directions[rand.IntN(len(Directions))]
+			s.ecs.AddComponent(e, bump)
 		}
 	}
 }
