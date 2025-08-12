@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/anaseto/gruid"
+	"codeberg.org/anaseto/gruid"
 	"github.com/k0kubun/pp/v3"
 )
 

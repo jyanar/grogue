@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/anaseto/gruid"
+	"codeberg.org/anaseto/gruid"
 )
 
 // func (g *game) NewBaseCreature(p gruid.Point) int {

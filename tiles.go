@@ -13,8 +13,8 @@ import (
 	"image/color"
 	"os"
 
-	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/tiles"
+	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/tiles"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/font/sfnt"
 )

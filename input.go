@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/anaseto/gruid"
+	"codeberg.org/anaseto/gruid"
 	"github.com/k0kubun/pp/v3"
 )
 

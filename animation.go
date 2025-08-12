@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/anaseto/gruid"
+	"codeberg.org/anaseto/gruid"
 )
 
 func (m *model) handleMsgTick() {
