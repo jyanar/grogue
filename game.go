@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/anaseto/gruid"
+	"codeberg.org/anaseto/gruid"
 )
 
 type game struct {
@@ -44,7 +44,7 @@ func (g *game) Pathable(p gruid.Point) bool {
 func (g *game) SpawnEnemies() {
 	for i := 0; i < MonstersToSpawn; i++ {
 		switch {
-		case g.Map.Rand.Intn(100) < 80:
+		case g.Map.Rand.IntN(100) < 80:
 			g.NewGoblin(g.FreeFloorTile())
 		default:
 			g.NewTroll(g.FreeFloorTile())

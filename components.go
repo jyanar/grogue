@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/rl"
+	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/rl"
 )
 
 type Component interface{}

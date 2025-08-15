@@ -5,8 +5,8 @@ package main
 import (
 	"log"
 
-	"github.com/anaseto/gruid"
-	js "github.com/anaseto/gruid-js"
+	"codeberg.org/anaseto/gruid"
+	js "codeberg.org/anaseto/gruid-js"
 )
 
 var driver gruid.Driver

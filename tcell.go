@@ -4,8 +4,8 @@
 package main
 
 // import (
-// 	"github.com/anaseto/gruid"
-// 	tcell "github.com/anaseto/gruid-tcell"
+// 	"codeberg.org/anaseto/gruid"
+// 	tcell "codeberg.org/anaseto/gruid-tcell"
 // 	tc "github.com/gdamore/tcell/v2"
 // )
 

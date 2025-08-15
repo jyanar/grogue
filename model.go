@@ -7,9 +7,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/paths"
-	"github.com/anaseto/gruid/ui"
+	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/paths"
+	"codeberg.org/anaseto/gruid/ui"
 )
 
 type model struct {

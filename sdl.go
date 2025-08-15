@@ -5,8 +5,8 @@ package main
 import (
 	"log"
 
-	"github.com/anaseto/gruid"
-	sdl "github.com/anaseto/gruid-sdl"
+	"codeberg.org/anaseto/gruid"
+	sdl "codeberg.org/anaseto/gruid-sdl"
 )
 
 var driver gruid.Driver

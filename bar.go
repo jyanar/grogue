@@ -1,6 +1,6 @@
 package main
 
-import "github.com/anaseto/gruid"
+import "codeberg.org/anaseto/gruid"
 
 type Bar struct {
 	Position gruid.Point // Point on grid at which to draw Bar

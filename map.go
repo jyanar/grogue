@@ -1,12 +1,11 @@
 package main
 
 import (
-	"math/rand"
-	"time"
+	"math/rand/v2"
 
-	"github.com/anaseto/gruid"
-	"github.com/anaseto/gruid/paths"
-	"github.com/anaseto/gruid/rl"
+	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/paths"
+	"codeberg.org/anaseto/gruid/rl"
 )
 
 const (
@@ -25,7 +24,7 @@ type Map struct {
 func NewMap(size gruid.Point) *Map {
 	m := &Map{
 		Grid:     rl.NewGrid(size.X, size.Y),
-		Rand:     rand.New(rand.NewSource(time.Now().UnixNano())),
+		Rand:     rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
 		Explored: make(map[gruid.Point]bool),
 		PR:       paths.NewPathRange(gruid.NewRange(0, 0, size.X, size.Y)),
 	}
@@ -77,7 +76,7 @@ func (m *Map) Generate() {
 func (m *Map) RandomFloor() gruid.Point {
 	size := m.Grid.Size()
 	for {
-		freep := gruid.Point{X: m.Rand.Intn(size.X), Y: m.Rand.Intn(size.Y)}
+		freep := gruid.Point{X: m.Rand.IntN(size.X), Y: m.Rand.IntN(size.Y)}
 		if m.Grid.At(freep) == Floor {
 			return freep
 		}
