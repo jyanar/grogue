@@ -49,6 +49,7 @@ func (s *PerceptionSystem) Update(e int) {
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
+		s.ecs.AddComponent(e, per) // Update perception component.
 	}
 	// If we're a mob and the player is perceived, switch to hunting state.
 	if e != 0 && s.ecs.HasComponent(e, AI{}) {

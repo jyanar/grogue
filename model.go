@@ -299,10 +299,8 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
-		// q := m.game.ECS.positions[e]
-		qC, _ := m.game.ECS.GetComponent(e, Position{})
-		q := qC.(Position)
-		if q.Point != p || !m.game.InFOV(q.Point) {
+		q := m.game.ECS.GetComponentUnchecked(e, Position{}).(Position).Point
+		if q != p || !m.game.InFOV(q) {
 			continue
 		}
 		if name, ok := m.game.ECS.GetComponent(e, Name{}); ok {

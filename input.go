@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"slices"
 
 	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/paths"
 	"github.com/k0kubun/pp/v3"
 )
 
@@ -66,19 +68,27 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 	// Initialize targeting right next to palyer if nil
 	maprange := gruid.NewRange(0, 0, UIWidth, UIHeight)
 	if m.target == nil {
-		// Start cursor position at first visible object
+		// Initialize targeting position at closest perceived entity to player.
+		// Otherwise, start it next to player.
 		per := m.game.ECS.GetComponentUnchecked(0, Perception{}).(Perception)
-		fmt.Println(per.perceived)
 		if len(per.perceived) > 0 {
-			other_pos := m.game.ECS.GetComponentUnchecked(per.perceived[0], Position{}).(Position).Point
+			distances := []int{}
+			positions := []gruid.Point{}
+			for _, e := range per.perceived {
+				// Compute distance to each
+				pp := m.game.PlayerPosition()
+				op := m.game.ECS.GetComponentUnchecked(e, Position{}).(Position).Point
+				distances = append(distances, paths.DistanceChebyshev(pp, op))
+				positions = append(positions, op)
+			}
+			// Target closest perceived entity
 			m.target = &targeting{
-				pos:    other_pos,
+				pos:    positions[slices.Index(distances, slices.Min(distances))],
 				radius: 1,
 			}
 		} else {
-			p := m.game.PlayerPosition()
 			m.target = &targeting{
-				pos:    p.Add(gruid.Point{X: 2, Y: 2}),
+				pos:    m.game.PlayerPosition().Add(gruid.Point{X: 2, Y: 2}),
 				radius: 1,
 			}
 		}
