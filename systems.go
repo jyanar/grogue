@@ -50,19 +50,22 @@ func (s *PerceptionSystem) Update(e int) {
 			per.perceived = append(per.perceived, other)
 		}
 	}
-	// Check if player is within perceived entities, and switch to appropriate state.
-	for _, other := range per.perceived {
-		name_other := s.ecs.GetComponentUnchecked(other, Name{}).(Name).string
-		if name_other == "you" && s.ecs.HasComponent(e, AI{}) {
-			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
-			ai.state = CSHunting
-			s.ecs.AddComponent(e, ai)
-			break
-		} else {
-			ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
-			ai.state = CSWandering
-			s.ecs.AddComponent(e, ai)
+	// If we're a mob and the player is perceived, switch to hunting state.
+	if e != 0 && s.ecs.HasComponent(e, AI{}) {
+		player_found := false
+		for _, other := range per.perceived {
+			if other == 0 {
+				player_found = true
+				break
+			}
 		}
+		ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+		if player_found {
+			ai.state = CSHunting
+		} else {
+			ai.state = CSWandering
+		}
+		s.ecs.AddComponent(e, ai)
 	}
 }
 
@@ -217,8 +220,6 @@ func (s *DamageEffectSystem) Update(e int) {
 		s.ecs.Create(LogEntry{Text: msg, Color: msgcolor})
 		if health.hp <= 0 {
 			health.hp = 0
-			s.ecs.AddComponent(e, Death{})
-			// s.ecs.DeathSystem.Update(e)
 		}
 	}
 	s.ecs.RemoveComponent(e, DamageEffects{}) // Consume the damage effects.
@@ -275,10 +276,8 @@ func (s *FOVSystem) Update(e int) {
 // keep cells within maxLOS chebyshev distance from the source entity.
 func (g *game) InFOV(p gruid.Point) bool {
 	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
-		pp, _ := g.ECS.GetComponent(e, Position{})
-		f, _ := g.ECS.GetComponent(e, FOV{})
-		pos := pp.(Position)
-		fov := f.(FOV)
+		pos := g.ECS.GetComponentUnchecked(e, Position{}).(Position)
+		fov := g.ECS.GetComponentUnchecked(e, FOV{}).(FOV)
 		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
 			return true
 		}
@@ -291,7 +290,11 @@ type DeathSystem struct {
 }
 
 func (s *DeathSystem) Update(e int) {
-	if !s.ecs.HasComponents(e, Death{}) {
+	if !s.ecs.HasComponents(e, Health{}) {
+		return
+	}
+	health := s.ecs.GetComponentUnchecked(e, Health{}).(Health)
+	if health.hp > 0 {
 		return
 	}
 	name := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
@@ -308,12 +311,12 @@ func (s *DeathSystem) Update(e int) {
 		Collectible{},
 		Consumable{},
 		Healing{amount: 2},
+		Dead{},
 		// TODO drop inventory items
 	)
 	msg := fmt.Sprintf("%s has died!", name)
 	if e == 0 {
 		msg = "You have died!"
-		s.ecs.AddComponent(e, Health{hp: 0})
 		s.ecs.AddComponent(e, fov)
 	}
 	s.ecs.Create(LogEntry{

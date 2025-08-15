@@ -57,18 +57,14 @@ func (m *model) updateInventory(msg gruid.Msg) {
 			err = m.game.InventoryDrop(0, n)
 		case modeInventoryActivate:
 			// Check whether the given item has a ranged component
-			// item_idx := m.game.ECS.inventories[0].items[n]
-			iC, _ := m.game.ECS.GetComponent(0, Inventory{})
-			inv := iC.(Inventory)
-			item_idx := inv.items[n]
-
-			if m.game.ECS.HasComponent(item_idx, Ranged{}) {
-				pC, _ := m.game.ECS.GetComponent(0, Position{})
-				p := pC.(Position).Point
+			inv := m.game.PlayerInventory()
+			itemid := inv.items[n]
+			if m.game.ECS.HasComponent(itemid, Ranged{}) {
+				p := m.game.PlayerPosition()
 				m.target = &targeting{
 					pos:    p.Shift(1, 1),
-					radius: 2,
-					item:   item_idx,
+					radius: 1,
+					itemid: itemid,
 				}
 				m.mode = modeTargeting
 				return
@@ -87,24 +83,21 @@ func (m *model) activateTarget(p gruid.Point) {
 	log.Println("Activating target at point p!")
 	log.Println(p)
 	// Check if there is an entity here capable of taking damage
-	item := m.target.item
-	// item_dmg := m.game.ECS.damages[item].int
-	dmg, _ := m.game.ECS.GetComponent(item, Damage{})
-	item_dmg := dmg.(Damage).int
+	itemid := m.target.itemid
+	itemdmg := m.game.ECS.GetComponentUnchecked(itemid, Damage{}).(Damage).int
 	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
 		for _, e := range entities {
-			m.game.ECS.AddComponent(e, DamageEffect{0, item_dmg})
+			m.game.ECS.AddComponent(e, DamageEffect{0, itemdmg})
 		}
 	}
 	m.target = nil
 	m.mode = modeNormal
-	// Get rid of item in inventory
-	if m.game.ECS.HasComponent(item, Consumable{}) {
-		iC, _ := m.game.ECS.GetComponent(0, Inventory{})
-		inv := iC.(Inventory)
-		inv.items = remove(inv.items, item)
+	// Remove item from inventory and world
+	if m.game.ECS.HasComponent(itemid, Consumable{}) {
+		inv := m.game.PlayerInventory()
+		inv.items = remove(inv.items, itemid)
 		m.game.ECS.AddComponent(0, inv)
-		m.game.ECS.Delete(item)
+		m.game.ECS.Delete(itemid)
 	}
 	m.game.ECS.Update()
 	// Can we force the game to re-render now?

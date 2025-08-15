@@ -229,7 +229,7 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 }
 
 func (ecs *ECS) PlayerDead() bool {
-	if _, ok := ecs.GetComponent(0, Death{}); ok {
+	if _, ok := ecs.GetComponent(0, Dead{}); ok {
 		return true
 	}
 	return false

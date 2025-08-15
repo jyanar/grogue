@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -31,10 +30,10 @@ type model struct {
 // targeting describes information related to examination or selection of
 // particular positions in the map.
 type targeting struct {
-	pos    gruid.Point
-	path   []gruid.Point
-	item   int
-	radius int
+	pos    gruid.Point   // The current position of the cursor.
+	path   []gruid.Point // The path to the current position.
+	itemid int           // The entity ID of the item being used/thrown/activated.
+	radius int           // Radius of the targeting area.
 }
 
 // mode describes distinct kinds of modes for the UI. It is used to send user
@@ -144,77 +143,6 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 	// Handle action (if any provided).
 	return m.handleAction()
-}
-
-// updateTargeting updates targeting information in response to user input
-// messages.
-func (m *model) updateTargeting(msg gruid.Msg) {
-	maprg := gruid.NewRange(0, 0, UIWidth, UIHeight)
-	if m.target == nil {
-		m.target = &targeting{}
-	}
-	if !m.target.pos.In(maprg) {
-		pos, _ := m.game.ECS.GetComponent(0, Position{})
-		m.target.pos = pos.(Position).Point.Add(maprg.Min)
-	}
-	p := m.target.pos
-	switch msg := msg.(type) {
-	case gruid.MsgKeyDown:
-		switch msg.Key {
-
-		case gruid.KeyArrowLeft, "h":
-			p = p.Shift(-1, 0)
-		case gruid.KeyArrowDown, "j":
-			p = p.Shift(0, 1)
-		case gruid.KeyArrowUp, "k":
-			p = p.Shift(0, -1)
-		case gruid.KeyArrowRight, "l":
-			p = p.Shift(1, 0)
-		case "y":
-			p = p.Shift(-1, -1)
-		case "u":
-			p = p.Shift(1, -1)
-		case "b":
-			p = p.Shift(-1, 1)
-		case "n":
-			p = p.Shift(1, 1)
-
-		case gruid.KeyEnter:
-			if m.mode == modeExamination {
-				break
-			}
-			m.activateTarget(p)
-
-		case gruid.KeyEscape, "q":
-			m.mode = modeNormal
-			m.target = nil
-			return
-		}
-
-		if m.target != nil {
-			m.target.pos = p.Add(maprg.Min)
-		}
-
-	case gruid.MsgMouse:
-		switch msg.Action {
-		case gruid.MouseMove:
-			m.target.pos = msg.P.Shift(-1, -1)
-
-		case gruid.MouseMain:
-			fmt.Printf("Mouse click at: %v\n", msg.P)
-		}
-	}
-
-	// We only compute the full path if the player is still alive.
-	if m.game.ECS.PlayerDead() {
-		m.target = nil
-	} else {
-		if m.target != nil {
-			p, _ := m.game.ECS.GetComponent(0, Position{})
-			pos := p.(Position)
-			m.target.path = m.pr.JPSPath(m.target.path, pos.Point, m.target.pos, m.game.Pathable, true)
-		}
-	}
 }
 
 /////////////////////////////////////
@@ -343,18 +271,20 @@ func (m *model) DrawLog(gd gruid.Grid) {
 	}
 }
 
-// DrawStatus draws the status line.
+// DrawStatus writes the HP on the bottom of the screen. If the player is dead,
+// displays "DEAD" in red.
 func (m *model) DrawStatus(gd gruid.Grid) {
-	// Write the HP on top of that.
-	st := gruid.Style{Fg: ColorStatusHealthy}
-	st.Bg = ColorLogMonsterAttack
-	// player_health := m.game.ECS.healths[0]
-	ph, _ := m.game.ECS.GetComponent(0, Health{})
-	player_health := ph.(Health)
-	if player_health.hp < player_health.maxhp/2 {
-		st.Fg = ColorStatusWounded
+	if m.game.ECS.PlayerDead() {
+		m.log.Content = ui.Text("  DEAD  ").WithStyle(gruid.Style{Fg: ColorBlood})
+	} else {
+		st := gruid.Style{Fg: ColorStatusHealthy}
+		st.Bg = ColorLogMonsterAttack
+		player_health := m.game.ECS.GetComponentUnchecked(0, Health{}).(Health)
+		if player_health.hp < player_health.maxhp/2 {
+			st.Fg = ColorStatusWounded
+		}
+		m.log.Content = ui.Textf("HP: %d/%d", player_health.hp, player_health.maxhp).WithStyle(st)
 	}
-	m.log.Content = ui.Textf("HP: %d/%d", player_health.hp, player_health.maxhp).WithStyle(st)
 	m.log.Draw(gd)
 }
 

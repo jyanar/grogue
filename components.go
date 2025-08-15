@@ -69,8 +69,8 @@ type Damage struct {
 	int
 }
 
-// Entities with this component are marked for death (see DeathSystem).
-type Death struct{}
+// Entities with this component are dead.
+type Dead struct{}
 
 // Entities with this component perceive other entities around them.
 type Perception struct {
@@ -131,14 +131,6 @@ type Ranged struct {
 type Action struct {
 	action actionType
 }
-
-// Entities with this component can be thrown.
-type Throwable struct{}
-
-// // Entities with this component can be used for ranged attacks. e.g. staffs.
-// type Zappable struct {
-// 	Range int
-// }
 
 // Entities with this component have an area of effect which is activated when
 // it is zapped (such as in the case of staffs) or thrown (such as in the case

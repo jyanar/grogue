@@ -73,13 +73,6 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionExamine:
 		m.mode = modeExamination
-		if m.target == nil {
-			m.target = &targeting{}
-		}
-		p, hasPos := m.game.ECS.GetComponent(0, Position{})
-		if hasPos {
-			m.target.pos = p.(Position).Point.Shift(2, 2)
-		}
 
 	case ActionIAnimate:
 		p, hasPos := m.game.ECS.GetComponent(0, Position{})

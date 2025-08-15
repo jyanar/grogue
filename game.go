@@ -117,3 +117,18 @@ func (g *game) FreeFloorTile() gruid.Point {
 		}
 	}
 }
+
+// Return the position of the player.
+func (g *game) PlayerPosition() gruid.Point {
+	if p, hasPos := g.ECS.GetComponent(0, Position{}); hasPos {
+		return p.(Position).Point
+	}
+	return gruid.Point{}
+}
+
+func (g *game) PlayerInventory() Inventory {
+	if inv, hasInv := g.ECS.GetComponent(0, Inventory{}); hasInv {
+		return inv.(Inventory)
+	}
+	return Inventory{}
+}
