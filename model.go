@@ -201,10 +201,8 @@ func (m *model) Draw() gruid.Grid {
 	}
 	entitiesToDraw := []tup{}
 	for _, e := range ECS.EntitiesWith(Position{}, Renderable{}) {
-		pC, _ := ECS.GetComponent(e, Position{})
-		rC, _ := ECS.GetComponent(e, Renderable{})
-		p := pC.(Position)
-		r := rC.(Renderable)
+		p := ECS.GetComponentUnchecked(e, Position{}).(Position)
+		r := ECS.GetComponentUnchecked(e, Renderable{}).(Renderable)
 		// If entities is not in FOV, do not add them to list.
 		if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
 			continue
@@ -216,10 +214,8 @@ func (m *model) Draw() gruid.Grid {
 	})
 	// Draw entities.
 	for _, e := range entitiesToDraw {
-		pC, _ := ECS.GetComponent(e.entity, Position{})
-		rC, _ := ECS.GetComponent(e.entity, Renderable{})
-		p := pC.(Position)
-		r := rC.(Renderable)
+		p := ECS.GetComponentUnchecked(e.entity, Position{}).(Position)
+		r := ECS.GetComponentUnchecked(e.entity, Renderable{}).(Renderable)
 		c := gruid.Cell{Rune: r.cell.Rune, Style: r.cell.Style}
 		if r.LacksBg() {
 			c.Style.Bg = mapgrid.At(p.Point).Style.Bg
@@ -298,14 +294,12 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	p := m.target.pos
 	// We get the names of the entities at p.
 	names := []string{}
-	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
-		q := m.game.ECS.GetComponentUnchecked(e, Position{}).(Position).Point
-		if q != p || !m.game.InFOV(q) {
+	for _, e := range m.game.ECS.EntitiesAtPWith(p, Name{}) {
+		if !m.game.InFOV(p) {
 			continue
 		}
-		if name, ok := m.game.ECS.GetComponent(e, Name{}); ok {
-			names = append(names, name.(Name).string)
-		}
+		name := m.game.ECS.GetComponentUnchecked(e, Name{}).(Name).string
+		names = append(names, name)
 	}
 	if len(names) == 0 {
 		return
@@ -337,8 +331,7 @@ func (m *model) DrawNames(gd gruid.Grid) {
 // entities and draws them. See AnimationSystem to see how these are updated.
 func (m *model) DrawBackgroundAnimations(gd gruid.Grid) {
 	for _, e := range m.game.ECS.EntitiesWith(Animation{}) {
-		aC, _ := m.game.ECS.GetComponent(e, Animation{})
-		anim := aC.(Animation)
+		anim := m.game.ECS.GetComponentUnchecked(e, Animation{}).(Animation)
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r

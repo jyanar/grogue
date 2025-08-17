@@ -42,8 +42,7 @@ func (m *model) InitializeMessageViewer() {
 // CollectMessages iterates through the ECS and collects any entities with MessageLog components.
 func (g *game) CollectMessages() {
 	for _, e := range g.ECS.EntitiesWith(LogEntry{}) {
-		lC, _ := g.ECS.GetComponent(e, LogEntry{})
-		msg := lC.(LogEntry)
+		msg := g.ECS.GetComponentUnchecked(e, LogEntry{}).(LogEntry)
 		g.Logf(msg.Text, msg.Color)
 		g.ECS.Delete(e)
 	}

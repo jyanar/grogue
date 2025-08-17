@@ -11,15 +11,12 @@ import (
 
 func (m *model) OpenInventory(title string) {
 	// Build list of entries in player inventory.
-	iC, _ := m.game.ECS.GetComponent(0, Inventory{})
-	inv := iC.(Inventory)
+	inv := m.game.PlayerInventory()
 	entries := []ui.MenuEntry{}
 	r := 'a'
 	for _, it := range inv.items {
-		nC, _ := m.game.ECS.GetComponent(it, Name{})
-		rC, _ := m.game.ECS.GetComponent(it, Renderable{})
-		name := nC.(Name).string
-		renderable := rC.(Renderable)
+		name := m.game.ECS.GetComponentUnchecked(it, Name{}).(Name).string
+		renderable := m.game.ECS.GetComponentUnchecked(it, Renderable{}).(Renderable)
 		glyph := renderable.cell.Rune
 		fg := renderable.cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
