@@ -303,6 +303,11 @@ func (s *DeathSystem) Update(e int) {
 	if e == 0 {
 		fov = s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
 	}
+	var droppedItems []int
+	if s.ecs.HasComponent(e, Inventory{}) {
+		inv := s.ecs.GetComponentUnchecked(e, Inventory{}).(Inventory)
+		droppedItems = inv.items
+	}
 	s.ecs.ClearAllComponents(e) // Clear all components of the entity.
 	s.ecs.AddComponents(e,
 		Name{name + " corpse"},
@@ -311,8 +316,10 @@ func (s *DeathSystem) Update(e int) {
 		Collectible{},
 		Consumable{},
 		Healing{amount: 2},
-		// TODO drop inventory items
 	)
+	for _, item := range droppedItems {
+		s.ecs.AddComponent(item, Position{pos.Point})
+	}
 	msg := fmt.Sprintf("%s has died!", name)
 	if e == 0 {
 		msg = "You have died!"
