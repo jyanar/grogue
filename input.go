@@ -5,30 +5,35 @@ import (
 	"github.com/k0kubun/pp/v3"
 )
 
+// keyToDir maps a movement key to a unit direction vector.
+// Returns the direction and true if the key is a movement key, otherwise false.
+func keyToDir(key gruid.Key) (gruid.Point, bool) {
+	switch key {
+	case gruid.KeyArrowLeft, "h":
+		return gruid.Point{X: -1, Y: 0}, true
+	case gruid.KeyArrowDown, "j":
+		return gruid.Point{X: 0, Y: 1}, true
+	case gruid.KeyArrowUp, "k":
+		return gruid.Point{X: 0, Y: -1}, true
+	case gruid.KeyArrowRight, "l":
+		return gruid.Point{X: 1, Y: 0}, true
+	case "y":
+		return gruid.Point{X: -1, Y: -1}, true
+	case "u":
+		return gruid.Point{X: 1, Y: -1}, true
+	case "b":
+		return gruid.Point{X: -1, Y: 1}, true
+	case "n":
+		return gruid.Point{X: 1, Y: 1}, true
+	}
+	return gruid.Point{}, false
+}
+
 func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 
 	m.target = nil
-	// m.target.path = nil // Remove path highlighting.
 
 	switch msg.Key {
-
-	// Movement
-	case gruid.KeyArrowLeft, "h":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{-1, 0}}
-	case gruid.KeyArrowDown, "j":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{0, 1}}
-	case gruid.KeyArrowUp, "k":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{0, -1}}
-	case gruid.KeyArrowRight, "l":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{1, 0}}
-	case "y":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{-1, -1}}
-	case "u":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{1, -1}}
-	case "b":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{-1, 1}}
-	case "n":
-		m.action = action{Type: ActionBump, Delta: gruid.Point{1, 1}}
 
 	case "a":
 		m.action = action{Type: ActionIAnimate}
@@ -55,5 +60,11 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	// Quitting
 	case gruid.KeyEscape, "q":
 		m.action = action{Type: ActionQuit}
+
+	// Movement
+	default:
+		if dir, ok := keyToDir(msg.Key); ok {
+			m.action = action{Type: ActionBump, Delta: dir}
+		}
 	}
 }

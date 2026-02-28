@@ -162,23 +162,6 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 	case gruid.MsgKeyDown:
 		switch msg.Key {
 
-		case gruid.KeyArrowLeft, "h":
-			p = p.Shift(-1, 0)
-		case gruid.KeyArrowDown, "j":
-			p = p.Shift(0, 1)
-		case gruid.KeyArrowUp, "k":
-			p = p.Shift(0, -1)
-		case gruid.KeyArrowRight, "l":
-			p = p.Shift(1, 0)
-		case "y":
-			p = p.Shift(-1, -1)
-		case "u":
-			p = p.Shift(1, -1)
-		case "b":
-			p = p.Shift(-1, 1)
-		case "n":
-			p = p.Shift(1, 1)
-
 		case gruid.KeyEnter:
 			if m.mode == modeExamination {
 				break
@@ -189,6 +172,11 @@ func (m *model) updateTargeting(msg gruid.Msg) {
 			m.mode = modeNormal
 			m.target = nil
 			return
+
+		default:
+			if dir, ok := keyToDir(msg.Key); ok {
+				p = p.Add(dir)
+			}
 		}
 
 		if m.target != nil {
