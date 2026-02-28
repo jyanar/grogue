@@ -39,9 +39,6 @@ func (g *game) Initialize() {
 	g.SpawnPotions()
 	g.SpawnScrolls()
 	// g.SpawnCorpses()
-	// pp := g.ECS.positions[0].Point
-	// g.NewExampleAnimation(pp.Add(gruid.Point{X: 1, Y: 0}))
-	// g.NewWaterTile(pp.Add(gruid.Point{X: 2, Y: 0}))
 	g.ECS.Initialize()
 }
 
@@ -111,8 +108,6 @@ func (g *game) PickupItem() (ok bool) {
 				inv.items = append(inv.items, i)
 				g.ECS.AddComponent(e, inv)
 				g.ECS.RemoveComponent(i, Position{})
-				// g.ECS.inventories[e].items = append(g.ECS.inventories[e].items, i)
-				// g.ECS.positions[i] = nil
 			}
 		}
 	}

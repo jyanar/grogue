@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"codeberg.org/anaseto/gruid"
 )
 
@@ -11,7 +9,7 @@ func (m *model) handleMsgTick() {
 	m.game.ECS.UpdateAnimation()
 	// Update interruptible animation
 	if m.ianimation != nil {
-		log.Println("Updating interruptible animation!!")
+		// log.Println("Updating interruptible animation!!")
 		// Advance animation by a single tick.
 		anim := m.ianimation
 		anim.frames[anim.index].itick++

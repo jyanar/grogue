@@ -56,8 +56,6 @@ func (m *model) updateInventory(msg gruid.Msg) {
 		case modeInventoryDrop:
 			err = m.game.InventoryDrop(0, n)
 		case modeInventoryActivate:
-			// Check whether the given item has a ranged component
-			// item_idx := m.game.ECS.inventories[0].items[n]
 			iC, _ := m.game.ECS.GetComponent(0, Inventory{})
 			inv := iC.(Inventory)
 			item_idx := inv.items[n]
@@ -88,7 +86,6 @@ func (m *model) activateTarget(p gruid.Point) {
 	log.Println(p)
 	// Check if there is an entity here capable of taking damage
 	item := m.target.item
-	// item_dmg := m.game.ECS.damages[item].int
 	dmg, _ := m.game.ECS.GetComponent(item, Damage{})
 	item_dmg := dmg.(Damage).int
 	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
