@@ -43,28 +43,6 @@ const (
 	ColorStatusWounded
 )
 
-// const (
-// 	ColorFOV     = "ColorFOV"
-// 	ColorTarget  = "ColorTarget"
-// 	ColorPlayer  = "ColorPlayer"
-// 	ColorMonster = "ColorMonster"
-// 	ColorTroll   = "ColorTroll"
-
-// 	ColorCorpse       = "ColorCorpse"
-// 	ColorHealthPotion = "ColorHealthPotion"
-// 	ColorScroll       = "ColorScroll"
-// 	ColorBlood        = "ColorBlood"
-// 	ColorWater1       = "ColorWater1"
-// 	ColorWater2       = "ColorWater2"
-
-// 	ColorLog              = "ColorLog"
-// 	ColorLogPlayerAttack  = "ColorLogPlayerAttack"
-// 	ColorLogMonsterAttack = "ColorLogMonsterAttack"
-// 	ColorLogSpecial       = "ColorLogSpecial"
-// 	ColorStatusHealthy    = "ColorStatusHealthy"
-// 	ColorStatusWounded    = "ColorStatusWounded"
-// )
-
 // A list of available themes.
 const (
 	ThemeSelenized = iota
@@ -72,7 +50,7 @@ const (
 )
 
 // Current theme.
-const theme = ThemeNoir
+const theme = ThemeSelenized
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
@@ -83,92 +61,58 @@ func inverseColor(c *image.Uniform) *image.Uniform {
 	return image.NewUniform(color.RGBA{uint8(255 - r), uint8(255 - g), uint8(255 - b), 255})
 }
 
+// themeDefaults holds the base fg/bg color for each theme.
+var themeDefaults = [2]struct{ fg, bg color.RGBA }{
+	ThemeSelenized: {fg: color.RGBA{0xad, 0xbc, 0xbc, 255}, bg: color.RGBA{0x10, 0x3c, 0x48, 255}},
+	ThemeNoir:      {fg: color.RGBA{80, 80, 80, 255}, bg: color.RGBA{0x00, 0x00, 0x00, 255}},
+}
+
+// fgTable maps a logical color to its per-theme foreground RGBA override.
+// A zero color.RGBA (alpha == 0) means "use the theme default".
+var fgTable = map[gruid.Color][2]color.RGBA{
+	ColorPlayer:           {ThemeSelenized: {0x46, 0x95, 0xf7, 255}, ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
+	ColorBlood:            {ThemeSelenized: {178, 3, 3, 255}, ThemeNoir: {138, 3, 3, 255}},
+	ColorMonster:          {ThemeSelenized: {0xfa, 0x57, 0x50, 255}, ThemeNoir: {230, 0, 0, 255}},
+	ColorCorpse:           {ThemeSelenized: {0xff, 0xa0, 0x30, 255}},
+	ColorLogPlayerAttack:  {ThemeSelenized: {0x75, 0xb9, 0x38, 255}, ThemeNoir: {0x75, 0xb9, 0x38, 255}},
+	ColorStatusHealthy:    {ThemeSelenized: {0x75, 0xb9, 0x38, 255}, ThemeNoir: {0x75, 0xb9, 0x38, 255}},
+	ColorLogMonsterAttack: {ThemeSelenized: {0xed, 0x86, 0x49, 255}, ThemeNoir: {230, 0, 0, 255}},
+	ColorStatusWounded:    {ThemeSelenized: {0xed, 0x86, 0x49, 255}, ThemeNoir: {230, 0, 0, 255}},
+	ColorLogSpecial:       {ThemeSelenized: {0xf2, 0x75, 0xbe, 255}, ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
+	ColorWater1:           {ThemeSelenized: {148, 148, 255, 255}, ThemeNoir: {148, 148, 255, 255}},
+	ColorFOV:              {ThemeNoir: {200, 200, 200, 255}},
+	ColorTroll:            {ThemeNoir: {20, 200, 20, 255}},
+	ColorHealthPotion:     {ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
+	ColorScroll:           {ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
+	ColorWater2:           {ThemeNoir: {107, 107, 255, 255}},
+}
+
+// bgTable maps a logical color to its per-theme background RGBA override.
+// A zero color.RGBA (alpha == 0) means "use the theme default".
+var bgTable = map[gruid.Color][2]color.RGBA{
+	ColorFOV:    {ThemeSelenized: {0x18, 0x49, 0x56, 255}},
+	ColorBlood:  {ThemeSelenized: {138, 3, 3, 255}, ThemeNoir: {138, 3, 3, 255}},
+	ColorTarget: {ThemeSelenized: {0x75, 0x75, 0x00, 255}, ThemeNoir: {100, 100, 100, 255}},
+	ColorWater1: {ThemeSelenized: {107, 107, 255, 255}, ThemeNoir: {107, 107, 255, 255}},
+	ColorWater2: {ThemeNoir: {148, 148, 255, 255}},
+}
+
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
-	fg := image.NewUniform(color.RGBA{0xff, 0xff, 0xff, 255})
-	bg := image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
-	switch theme {
-
-	case ThemeSelenized:
-		fg = image.NewUniform(color.RGBA{0xad, 0xbc, 0xbc, 255})
-		bg = image.NewUniform(color.RGBA{0x10, 0x3c, 0x48, 255})
-
-		switch c.Style.Fg {
-		case ColorPlayer:
-			fg = image.NewUniform(color.RGBA{0x46, 0x95, 0xf7, 255})
-		case ColorBlood:
-			fg = image.NewUniform(color.RGBA{178, 3, 3, 255})
-		case ColorMonster:
-			fg = image.NewUniform(color.RGBA{0xfa, 0x57, 0x50, 255})
-		case ColorCorpse:
-			fg = image.NewUniform(color.RGBA{0xff, 0xa0, 0x30, 255})
-		case ColorLogPlayerAttack, ColorStatusHealthy:
-			fg = image.NewUniform(color.RGBA{0x75, 0xb9, 0x38, 255})
-		case ColorLogMonsterAttack, ColorStatusWounded:
-			fg = image.NewUniform(color.RGBA{0xed, 0x86, 0x49, 255})
-		case ColorLogSpecial:
-			fg = image.NewUniform(color.RGBA{0xf2, 0x75, 0xbe, 255})
-		case ColorWater1:
-			fg = image.NewUniform(color.RGBA{148, 148, 255, 255})
+	d := themeDefaults[theme]
+	fg := image.NewUniform(d.fg)
+	bg := image.NewUniform(d.bg)
+	if rgba, ok := fgTable[c.Style.Fg]; ok {
+		if v := rgba[theme]; v.A != 0 {
+			fg = image.NewUniform(v)
 		}
-
-		switch c.Style.Bg {
-		case ColorFOV:
-			bg = image.NewUniform(color.RGBA{0x18, 0x49, 0x56, 255})
-		case ColorBlood:
-			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
-		case ColorTarget:
-			bg = image.NewUniform(color.RGBA{0x75, 0x75, 0x00, 255})
-		case ColorWater1:
-			bg = image.NewUniform(color.RGBA{107, 107, 255, 255})
+	}
+	if rgba, ok := bgTable[c.Style.Bg]; ok {
+		if v := rgba[theme]; v.A != 0 {
+			bg = image.NewUniform(v)
 		}
-
-	case ThemeNoir:
-		fg = image.NewUniform(color.RGBA{80, 80, 80, 255})
-		bg = image.NewUniform(color.RGBA{0x00, 0x00, 0x00, 255})
-
-		switch c.Style.Fg {
-		case ColorPlayer:
-			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
-		case ColorBlood:
-			fg = image.NewUniform(color.RGBA{138, 3, 3, 255})
-		case ColorFOV:
-			fg = image.NewUniform(color.RGBA{200, 200, 200, 255})
-		case ColorMonster:
-			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
-		case ColorTroll:
-			fg = image.NewUniform(color.RGBA{20, 200, 20, 255})
-		case ColorHealthPotion:
-			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
-		case ColorScroll:
-			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
-		case ColorLogPlayerAttack, ColorStatusHealthy:
-			fg = image.NewUniform(color.RGBA{0x75, 0xb9, 0x38, 255})
-		case ColorLogMonsterAttack, ColorStatusWounded:
-			fg = image.NewUniform(color.RGBA{230, 0, 0, 255})
-		case ColorLogSpecial:
-			fg = image.NewUniform(color.RGBA{0xdb, 0xb3, 0x2d, 255})
-		case ColorWater1:
-			fg = image.NewUniform(color.RGBA{148, 148, 255, 255})
-		case ColorWater2:
-			fg = image.NewUniform(color.RGBA{107, 107, 255, 255})
-		}
-
-		switch c.Style.Bg {
-		case ColorBlood:
-			bg = image.NewUniform(color.RGBA{138, 3, 3, 255})
-		case ColorTarget:
-			bg = image.NewUniform(color.RGBA{100, 100, 100, 255})
-		case ColorWater1:
-			bg = image.NewUniform(color.RGBA{107, 107, 255, 255})
-		case ColorWater2:
-			bg = image.NewUniform(color.RGBA{148, 148, 255, 255})
-		}
-
-		switch c.Style.Attrs { // If you want to invert fg and bg
-		case AttrReverse:
-			fg, bg = bg, fg
-		}
-
+	}
+	if c.Style.Attrs == AttrReverse {
+		fg, bg = bg, fg
 	}
 	return t.drawer.Draw(c.Rune, fg, bg)
 }
