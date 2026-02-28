@@ -127,9 +127,11 @@ func (s *AISystem) Update(e int) {
 	}
 	// Compute path to ai.dest.
 	path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
-	q := path[1]
-	// Move entity to first position in the path.
-	s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
+	if len(path) > 0 {
+		// Move entity to first position in the path.
+		q := path[1]
+		s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
+	}
 }
 
 type BumpSystem struct {
