@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -153,65 +152,6 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 
 	// Handle action (if any provided).
 	return m.handleAction()
-}
-
-// updateTargeting updates targeting information in response to user input
-// messages.
-func (m *model) updateTargeting(msg gruid.Msg) {
-	maprg := gruid.NewRange(0, 0, UIWidth, UIHeight)
-	if m.target == nil {
-		m.target = &targeting{}
-	}
-	if !m.target.pos.In(maprg) {
-		pos, _ := m.game.ECS.GetComponent(0, Position{})
-		m.target.pos = pos.(Position).Point.Add(maprg.Min)
-	}
-	p := m.target.pos
-	switch msg := msg.(type) {
-	case gruid.MsgKeyDown:
-		switch msg.Key {
-
-		case gruid.KeyEnter:
-			if m.mode == modeExamination {
-				break
-			}
-			m.activateTarget(p)
-
-		case gruid.KeyEscape, "q":
-			m.mode = modeNormal
-			m.target = nil
-			return
-
-		default:
-			if dir, ok := keyToDir(msg.Key); ok {
-				p = p.Add(dir)
-			}
-		}
-
-		if m.target != nil {
-			m.target.pos = p.Add(maprg.Min)
-		}
-
-	case gruid.MsgMouse:
-		switch msg.Action {
-		case gruid.MouseMove:
-			m.target.pos = msg.P.Shift(-1, -1)
-
-		case gruid.MouseMain:
-			fmt.Printf("Mouse click at: %v\n", msg.P)
-		}
-	}
-
-	// We only compute the full path if the player is still alive.
-	if m.game.ECS.PlayerDead() {
-		m.target = nil
-	} else {
-		if m.target != nil {
-			p, _ := m.game.ECS.GetComponent(0, Position{})
-			pos := p.(Position)
-			m.target.path = m.pr.JPSPath(m.target.path, pos.Point, m.target.pos, m.game.Pathable, true)
-		}
-	}
 }
 
 /////////////////////////////////////
