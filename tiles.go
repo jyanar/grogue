@@ -49,11 +49,11 @@ const (
 const (
 	ThemeSelenized = iota
 	ThemeNoir
-	ThemeBrogue
+	ThemeSepia
 )
 
 // Current theme.
-const theme = ThemeNoir
+const theme = ThemeSepia
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
@@ -69,40 +69,41 @@ func rgba(r, g, b uint8) color.RGBA {
 }
 
 // themeDefaults holds the base fg/bg color for each theme.
-var themeDefaults = [2]struct{ fg, bg color.RGBA }{
+var themeDefaults = [3]struct{ fg, bg color.RGBA }{
 	ThemeSelenized: {fg: rgba(0xad, 0xbc, 0xbc), bg: rgba(0x10, 0x3c, 0x48)},
 	ThemeNoir:      {fg: rgba(80, 80, 80), bg: rgba(0, 0, 0)},
+	ThemeSepia:     {fg: rgba(0x55, 0x4a, 0x3a), bg: rgba(0x08, 0x08, 0x0c)},
 }
 
 // fgTable maps a logical color to its per-theme foreground RGBA override.
 // A zero color.RGBA (alpha == 0) means "use the theme default".
 var fgTable = map[gruid.Color][3]color.RGBA{
-	ColorPlayer:           {ThemeSelenized: rgba(0x46, 0x95, 0xf7), ThemeNoir: rgba(0xdb, 0xb3, 0x2d)},
-	ColorBlood:            {ThemeSelenized: rgba(178, 3, 3), ThemeNoir: rgba(138, 3, 3)},
-	ColorMonster:          {ThemeSelenized: rgba(0xfa, 0x57, 0x50), ThemeNoir: rgba(230, 0, 0)},
-	ColorCorpse:           {ThemeSelenized: rgba(0xff, 0xa0, 0x30)},
-	ColorLogPlayerAttack:  {ThemeSelenized: rgba(0x75, 0xb9, 0x38), ThemeNoir: rgba(0x75, 0xb9, 0x38)},
-	ColorStatusHealthy:    {ThemeSelenized: rgba(0x75, 0xb9, 0x38), ThemeNoir: rgba(0x75, 0xb9, 0x38)},
-	ColorLogMonsterAttack: {ThemeSelenized: rgba(0xed, 0x86, 0x49), ThemeNoir: rgba(230, 0, 0)},
-	ColorStatusWounded:    {ThemeSelenized: rgba(0xed, 0x86, 0x49), ThemeNoir: rgba(230, 0, 0)},
-	ColorLogSpecial:       {ThemeSelenized: rgba(0xf2, 0x75, 0xbe), ThemeNoir: rgba(0xdb, 0xb3, 0x2d)},
-	ColorWater1:           {ThemeSelenized: rgba(148, 148, 255), ThemeNoir: rgba(148, 148, 255)},
-	ColorFOV:              {ThemeNoir: rgba(200, 200, 200)},
-	ColorTroll:            {ThemeNoir: rgba(20, 200, 20)},
-	ColorHealthPotion:     {ThemeNoir: rgba(0xdb, 0xb3, 0x2d)},
-	ColorScroll:           {ThemeNoir: rgba(0xdb, 0xb3, 0x2d)},
-	ColorWater2:           {ThemeNoir: rgba(107, 107, 255)},
-	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33)},
+	ColorPlayer:           {ThemeSelenized: rgba(0x46, 0x95, 0xf7), ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xff, 0xff, 0xd0)},
+	ColorBlood:            {ThemeSelenized: rgba(178, 3, 3), ThemeNoir: rgba(138, 3, 3), ThemeSepia: rgba(0x90, 0x20, 0x20)},
+	ColorMonster:          {ThemeSelenized: rgba(0xfa, 0x57, 0x50), ThemeNoir: rgba(230, 0, 0), ThemeSepia: rgba(0xcc, 0x70, 0x20)},
+	ColorCorpse:           {ThemeSelenized: rgba(0xff, 0xa0, 0x30), ThemeSepia: rgba(0x70, 0x30, 0x10)},
+	ColorLogPlayerAttack:  {ThemeSelenized: rgba(0x75, 0xb9, 0x38), ThemeNoir: rgba(0x75, 0xb9, 0x38), ThemeSepia: rgba(0x70, 0xc0, 0x50)},
+	ColorStatusHealthy:    {ThemeSelenized: rgba(0x75, 0xb9, 0x38), ThemeNoir: rgba(0x75, 0xb9, 0x38), ThemeSepia: rgba(0x60, 0xb0, 0x40)},
+	ColorLogMonsterAttack: {ThemeSelenized: rgba(0xed, 0x86, 0x49), ThemeNoir: rgba(230, 0, 0), ThemeSepia: rgba(0xcc, 0x60, 0x20)},
+	ColorStatusWounded:    {ThemeSelenized: rgba(0xed, 0x86, 0x49), ThemeNoir: rgba(230, 0, 0), ThemeSepia: rgba(0xcc, 0x50, 0x20)},
+	ColorLogSpecial:       {ThemeSelenized: rgba(0xf2, 0x75, 0xbe), ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xa0, 0x70, 0xc8)},
+	ColorWater1:           {ThemeSelenized: rgba(148, 148, 255), ThemeNoir: rgba(148, 148, 255), ThemeSepia: rgba(0x40, 0x70, 0xb0)},
+	ColorFOV:              {ThemeNoir: rgba(200, 200, 200), ThemeSepia: rgba(0x96, 0x82, 0x5a)},
+	ColorTroll:            {ThemeNoir: rgba(20, 200, 20), ThemeSepia: rgba(0x30, 0xa0, 0x30)},
+	ColorHealthPotion:     {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xcc, 0x44, 0x44)},
+	ColorScroll:           {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xd4, 0xc4, 0x8c)},
+	ColorWater2:           {ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x30, 0x58, 0x98)},
+	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33), ThemeSepia: rgba(0x36, 0x7a, 0x2e)},
 }
 
 // bgTable maps a logical color to its per-theme background RGBA override.
 // A zero color.RGBA (alpha == 0) means "use the theme default".
-var bgTable = map[gruid.Color][2]color.RGBA{
-	ColorFOV:    {ThemeSelenized: rgba(0x18, 0x49, 0x56)},
-	ColorBlood:  {ThemeSelenized: rgba(138, 3, 3), ThemeNoir: rgba(138, 3, 3)},
-	ColorTarget: {ThemeSelenized: rgba(0x75, 0x75, 0x00), ThemeNoir: rgba(100, 100, 100)},
-	ColorWater1: {ThemeSelenized: rgba(107, 107, 255), ThemeNoir: rgba(107, 107, 255)},
-	ColorWater2: {ThemeNoir: rgba(148, 148, 255)},
+var bgTable = map[gruid.Color][3]color.RGBA{
+	ColorFOV:    {ThemeSelenized: rgba(0x18, 0x49, 0x56), ThemeSepia: rgba(0x14, 0x10, 0x08)},
+	ColorBlood:  {ThemeSelenized: rgba(138, 3, 3), ThemeNoir: rgba(138, 3, 3), ThemeSepia: rgba(0x50, 0x10, 0x10)},
+	ColorTarget: {ThemeSelenized: rgba(0x75, 0x75, 0x00), ThemeNoir: rgba(100, 100, 100), ThemeSepia: rgba(0x40, 0x20, 0x60)},
+	ColorWater1: {ThemeSelenized: rgba(107, 107, 255), ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x20, 0x40, 0x80)},
+	ColorWater2: {ThemeNoir: rgba(148, 148, 255), ThemeSepia: rgba(0x18, 0x30, 0x60)},
 }
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
