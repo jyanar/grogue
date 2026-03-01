@@ -15,20 +15,28 @@ const (
 
 // Map represents the rectangular grid of the game's level.
 type Map struct {
-	Grid     rl.Grid                 // Gamemap.
-	Rand     *rand.Rand              // Random number generator.
-	Explored map[gruid.Point]bool    // Explored tiles.
-	LightMap map[gruid.Point]float32 // Per-tile light level (0.0=dark, 1.0=bright), updated each turn.
-	PR       *paths.PathRange
+	Grid       rl.Grid    // Gamemap.
+	Rand       *rand.Rand // Random number generator.
+	Explored   []bool     // Flat array [y*MapWidth+x]: tiles the player has ever seen.
+	LightMap   []float32  // Flat array [y*MapWidth+x]: per-tile light level (0.0–1.0), updated each turn.
+	VisibleNow []bool     // Flat array [y*MapWidth+x]: tiles in player FOV this turn, updated each turn.
+	PR         *paths.PathRange
+}
+
+// idx converts a map point to a flat array index.
+func (m *Map) idx(p gruid.Point) int {
+	return p.Y*MapWidth + p.X
 }
 
 func NewMap(size gruid.Point) *Map {
+	n := size.X * size.Y
 	m := &Map{
-		Grid:     rl.NewGrid(size.X, size.Y),
-		Rand:     rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
-		Explored: make(map[gruid.Point]bool),
-		LightMap: make(map[gruid.Point]float32),
-		PR:       paths.NewPathRange(gruid.NewRange(0, 0, size.X, size.Y)),
+		Grid:       rl.NewGrid(size.X, size.Y),
+		Rand:       rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
+		Explored:   make([]bool, n),
+		LightMap:   make([]float32, n),
+		VisibleNow: make([]bool, n),
+		PR:         paths.NewPathRange(gruid.NewRange(0, 0, size.X, size.Y)),
 	}
 	m.Generate()
 	return m

@@ -266,6 +266,10 @@ func (s *FOVSystem) Update(e int) {
 	rg := gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1)
 	f.FOV.SetRange(rg.Add(p.Point).Intersect(s.ecs.Map.Grid.Range()))
 	s.ecs.AddComponent(e, f)
+	// Clear the visible-now array before recomputing (only one FOV entity expected).
+	for i := range s.ecs.Map.VisibleNow {
+		s.ecs.Map.VisibleNow[i] = false
+	}
 	// We mark cells in field of view as explored. We use the symmetric shadow
 	// casting algorithm provided by the rl package.
 	isnotwall := func(q gruid.Point) bool {
@@ -278,23 +282,21 @@ func (s *FOVSystem) Update(e int) {
 		if paths.DistanceChebyshev(point, p.Point) > f.LOS {
 			continue
 		}
-		if !s.ecs.Map.Explored[point] {
-			s.ecs.Map.Explored[point] = true
+		idx := s.ecs.Map.idx(point)
+		s.ecs.Map.VisibleNow[idx] = true
+		if !s.ecs.Map.Explored[idx] {
+			s.ecs.Map.Explored[idx] = true
 		}
 	}
 }
 
-// InFOV returns true if p is in the field of view of an entity with FOV. We only
-// keep cells within maxLOS chebyshev distance from the source entity.
+// InFOV returns true if p is currently visible to the player.
+// FOVSystem.Update populates Map.VisibleNow each turn, so this is O(1).
 func (g *game) InFOV(p gruid.Point) bool {
-	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
-		pos := GetComponent[Position](g.ECS, e)
-		fov := GetComponent[FOV](g.ECS, e)
-		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
-			return true
-		}
+	if !p.In(g.Map.Grid.Range()) {
+		return false
 	}
-	return false
+	return g.Map.VisibleNow[g.Map.idx(p)]
 }
 
 type DeathSystem struct {
@@ -415,9 +417,9 @@ type LightingSystem struct {
 func (s *LightingSystem) UpdateLighting() {
 	const ambientLight float32 = 0.1
 
-	// Reset the light map.
-	for k := range s.ecs.Map.LightMap {
-		delete(s.ecs.Map.LightMap, k)
+	// Reset the light map (zero the flat array).
+	for i := range s.ecs.Map.LightMap {
+		s.ecs.Map.LightMap[i] = 0
 	}
 
 	// Lazily initialise the shared FOV object sized to the full map.
@@ -430,17 +432,10 @@ func (s *LightingSystem) UpdateLighting() {
 	}
 
 	// Apply ambient light to every tile in the player's current FOV.
-	// FOVSystem.Update has already run, so fov.FOV.Visibles is populated.
-	for _, e := range s.ecs.EntitiesWith(Position{}, FOV{}) {
-		fov := GetComponent[FOV](s.ecs, e)
-		pos := GetComponent[Position](s.ecs, e)
-		if fov.FOV == nil {
-			continue
-		}
-		for _, p := range fov.FOV.Visibles {
-			if paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
-				s.ecs.Map.LightMap[p] = ambientLight
-			}
+	// VisibleNow was populated by FOVSystem this turn.
+	for i, visible := range s.ecs.Map.VisibleNow {
+		if visible {
+			s.ecs.Map.LightMap[i] = ambientLight
 		}
 	}
 
@@ -455,13 +450,14 @@ func (s *LightingSystem) UpdateLighting() {
 			if dist > ls.Radius {
 				continue
 			}
-			// Only illuminate tiles already visible to the player.
-			if _, inFOV := s.ecs.Map.LightMap[p]; !inFOV {
+			idx := s.ecs.Map.idx(p)
+			// Only illuminate tiles currently visible to the player.
+			if !s.ecs.Map.VisibleNow[idx] {
 				continue
 			}
 			contribution := ls.Intensity * (1.0 - float32(dist)/float32(ls.Radius))
-			if contribution > s.ecs.Map.LightMap[p] {
-				s.ecs.Map.LightMap[p] = contribution
+			if contribution > s.ecs.Map.LightMap[idx] {
+				s.ecs.Map.LightMap[idx] = contribution
 			}
 		}
 	}

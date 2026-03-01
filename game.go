@@ -47,7 +47,7 @@ func (g *game) Initialize() {
 }
 
 func (g *game) Pathable(p gruid.Point) bool {
-	if g.Map.Walkable(p) && g.Map.Explored[p] {
+	if g.Map.Walkable(p) && g.Map.Explored[g.Map.idx(p)] {
 		return true
 	}
 	return false

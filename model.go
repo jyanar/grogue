@@ -189,16 +189,18 @@ func (m *model) Draw() gruid.Grid {
 	// Draw the map.
 	it := Map.Grid.Iterator()
 	for it.Next() {
-		if !m.debugRevealAll && !Map.Explored[it.P()] {
+		p := it.P()
+		idx := Map.idx(p)
+		if !m.debugRevealAll && !Map.Explored[idx] {
 			continue
 		}
 		c := gruid.Cell{Rune: Map.Rune(it.Cell())}
-		if m.debugRevealAll || m.game.InFOV(it.P()) {
-			col := lightColor(m.game.Map.LightMap[it.P()])
+		if m.debugRevealAll || Map.VisibleNow[idx] {
+			col := lightColor(Map.LightMap[idx])
 			c.Style.Fg = col
 			c.Style.Bg = col
 		}
-		mapgrid.Set(it.P(), c)
+		mapgrid.Set(p, c)
 	}
 
 	// Draw background animations
@@ -215,8 +217,9 @@ func (m *model) Draw() gruid.Grid {
 		rC, _ := ECS.GetComponent(e, Renderable{})
 		p := pC.(Position)
 		r := rC.(Renderable)
-		// If entities is not in FOV, do not add them to list.
-		if !m.debugRevealAll && (!m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point)) {
+		// If entity is not explored or not currently visible, skip it.
+		idx := m.game.Map.idx(p.Point)
+		if !m.debugRevealAll && (!m.game.Map.Explored[idx] || !m.game.Map.VisibleNow[idx]) {
 			continue
 		}
 		entitiesToDraw = append(entitiesToDraw, tup{e, r.order})
@@ -364,7 +367,7 @@ func (m *model) DrawBackgroundAnimations(gd gruid.Grid) {
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r
-			if m.debugRevealAll || (m.game.Map.Explored[p] && m.game.InFOV(p)) {
+			if m.debugRevealAll || (m.game.Map.Explored[m.game.Map.idx(p)] && m.game.Map.VisibleNow[m.game.Map.idx(p)]) {
 				gd.Set(p, r.cell)
 			}
 		}
