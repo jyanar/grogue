@@ -114,7 +114,7 @@ func (g *game) PickupItem() (ok bool) {
 		ok = true
 		item_name := GetComponent[Name](g.ECS, i).string
 		g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
-		inv.items = append(inv.items, i)
+		inv.items[inv.nextKey()] = i
 		g.ECS.RemoveComponent(i, Position{})
 	}
 	g.ECS.AddComponent(0, inv)

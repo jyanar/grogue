@@ -317,8 +317,9 @@ func (s *DeathSystem) Update(e int) {
 	}
 	var droppedItems []int
 	if s.ecs.HasComponent(e, Inventory{}) {
-		inv := GetComponent[Inventory](s.ecs, e)
-		droppedItems = inv.items
+		for _, item := range GetComponent[Inventory](s.ecs, e).items {
+			droppedItems = append(droppedItems, item)
+		}
 	}
 	s.ecs.ClearAllComponents(e) // Clear all components of the entity.
 	s.ecs.AddComponents(e,

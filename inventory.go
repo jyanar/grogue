@@ -4,27 +4,37 @@ package main
 
 import (
 	"log"
+	"sort"
 
 	"codeberg.org/anaseto/gruid"
 	"codeberg.org/anaseto/gruid/ui"
 )
 
+// sortedInventoryKeys returns the inventory's assigned letters in sorted order.
+func sortedInventoryKeys(inv Inventory) []rune {
+	keys := make([]rune, 0, len(inv.items))
+	for k := range inv.items {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
 func (m *model) OpenInventory(title string) {
 	// Build list of entries in player inventory.
 	inv := GetComponent[Inventory](m.game.ECS, 0)
 	entries := []ui.MenuEntry{}
-	r := 'a'
-	for _, it := range inv.items {
+	for _, k := range sortedInventoryKeys(inv) {
+		it := inv.items[k]
 		name := GetComponent[Name](m.game.ECS, it).string
 		renderable := GetComponent[Renderable](m.game.ECS, it)
 		glyph := renderable.cell.Rune
 		fg := renderable.cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
 		entries = append(entries, ui.MenuEntry{
-			Text: stt.WithText(string(r) + " - @k" + string(glyph) + "@N " + name),
-			Keys: []gruid.Key{gruid.Key(r)},
+			Text: stt.WithText(string(k) + " - @k" + string(glyph) + "@N " + name),
+			Keys: []gruid.Key{gruid.Key(k)},
 		})
-		r++
 	}
 	// We create a new menu widget for the inventory window.
 	m.inventory = ui.NewMenu(ui.MenuConfig{
@@ -47,15 +57,15 @@ func (m *model) updateInventory(msg gruid.Msg) {
 	case ui.MenuInvoke:
 		// The user invoked a particular entry of the menu (either by
 		// using enter or clicking on it).
-		n := m.inventory.Active()
+		inv := m.game.PlayerInventory()
+		key := sortedInventoryKeys(inv)[m.inventory.Active()]
+		itemid := inv.items[key]
 		var err error
 		switch m.mode {
 		case modeInventoryDrop:
-			err = m.game.InventoryDrop(0, n)
+			err = m.game.InventoryDrop(0, key)
 		case modeInventoryActivate:
 			// Check whether the given item has a ranged component
-			inv := m.game.PlayerInventory()
-			itemid := inv.items[n]
 			if m.game.ECS.HasComponent(itemid, Ranged{}) {
 				p := m.game.PlayerPosition()
 				m.target = &targeting{
@@ -66,7 +76,7 @@ func (m *model) updateInventory(msg gruid.Msg) {
 				m.mode = modeTargeting
 				return
 			}
-			err = m.game.InventoryActivate(0, n)
+			err = m.game.InventoryActivate(0, key)
 		}
 		if err != nil {
 			m.game.Logf(err.Error(), ColorLogSpecial)
@@ -92,20 +102,19 @@ func (m *model) activateTarget(p gruid.Point) {
 	// Remove item from inventory and world
 	if m.game.ECS.HasComponent(itemid, Consumable{}) {
 		inv := m.game.PlayerInventory()
-		inv.items = remove(inv.items, itemid)
+		inv.removeItem(itemid)
 		m.game.ECS.AddComponent(0, inv)
 		m.game.ECS.Delete(itemid)
 	}
 	m.game.ECS.Update()
-	// Can we force the game to re-render now?
 }
 
 const ErrNoShow = "ErrNoShow"
 
 // TODO Better log messages
-func (g *game) InventoryActivate(entity, itemidx int) error {
+func (g *game) InventoryActivate(entity int, key rune) error {
 	inventory := GetComponent[Inventory](g.ECS, entity)
-	item_id := inventory.items[itemidx]
+	item_id := inventory.items[key]
 	item_name := GetComponent[Name](g.ECS, item_id).string
 	g.Logf("You use the %s.", ColorLogSpecial, item_name)
 	// Item can provide healing. Apply healing.
@@ -118,28 +127,23 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 		}
 		g.ECS.AddComponent(entity, health)
 	}
-	// TODO Ranged effects
 	// Item was consumable, so we delete from inventory.
 	if g.ECS.HasComponent(item_id, Consumable{}) {
-		inventory.items = remove(inventory.items, item_id)
+		delete(inventory.items, key)
 		g.ECS.AddComponent(entity, inventory)
 		g.ECS.Delete(item_id)
 	}
 	return nil
 }
 
-// func (g *game) InventoryActivateWithTarget(entity, itemidx int) error {
-// 	item := g.ECS.inventories[entity].items[itemidx]
-// }
-
-func (g *game) InventoryDrop(entity, itemidx int) error {
+func (g *game) InventoryDrop(entity int, key rune) error {
 	inventory := GetComponent[Inventory](g.ECS, entity)
-	item_id := inventory.items[itemidx]
+	item_id := inventory.items[key]
 	item_name := GetComponent[Name](g.ECS, item_id).string
 	prefix := "You drop the "
 	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
 	// Remove item from inventory.
-	inventory.items = remove(inventory.items, item_id)
+	delete(inventory.items, key)
 	g.ECS.AddComponent(entity, inventory)
 	pos := GetComponent[Position](g.ECS, entity).Point
 	// Add Position component back to the item.

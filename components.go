@@ -122,7 +122,27 @@ type Collectible struct{}
 // Entities with this component have an inventory, and can pick up Collectible
 // components.
 type Inventory struct {
-	items []int // A list of entities.
+	items map[rune]int // maps assigned letter → entity ID
+}
+
+// nextKey returns the first alphabetically available inventory letter.
+func (inv Inventory) nextKey() rune {
+	for k := rune('a'); k <= 'z'; k++ {
+		if _, used := inv.items[k]; !used {
+			return k
+		}
+	}
+	return 0
+}
+
+// removeItem removes an entity from the inventory by its entity ID.
+func (inv Inventory) removeItem(entityID int) {
+	for k, v := range inv.items {
+		if v == entityID {
+			delete(inv.items, k)
+			return
+		}
+	}
 }
 
 // Entities with this component can be used for ranged attacks. e.g. staffs.
