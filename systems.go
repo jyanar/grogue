@@ -131,7 +131,7 @@ func (s *AISystem) Update(e int) {
 	}
 	// Compute path to ai.dest.
 	path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
-	if len(path) > 0 {
+	if len(path) > 1 {
 		// Move entity to first position in the path.
 		q := path[1]
 		s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
@@ -157,10 +157,15 @@ func (s *BumpSystem) Update(e int) {
 	// Let's attempt to move to dest.
 	if s.ecs.Map.Walkable(dest) {
 		// Check whether there are blocking entities at dest.
-		attackable_entities := s.ecs.EntitiesAtPWith(dest, Health{}, Obstruct{})
+		attackable_entities := s.ecs.EntitiesAtPWith(dest, Health{}, ObstructsMovement{})
 		if len(attackable_entities) == 0 {
 			p.Point = dest // No entity blocking the way, move to dest.
 			s.ecs.AddComponent(e, p)
+			if s.ecs.HasComponent(e, Input{}) {
+				for _, g := range s.ecs.EntitiesAtPWith(dest, ObstructsView{}) {
+					s.ecs.Delete(g)
+				}
+			}
 			return
 		}
 		if len(attackable_entities) > 1 {
@@ -263,8 +268,11 @@ func (s *FOVSystem) Update(e int) {
 	s.ecs.AddComponent(e, f)
 	// We mark cells in field of view as explored. We use the symmetric shadow
 	// casting algorithm provided by the rl package.
-	isnotwall := func(p gruid.Point) bool {
-		return s.ecs.Map.Grid.At(p) != Wall
+	isnotwall := func(q gruid.Point) bool {
+		if s.ecs.Map.Grid.At(q) == Wall {
+			return false
+		}
+		return len(s.ecs.EntitiesAtPWith(q, ObstructsView{})) == 0
 	}
 	for _, point := range f.FOV.SSCVisionMap(p.Point, f.LOS, isnotwall, true) {
 		if paths.DistanceChebyshev(point, p.Point) > f.LOS {

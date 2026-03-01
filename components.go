@@ -57,7 +57,10 @@ type Bump struct {
 }
 
 // Entities with this component obstruct movement. Corpses do not.
-type Obstruct struct{}
+type ObstructsMovement struct{}
+
+// Entities with this component obstruct FOV. e.g., tall grass.
+type ObstructsView struct{}
 
 // Entities with this component have health, and can take damage.
 type Health struct {

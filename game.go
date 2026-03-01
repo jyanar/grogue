@@ -14,6 +14,7 @@ const (
 	MonstersToSpawn = 6
 	ScrollsToPlace  = 5
 	PotionsToPlace  = 5
+	GrassToPlace    = 30
 )
 
 var Directions = []gruid.Point{
@@ -38,6 +39,7 @@ func (g *game) Initialize() {
 	g.SpawnEnemies()
 	g.SpawnPotions()
 	g.SpawnScrolls()
+	g.SpawnTallGrass()
 	// g.SpawnCorpses()
 	g.ECS.Initialize()
 }
@@ -70,6 +72,12 @@ func (g *game) SpawnPotions() {
 func (g *game) SpawnScrolls() {
 	for i := 0; i < ScrollsToPlace; i++ {
 		g.NewScroll(g.FreeFloorTile())
+	}
+}
+
+func (g *game) SpawnTallGrass() {
+	for i := 0; i < GrassToPlace; i++ {
+		g.NewTallGrass(g.Map.RandomFloor())
 	}
 }
 

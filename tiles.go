@@ -35,6 +35,8 @@ const (
 	ColorWater1
 	ColorWater2
 
+	ColorGrass
+
 	ColorLog
 	ColorLogPlayerAttack
 	ColorLogMonsterAttack
@@ -85,6 +87,7 @@ var fgTable = map[gruid.Color][2]color.RGBA{
 	ColorHealthPotion:     {ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
 	ColorScroll:           {ThemeNoir: {0xdb, 0xb3, 0x2d, 255}},
 	ColorWater2:           {ThemeNoir: {107, 107, 255, 255}},
+	ColorGrass:            {ThemeSelenized: {0x44, 0x99, 0x33, 255}, ThemeNoir: {0x44, 0x99, 0x33, 255}},
 }
 
 // bgTable maps a logical color to its per-theme background RGBA override.

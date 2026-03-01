@@ -38,7 +38,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		Perception{LOS: 20},
 		Inventory{},
 		Input{},
-		Obstruct{},
+		ObstructsMovement{},
 	)
 }
 
@@ -53,7 +53,7 @@ func (g *game) NewGoblin(p gruid.Point) int {
 		DamageEffects{effects: []DamageEffect{}}, // Initialize with an empty list of effects
 		Perception{LOS: 8},
 		AI{state: CSWandering},
-		Obstruct{},
+		ObstructsMovement{},
 	)
 }
 
@@ -68,7 +68,7 @@ func (g *game) NewTroll(p gruid.Point) int {
 		Damage{5},
 		Perception{LOS: 6},
 		AI{state: CSWandering},
-		Obstruct{},
+		ObstructsMovement{},
 	)
 }
 
@@ -116,6 +116,16 @@ func (g *game) NewScroll(p gruid.Point) int {
 		Ranged{Range: 6},
 		Damage{5},
 		AreaOfEffect{radius: 3},
+	)
+}
+
+func (g *game) NewTallGrass(p gruid.Point) int {
+	return g.ECS.Create(
+		Name{"tall grass"},
+		Position{p},
+		Visible{},
+		NewRenderableNoBg('^', ColorGrass, ROItem),
+		ObstructsView{},
 	)
 }
 

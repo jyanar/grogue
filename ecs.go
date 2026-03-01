@@ -217,7 +217,7 @@ func (ecs *ECS) EntitiesAtPWith(p gruid.Point, components ...any) (entities []in
 
 // Returns true if there is no blocking entity at p.
 func (ecs *ECS) NoBlockingEntityAt(p gruid.Point) bool {
-	return len(ecs.EntitiesAtPWith(p, Obstruct{})) == 0
+	return len(ecs.EntitiesAtPWith(p, ObstructsMovement{})) == 0
 }
 
 func (ecs *ECS) BloodAt(p gruid.Point) bool {
