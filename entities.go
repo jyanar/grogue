@@ -119,13 +119,11 @@ func (g *game) NewScroll(p gruid.Point) int {
 	)
 }
 
-func (g *game) NewTallGrass(p gruid.Point) int {
+func (g *game) NewGrass(p gruid.Point) int {
 	return g.ECS.Create(
-		Name{"tall grass"},
 		Position{p},
 		Visible{},
-		NewRenderableNoBg('^', ColorGrass, ROItem),
-		ObstructsView{},
+		NewRenderableNoBg('"', ColorGrass, ROItem),
 	)
 }
 

@@ -12,9 +12,9 @@ type game struct {
 }
 
 const (
-	MonstersToSpawn = 6
-	ScrollsToPlace  = 5
-	PotionsToPlace  = 5
+	MonstersToSpawn = 4
+	ScrollsToPlace  = 3
+	PotionsToPlace  = 3
 )
 
 var Directions = []gruid.Point{
@@ -39,7 +39,7 @@ func (g *game) Initialize() {
 	g.SpawnEnemies()
 	g.SpawnPotions()
 	g.SpawnScrolls()
-	g.SpawnTallGrass()
+	g.SpawnGrass()
 	// g.SpawnCorpses()
 	g.ECS.Initialize()
 }
@@ -75,7 +75,7 @@ func (g *game) SpawnScrolls() {
 	}
 }
 
-func (g *game) SpawnTallGrass() {
+func (g *game) SpawnGrass() {
 	// Generate a clump mask using cellular automata on a scratch grid.
 	// Cells that come out as GrassFloor define where grass can grow.
 	const GrassFloor rl.Cell = 2
@@ -90,7 +90,7 @@ func (g *game) SpawnTallGrass() {
 	for it.Next() {
 		p := it.P()
 		if it.Cell() == GrassFloor && g.Map.Grid.At(p) == Floor && g.ECS.NoBlockingEntityAt(p) {
-			g.NewTallGrass(p)
+			g.NewGrass(p)
 		}
 	}
 }
