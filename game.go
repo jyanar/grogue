@@ -2,6 +2,7 @@ package main
 
 import (
 	"codeberg.org/anaseto/gruid"
+	"codeberg.org/anaseto/gruid/rl"
 )
 
 type game struct {
@@ -14,7 +15,6 @@ const (
 	MonstersToSpawn = 6
 	ScrollsToPlace  = 5
 	PotionsToPlace  = 5
-	GrassToPlace    = 30
 )
 
 var Directions = []gruid.Point{
@@ -76,8 +76,22 @@ func (g *game) SpawnScrolls() {
 }
 
 func (g *game) SpawnTallGrass() {
-	for i := 0; i < GrassToPlace; i++ {
-		g.NewTallGrass(g.Map.RandomFloor())
+	// Generate a clump mask using cellular automata on a scratch grid.
+	// Cells that come out as GrassFloor define where grass can grow.
+	const GrassFloor rl.Cell = 2
+	scratch := rl.NewGrid(MapWidth, MapHeight)
+	mgen := rl.MapGen{Rand: g.Map.Rand, Grid: scratch}
+	rules := []rl.CellularAutomataRule{
+		{WCutoff1: 5, WCutoff2: 2, Reps: 3, WallsOutOfRange: true},
+	}
+	mgen.CellularAutomataCave(Wall, GrassFloor, 0.65, rules)
+
+	it := scratch.Iterator()
+	for it.Next() {
+		p := it.P()
+		if it.Cell() == GrassFloor && g.Map.Grid.At(p) == Floor && g.ECS.NoBlockingEntityAt(p) {
+			g.NewTallGrass(p)
+		}
 	}
 }
 
