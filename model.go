@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unicode/utf8"
-
 	"codeberg.org/anaseto/gruid"
 	"codeberg.org/anaseto/gruid/paths"
 	"codeberg.org/anaseto/gruid/ui"
@@ -58,7 +56,7 @@ func NewModel(gd gruid.Grid) *model {
 		grid:   gd,
 		log:    &ui.Label{},
 		status: &ui.Label{},
-		desc:   &ui.Label{Box: &ui.Box{}},
+		desc:   &ui.Label{},
 		viewer: ui.NewPager(ui.PagerConfig{
 			Grid: gruid.NewGrid(UIWidth, UIHeight-1),
 			Box:  &ui.Box{},
@@ -242,7 +240,7 @@ func (m *model) Draw() gruid.Grid {
 
 	// Draw target (if targeting), names, log, and status.
 	m.DrawTarget(mapgrid)
-	m.DrawNames(mapgrid)
+	m.DrawNames(loggrid.Slice(loggrid.Range().Line(2)))
 	m.DrawLog(loggrid)
 	m.DrawStatus(statusgrid)
 
@@ -313,17 +311,19 @@ func (m *model) DrawStatus(gd gruid.Grid) {
 	m.log.Draw(gd)
 }
 
-// DrawNames renders the names of the named entities at the current mouse location
-// if it is in the map.
+// DrawNames writes a "You see a [name]." line when the mouse hovers over a
+// named entity in the map. gd should be a single-row grid slice.
 func (m *model) DrawNames(gd gruid.Grid) {
 	maprg := gruid.NewRange(0, 2, UIWidth, UIHeight-1)
 	if m.target == nil || !m.target.pos.In(maprg) {
 		return
 	}
 	p := m.target.pos
-	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
+		if e == 0 { // skip the player
+			continue
+		}
 		q := GetComponent[Position](m.game.ECS, e).Point
 		if q != p || (!m.debugRevealAll && !m.game.InFOV(q)) {
 			continue
@@ -335,27 +335,24 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	if len(names) == 0 {
 		return
 	}
-	// We sort the names. This could be improved to sort by entity type
-	// too, as well as to remove duplicates (for example showing "corpse
-	// (3x)" if there are three corpses).
 	sort.Strings(names)
+	parts := make([]string, len(names))
+	for i, name := range names {
+		parts[i] = article(name) + " " + name
+	}
+	m.desc.Content = ui.Text("You see " + strings.Join(parts, ", ") + ".")
+	m.desc.Draw(gd)
+}
 
-	text := strings.Join(names, ", ")
-	width := utf8.RuneCountInString(text) + 2
-	rg := gruid.NewRange(p.X+1, p.Y-1, p.X+1+width, p.Y+2)
-	// We adjust a bit the box's placement in case it's on an edge.
-	if p.X+1+width >= UIWidth {
-		rg = rg.Shift(-1-width, 0, -1-width, 0)
+// article returns "an" before a vowel sound, "a" otherwise.
+func article(s string) string {
+	if len(s) > 0 {
+		switch s[0] {
+		case 'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U':
+			return "an"
+		}
 	}
-	if p.Y+2 > MapHeight {
-		rg = rg.Shift(0, -1, 0, -1)
-	}
-	if p.Y-1 < 0 {
-		rg = rg.Shift(0, 1, 0, 1)
-	}
-	slice := gd.Slice(rg)
-	m.desc.Content = ui.Text(text)
-	m.desc.Draw(slice)
+	return "a"
 }
 
 // Animations such as lava, water, torches. This function iterates over all such
