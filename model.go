@@ -27,6 +27,7 @@ type model struct {
 	target         *targeting       // Mouse position.
 	ianimation     *Animation       // Interruptible animation.
 	debugRevealAll bool             // Debug: reveal entire map.
+	mouseActive    bool             // True once mouse has hovered over a visible tile.
 }
 
 // targeting describes information related to examination or selection of
@@ -107,7 +108,14 @@ func (m *model) Update(msg gruid.Msg) gruid.Effect {
 			m.updateMsgKeyDown(msg)
 
 		case gruid.MsgMouse:
-			m.updateTargeting(msg)
+			if !m.mouseActive {
+				if m.game.InFOV(msg.P.Shift(-1, -1)) {
+					m.mouseActive = true
+					m.updateTargeting(msg)
+				}
+			} else {
+				m.updateTargeting(msg)
+			}
 
 		case msgTick:
 			m.handleMsgTick()

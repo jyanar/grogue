@@ -61,7 +61,14 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		m.action = action{Type: ActionWait}
 
 	// Quitting
-	case gruid.KeyEscape, "q":
+	case gruid.KeyEscape:
+		if m.mouseActive {
+			m.mouseActive = false
+			m.target = nil
+		} else {
+			m.action = action{Type: ActionQuit}
+		}
+	case "q":
 		m.action = action{Type: ActionQuit}
 
 	// Movement
