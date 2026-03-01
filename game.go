@@ -84,33 +84,18 @@ func (g *game) PickupItem() (ok bool) {
 	// Right now only looking at entities that have both input and inventory (player)
 	// but want to write way of doing this that doesn't care about input
 	ok = false
-	for _, e := range g.ECS.EntitiesWith(Input{}, Inventory{}) {
-		// Check if e is standing over a collectible item.
-		pos, _ := g.ECS.GetComponent(e, Position{})
-		p := pos.(Position).Point
-		for _, i := range g.ECS.EntitiesAt(p) {
-			if i != e && g.ECS.HasComponent(i, Collectible{}) {
-				// There is an item here that is collectible! Place a reference to it
-				// in e's inventory and remove its Position component.
-				ok = true
-				n, _ := g.ECS.GetComponent(e, Name{})
-				in, _ := g.ECS.GetComponent(i, Name{})
-				entity_name := n.(Name).string
-				item_name := in.(Name).string
-				if e == 0 {
-					g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
-				} else {
-					g.Logf("%s picks up %s.", ColorLogSpecial, entity_name, item_name)
-				}
-
-				inventory, _ := g.ECS.GetComponent(e, Inventory{})
-				inv := inventory.(Inventory)
-				inv.items = append(inv.items, i)
-				g.ECS.AddComponent(e, inv)
-				g.ECS.RemoveComponent(i, Position{})
-			}
-		}
+	p := g.PlayerPosition()
+	inv := g.PlayerInventory()
+	for _, i := range g.ECS.EntitiesAtPWith(p, Collectible{}) {
+		// There is an item here that is collectible! Place a reference to it
+		// in e's inventory and remove its Position component.
+		ok = true
+		item_name := g.ECS.GetComponentUnchecked(i, Name{}).(Name).string
+		g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
+		inv.items = append(inv.items, i)
+		g.ECS.RemoveComponent(i, Position{})
 	}
+	g.ECS.AddComponent(0, inv)
 	return ok
 }
 
@@ -122,4 +107,19 @@ func (g *game) FreeFloorTile() gruid.Point {
 			return p
 		}
 	}
+}
+
+// Return the position of the player.
+func (g *game) PlayerPosition() gruid.Point {
+	if p, hasPos := g.ECS.GetComponent(0, Position{}); hasPos {
+		return p.(Position).Point
+	}
+	return gruid.Point{}
+}
+
+func (g *game) PlayerInventory() Inventory {
+	if inv, hasInv := g.ECS.GetComponent(0, Inventory{}); hasInv {
+		return inv.(Inventory)
+	}
+	return Inventory{}
 }

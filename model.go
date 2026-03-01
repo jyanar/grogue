@@ -33,10 +33,10 @@ type model struct {
 // targeting describes information related to examination or selection of
 // particular positions in the map.
 type targeting struct {
-	pos    gruid.Point
-	path   []gruid.Point
-	item   int
-	radius int
+	pos    gruid.Point   // The current position of the cursor.
+	path   []gruid.Point // The path to the current position.
+	itemid int           // The entity ID of the item being used/thrown/activated.
+	radius int           // Radius of the targeting area.
 }
 
 // mode describes distinct kinds of modes for the UI. It is used to send user
@@ -340,18 +340,20 @@ func (m *model) DrawLog(gd gruid.Grid) {
 	}
 }
 
-// DrawStatus draws the status line.
+// DrawStatus writes the HP on the bottom of the screen. If the player is dead,
+// displays "DEAD" in red.
 func (m *model) DrawStatus(gd gruid.Grid) {
-	// Write the HP on top of that.
-	st := gruid.Style{Fg: ColorStatusHealthy}
-	st.Bg = ColorLogMonsterAttack
-	// player_health := m.game.ECS.healths[0]
-	ph, _ := m.game.ECS.GetComponent(0, Health{})
-	player_health := ph.(Health)
-	if player_health.hp < player_health.maxhp/2 {
-		st.Fg = ColorStatusWounded
+	if m.game.ECS.PlayerDead() {
+		m.log.Content = ui.Text("  DEAD  ").WithStyle(gruid.Style{Fg: ColorBlood})
+	} else {
+		st := gruid.Style{Fg: ColorStatusHealthy}
+		st.Bg = ColorLogMonsterAttack
+		player_health := m.game.ECS.GetComponentUnchecked(0, Health{}).(Health)
+		if player_health.hp < player_health.maxhp/2 {
+			st.Fg = ColorStatusWounded
+		}
+		m.log.Content = ui.Textf("HP: %d/%d", player_health.hp, player_health.maxhp).WithStyle(st)
 	}
-	m.log.Content = ui.Textf("HP: %d/%d", player_health.hp, player_health.maxhp).WithStyle(st)
 	m.log.Draw(gd)
 }
 
@@ -366,10 +368,8 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
-		// q := m.game.ECS.positions[e]
-		qC, _ := m.game.ECS.GetComponent(e, Position{})
-		q := qC.(Position)
-		if q.Point != p || (!m.debugRevealAll && !m.game.InFOV(q.Point)) {
+		q := m.game.ECS.GetComponentUnchecked(e, Position{}).(Position).Point
+		if q != p || (!m.debugRevealAll && !m.game.InFOV(q)) {
 			continue
 		}
 		if name, ok := m.game.ECS.GetComponent(e, Name{}); ok {

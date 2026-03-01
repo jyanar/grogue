@@ -194,9 +194,7 @@ func (ecs *ECS) EntitiesWith(components ...any) (entities []int) {
 
 func (ecs *ECS) EntitiesAt(p gruid.Point) (entities []int) {
 	for _, e := range ecs.EntitiesWith(Position{}) {
-		ep, _ := ecs.GetComponent(e, Position{})
-		pos := ep.(Position).Point
-		if pos == p {
+		if p == ecs.GetComponentUnchecked(e, Position{}).(Position).Point {
 			entities = append(entities, e)
 		}
 	}
@@ -232,7 +230,7 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 }
 
 func (ecs *ECS) PlayerDead() bool {
-	if _, ok := ecs.GetComponent(0, Death{}); ok {
+	if _, ok := ecs.GetComponent(0, Dead{}); ok {
 		return true
 	}
 	return false

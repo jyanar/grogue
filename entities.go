@@ -35,6 +35,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		Damage{5},
 		DamageEffects{effects: []DamageEffect{}}, // Initialize with an empty list of effects
 		FOV{LOS: 20},
+		Perception{LOS: 20},
 		Inventory{},
 		Input{},
 		Obstruct{},
