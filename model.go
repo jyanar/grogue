@@ -194,8 +194,9 @@ func (m *model) Draw() gruid.Grid {
 		}
 		c := gruid.Cell{Rune: Map.Rune(it.Cell())}
 		if m.debugRevealAll || m.game.InFOV(it.P()) {
-			c.Style.Fg = ColorFOV
-			c.Style.Bg = ColorFOV
+			col := lightColor(m.game.Map.LightMap[it.P()])
+			c.Style.Fg = col
+			c.Style.Bg = col
 		}
 		mapgrid.Set(it.P(), c)
 	}
@@ -252,6 +253,18 @@ const (
 	AttrNone gruid.AttrMask = iota
 	AttrReverse
 )
+
+// lightColor maps a light level (0.0–1.0) to one of three discrete tile colors.
+func lightColor(level float32) gruid.Color {
+	switch {
+	case level >= 0.55:
+		return ColorFOVBright
+	case level >= 0.15:
+		return ColorFOV
+	default:
+		return ColorFOVDim
+	}
+}
 
 // DrawTarget draws the current position of the mouse.
 func (m *model) DrawTarget(gd gruid.Grid) {

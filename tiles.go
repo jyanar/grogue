@@ -23,6 +23,8 @@ import (
 const (
 	ColorNone gruid.Color = iota + 1
 	ColorFOV
+	ColorFOVDim    // barely lit: ambient only
+	ColorFOVBright // brightly lit: near a light source
 	ColorTarget
 	ColorPlayer
 	ColorMonster
@@ -89,6 +91,8 @@ var fgTable = map[gruid.Color][3]color.RGBA{
 	ColorLogSpecial:       {ThemeSelenized: rgba(0xf2, 0x75, 0xbe), ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xa0, 0x70, 0xc8)},
 	ColorWater1:           {ThemeSelenized: rgba(148, 148, 255), ThemeNoir: rgba(148, 148, 255), ThemeSepia: rgba(0x40, 0x70, 0xb0)},
 	ColorFOV:              {ThemeNoir: rgba(200, 200, 200), ThemeSepia: rgba(0x96, 0x82, 0x5a)},
+	ColorFOVDim:           {ThemeNoir: rgba(100, 100, 100), ThemeSepia: rgba(0x50, 0x46, 0x34)},
+	ColorFOVBright:        {ThemeNoir: rgba(255, 255, 210), ThemeSepia: rgba(0xd4, 0xb8, 0x7a)},
 	ColorTroll:            {ThemeNoir: rgba(20, 200, 20), ThemeSepia: rgba(0x30, 0xa0, 0x30)},
 	ColorHealthPotion:     {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xcc, 0x44, 0x44)},
 	ColorScroll:           {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xd4, 0xc4, 0x8c)},
@@ -99,7 +103,9 @@ var fgTable = map[gruid.Color][3]color.RGBA{
 // bgTable maps a logical color to its per-theme background RGBA override.
 // A zero color.RGBA (alpha == 0) means "use the theme default".
 var bgTable = map[gruid.Color][3]color.RGBA{
-	ColorFOV:    {ThemeSelenized: rgba(0x18, 0x49, 0x56), ThemeSepia: rgba(0x14, 0x10, 0x08)},
+	ColorFOV:       {ThemeSelenized: rgba(0x18, 0x49, 0x56), ThemeSepia: rgba(0x14, 0x10, 0x08)},
+	ColorFOVDim:    {ThemeSelenized: rgba(0x10, 0x30, 0x3a), ThemeSepia: rgba(0x0d, 0x0b, 0x06)},
+	ColorFOVBright: {ThemeSelenized: rgba(0x28, 0x6a, 0x7c), ThemeSepia: rgba(0x2c, 0x22, 0x10)},
 	ColorBlood:  {ThemeSelenized: rgba(138, 3, 3), ThemeNoir: rgba(138, 3, 3), ThemeSepia: rgba(0x50, 0x10, 0x10)},
 	ColorTarget: {ThemeSelenized: rgba(0x75, 0x75, 0x00), ThemeNoir: rgba(100, 100, 100), ThemeSepia: rgba(0x40, 0x20, 0x60)},
 	ColorWater1: {ThemeSelenized: rgba(107, 107, 255), ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x20, 0x40, 0x80)},

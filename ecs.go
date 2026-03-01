@@ -21,6 +21,7 @@ type ECS struct {
 	DebugSystem
 	AnimationSystem
 	ConfusedSystem
+	LightingSystem
 }
 
 // Note that we do not initialize the map here. The idea is that
@@ -39,6 +40,7 @@ func NewECS() *ECS {
 	ecs.AnimationSystem = AnimationSystem{ecs: ecs}
 	ecs.DebugSystem = DebugSystem{ecs: ecs}
 	ecs.ConfusedSystem = ConfusedSystem{ecs: ecs}
+	ecs.LightingSystem = LightingSystem{ecs: ecs}
 	return ecs
 }
 
@@ -48,6 +50,7 @@ func (ecs *ECS) Initialize() {
 		ecs.AISystem.Update(e)
 		ecs.FOVSystem.Update(e)
 	}
+	ecs.LightingSystem.UpdateLighting()
 }
 
 // Iterates through each entity
@@ -63,6 +66,7 @@ func (ecs *ECS) Update() {
 		ecs.DamageEffectSystem.Update(e)
 		ecs.DeathSystem.Update(e)
 	}
+	ecs.LightingSystem.UpdateLighting()
 	// ecs.DebugSystem.Update()
 }
 

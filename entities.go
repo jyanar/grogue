@@ -39,6 +39,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		Inventory{items: map[rune]int{}},
 		Input{},
 		ObstructsMovement{},
+		LightSource{Radius: 8, Intensity: 1.0},
 	)
 }
 
@@ -116,6 +117,15 @@ func (g *game) NewScroll(p gruid.Point) int {
 		Ranged{Range: 6},
 		Damage{5},
 		AreaOfEffect{radius: 3},
+	)
+}
+
+func (g *game) NewTorch(p gruid.Point) int {
+	return g.ECS.Create(
+		Name{"torch"},
+		Position{p},
+		NewRenderable('i', ColorFOVBright, ColorFOVBright, ROFloor),
+		LightSource{Radius: 6, Intensity: 0.85},
 	)
 }
 

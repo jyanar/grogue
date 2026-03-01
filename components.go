@@ -192,3 +192,9 @@ type Animation struct {
 type Confused struct {
 	nticks int
 }
+
+// Entities with this component emit light.
+type LightSource struct {
+	Radius    int
+	Intensity float32 // 0.0 to 1.0
+}

@@ -403,6 +403,70 @@ func (s *ConfusedSystem) Update(e int) {
 	}
 }
 
+type LightingSystem struct {
+	ecs *ECS
+	fov *rl.FOV
+}
+
+// UpdateLighting resets the map's LightMap and recomputes light levels for
+// all currently player-visible tiles. Ambient light is applied everywhere in
+// the player's FOV; each LightSource entity then contributes additional
+// brightness within its radius using symmetric shadow casting.
+func (s *LightingSystem) UpdateLighting() {
+	const ambientLight float32 = 0.1
+
+	// Reset the light map.
+	for k := range s.ecs.Map.LightMap {
+		delete(s.ecs.Map.LightMap, k)
+	}
+
+	// Lazily initialise the shared FOV object sized to the full map.
+	if s.fov == nil {
+		s.fov = rl.NewFOV(s.ecs.Map.Grid.Range())
+	}
+
+	passable := func(p gruid.Point) bool {
+		return s.ecs.Map.Grid.At(p) == Floor
+	}
+
+	// Apply ambient light to every tile in the player's current FOV.
+	// FOVSystem.Update has already run, so fov.FOV.Visibles is populated.
+	for _, e := range s.ecs.EntitiesWith(Position{}, FOV{}) {
+		fov := GetComponent[FOV](s.ecs, e)
+		pos := GetComponent[Position](s.ecs, e)
+		if fov.FOV == nil {
+			continue
+		}
+		for _, p := range fov.FOV.Visibles {
+			if paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
+				s.ecs.Map.LightMap[p] = ambientLight
+			}
+		}
+	}
+
+	// Add contributions from each light source.
+	for _, e := range s.ecs.EntitiesWith(Position{}, LightSource{}) {
+		pos := GetComponent[Position](s.ecs, e)
+		ls := GetComponent[LightSource](s.ecs, e)
+
+		visibles := s.fov.SSCVisionMap(pos.Point, ls.Radius, passable, true)
+		for _, p := range visibles {
+			dist := paths.DistanceChebyshev(pos.Point, p)
+			if dist > ls.Radius {
+				continue
+			}
+			// Only illuminate tiles already visible to the player.
+			if _, inFOV := s.ecs.Map.LightMap[p]; !inFOV {
+				continue
+			}
+			contribution := ls.Intensity * (1.0 - float32(dist)/float32(ls.Radius))
+			if contribution > s.ecs.Map.LightMap[p] {
+				s.ecs.Map.LightMap[p] = contribution
+			}
+		}
+	}
+}
+
 type DebugSystem struct {
 	ecs *ECS
 }
