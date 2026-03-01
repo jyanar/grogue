@@ -53,6 +53,9 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case "t":
 		pp.Print(m.game.ECS.GetComponentsFor(0))
 
+	case `\`:
+		m.debugRevealAll = !m.debugRevealAll
+
 	// Waiting
 	case ".":
 		m.action = action{Type: ActionWait}

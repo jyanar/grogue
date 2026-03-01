@@ -14,18 +14,19 @@ import (
 )
 
 type model struct {
-	grid       gruid.Grid       // The drawing grid.
-	game       game             // The game state.
-	action     action           // The current UI action.
-	mode       mode             // The current UI mode.
-	log        *ui.Label        // Label for the log.
-	status     *ui.Label        // Label for the status.
-	desc       *ui.Label        // Label for position description.
-	viewer     *ui.Pager        // Message's history viewer.
-	inventory  *ui.Menu         // Inventory menu.
-	pr         *paths.PathRange // Pathing algorithm.
-	target     *targeting       // Mouse position.
-	ianimation *Animation       // Interruptible animation.
+	grid           gruid.Grid       // The drawing grid.
+	game           game             // The game state.
+	action         action           // The current UI action.
+	mode           mode             // The current UI mode.
+	log            *ui.Label        // Label for the log.
+	status         *ui.Label        // Label for the status.
+	desc           *ui.Label        // Label for position description.
+	viewer         *ui.Pager        // Message's history viewer.
+	inventory      *ui.Menu         // Inventory menu.
+	pr             *paths.PathRange // Pathing algorithm.
+	target         *targeting       // Mouse position.
+	ianimation     *Animation       // Interruptible animation.
+	debugRevealAll bool             // Debug: reveal entire map.
 }
 
 // targeting describes information related to examination or selection of
@@ -240,11 +241,11 @@ func (m *model) Draw() gruid.Grid {
 	// Draw the map.
 	it := Map.Grid.Iterator()
 	for it.Next() {
-		if !Map.Explored[it.P()] {
+		if !m.debugRevealAll && !Map.Explored[it.P()] {
 			continue
 		}
 		c := gruid.Cell{Rune: Map.Rune(it.Cell())}
-		if m.game.InFOV(it.P()) {
+		if m.debugRevealAll || m.game.InFOV(it.P()) {
 			c.Style.Fg = ColorFOV
 			c.Style.Bg = ColorFOV
 		}
@@ -266,7 +267,7 @@ func (m *model) Draw() gruid.Grid {
 		p := pC.(Position)
 		r := rC.(Renderable)
 		// If entities is not in FOV, do not add them to list.
-		if !m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point) {
+		if !m.debugRevealAll && (!m.game.Map.Explored[p.Point] || !m.game.InFOV(p.Point)) {
 			continue
 		}
 		entitiesToDraw = append(entitiesToDraw, tup{e, r.order})
@@ -360,7 +361,7 @@ func (m *model) DrawNames(gd gruid.Grid) {
 		// q := m.game.ECS.positions[e]
 		qC, _ := m.game.ECS.GetComponent(e, Position{})
 		q := qC.(Position)
-		if q.Point != p || !m.game.InFOV(q.Point) {
+		if q.Point != p || (!m.debugRevealAll && !m.game.InFOV(q.Point)) {
 			continue
 		}
 		if name, ok := m.game.ECS.GetComponent(e, Name{}); ok {
@@ -402,7 +403,7 @@ func (m *model) DrawBackgroundAnimations(gd gruid.Grid) {
 		for _, fc := range anim.frames[anim.index].framecells {
 			p := fc.p
 			r := fc.r
-			if m.game.Map.Explored[p] && m.game.InFOV(p) {
+			if m.debugRevealAll || (m.game.Map.Explored[p] && m.game.InFOV(p)) {
 				gd.Set(p, r.cell)
 			}
 		}

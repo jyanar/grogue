@@ -50,7 +50,7 @@ const (
 )
 
 // Current theme.
-const theme = ThemeSelenized
+const theme = ThemeNoir
 
 type TileDrawer struct {
 	drawer *tiles.Drawer
