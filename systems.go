@@ -221,7 +221,7 @@ func (s *DamageEffectSystem) Update(e int) {
 		}
 		if !s.ecs.BloodAt(GetComponent[Position](s.ecs, e).Point) { // Add blood
 			s.ecs.Create(
-				Name{"blood"},
+				Name{"pool of blood"},
 				Position{GetComponent[Position](s.ecs, e).Point},
 				NewRenderable('.', ColorCorpse, ColorBlood, ROFloor),
 			)

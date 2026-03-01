@@ -99,7 +99,7 @@ func (g *game) NewCorpse(p gruid.Point) int {
 
 func (g *game) NewBlood(p gruid.Point) int {
 	return g.ECS.Create(
-		Name{"blood"},
+		Name{"pool of blood"},
 		Visible{},
 		Position{p},
 		NewRenderable('.', ColorBlood, ColorBlood, ROFloor),

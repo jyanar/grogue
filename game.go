@@ -19,14 +19,14 @@ const (
 )
 
 var Directions = []gruid.Point{
-	gruid.Point{X: 0, Y: -1},  // N
-	gruid.Point{X: 1, Y: 0},   // E
-	gruid.Point{X: 0, Y: 1},   // S
-	gruid.Point{X: -1, Y: 0},  // W
-	gruid.Point{X: 1, Y: -1},  // NE
-	gruid.Point{X: 1, Y: 1},   // SE
-	gruid.Point{X: -1, Y: -1}, // NW
-	gruid.Point{X: -1, Y: 1},  // SW
+	{X: 0, Y: -1},  // N
+	{X: 1, Y: 0},   // E
+	{X: 0, Y: 1},   // S
+	{X: -1, Y: 0},  // W
+	{X: 1, Y: -1},  // NE
+	{X: 1, Y: 1},   // SE
+	{X: -1, Y: -1}, // NW
+	{X: -1, Y: 1},  // SW
 }
 
 func (g *game) Initialize() {

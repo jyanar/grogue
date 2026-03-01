@@ -231,7 +231,7 @@ func (ecs *ECS) BloodAt(p gruid.Point) bool {
 	}
 	for _, e := range entities {
 		n, hasName := ecs.GetComponent(e, Name{})
-		if hasName && n.(Name).string == "blood" {
+		if hasName && n.(Name).string == "pool of blood" {
 			return true
 		}
 	}
