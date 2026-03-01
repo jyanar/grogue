@@ -78,7 +78,7 @@ func (g *game) NewHealthPotion(p gruid.Point) int {
 		Name{"health potion"},
 		Position{p},
 		Visible{},
-		NewRenderableNoBg('!', ColorHealthPotion, ROItem),
+		NewRenderableNoBg('¡', ColorHealthPotion, ROItem),
 		Collectible{},
 		Consumable{},
 		Healing{amount: 5},
