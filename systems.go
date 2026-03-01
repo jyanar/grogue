@@ -25,8 +25,8 @@ func (s *PerceptionSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, Perception{}) {
 		return
 	}
-	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
-	per := s.ecs.GetComponentUnchecked(e, Perception{}).(Perception)
+	pos := GetComponent[Position](s.ecs, e)
+	per := GetComponent[Perception](s.ecs, e)
 	if per.FOV == nil {
 		per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
 	}
@@ -46,7 +46,7 @@ func (s *PerceptionSystem) Update(e int) {
 			continue
 		}
 		// If other entity is within perceptive radius, add to perceived list.
-		pos_other := s.ecs.GetComponentUnchecked(other, Position{}).(Position)
+		pos_other := GetComponent[Position](s.ecs, other)
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
@@ -61,7 +61,7 @@ func (s *PerceptionSystem) Update(e int) {
 				break
 			}
 		}
-		ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
+		ai := GetComponent[AI](s.ecs, e)
 		if player_found {
 			ai.state = CSHunting
 		} else {
@@ -105,8 +105,8 @@ func (s *AISystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, AI{}) {
 		return
 	}
-	ai := s.ecs.GetComponentUnchecked(e, AI{}).(AI)
-	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	ai := GetComponent[AI](s.ecs, e)
+	pos := GetComponent[Position](s.ecs, e)
 	switch ai.state {
 	case CSSleeping:
 		// Do nothing, the entity is asleep!
@@ -125,7 +125,7 @@ func (s *AISystem) Update(e int) {
 		}
 	case CSHunting:
 		// Set destination to be the player.
-		pp := s.ecs.GetComponentUnchecked(0, Position{}).(Position)
+		pp := GetComponent[Position](s.ecs, 0)
 		ai.dest = &pp.Point
 		s.ecs.AddComponent(e, ai)
 	}
@@ -146,8 +146,8 @@ func (s *BumpSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Bump{}, Position{}) {
 		return
 	}
-	b := s.ecs.GetComponentUnchecked(e, Bump{}).(Bump)
-	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	b := GetComponent[Bump](s.ecs, e)
+	p := GetComponent[Position](s.ecs, e)
 	dest := p.Point.Add(b.Point)
 	s.ecs.RemoveComponent(e, Bump{})
 	// Ignore movement to the same tile.
@@ -167,11 +167,11 @@ func (s *BumpSystem) Update(e int) {
 			panic(fmt.Sprintf("More than one entity with obstruct at position: %v", dest))
 		}
 		// Attack entity at location.
-		dmg := s.ecs.GetComponentUnchecked(e, Damage{}).(Damage)
+		dmg := GetComponent[Damage](s.ecs, e)
 		if !s.ecs.HasComponent(attackable_entities[0], DamageEffects{}) {
 			s.ecs.AddComponent(attackable_entities[0], DamageEffects{effects: []DamageEffect{}})
 		}
-		dmgfx := s.ecs.GetComponentUnchecked(attackable_entities[0], DamageEffects{}).(DamageEffects)
+		dmgfx := GetComponent[DamageEffects](s.ecs, attackable_entities[0])
 		target_entity := attackable_entities[0]
 		// Add damage effect to the target entity
 		dmgfx.effects = append(dmgfx.effects, DamageEffect{source: e, amount: dmg.int})
@@ -194,12 +194,12 @@ func (s *DamageEffectSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, DamageEffects{}, Health{}) {
 		return
 	}
-	health := s.ecs.GetComponentUnchecked(e, Health{}).(Health)
-	dmgfx := s.ecs.GetComponentUnchecked(e, DamageEffects{}).(DamageEffects)
+	health := GetComponent[Health](s.ecs, e)
+	dmgfx := GetComponent[DamageEffects](s.ecs, e)
 	for _, de := range dmgfx.effects {
 		health.hp -= de.amount
-		name_attacker := s.ecs.GetComponentUnchecked(de.source, Name{}).(Name).string
-		name_receiver := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
+		name_attacker := GetComponent[Name](s.ecs, de.source).string
+		name_receiver := GetComponent[Name](s.ecs, e).string
 		var msg string
 		if de.source == 0 {
 			msg = fmt.Sprintf("You stab the %s with your sword!", name_receiver)
@@ -214,10 +214,10 @@ func (s *DamageEffectSystem) Update(e int) {
 		if e == 0 {
 			msgcolor = ColorLogMonsterAttack
 		}
-		if !s.ecs.BloodAt(s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point) { // Add blood
+		if !s.ecs.BloodAt(GetComponent[Position](s.ecs, e).Point) { // Add blood
 			s.ecs.Create(
 				Name{"blood"},
-				Position{s.ecs.GetComponentUnchecked(e, Position{}).(Position).Point},
+				Position{GetComponent[Position](s.ecs, e).Point},
 				NewRenderable('.', ColorCorpse, ColorBlood, ROFloor),
 			)
 		}
@@ -251,8 +251,8 @@ func (s *FOVSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, FOV{}) {
 		return
 	}
-	p := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
-	f := s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
+	p := GetComponent[Position](s.ecs, e)
+	f := GetComponent[FOV](s.ecs, e)
 	if f.FOV == nil {
 		f.FOV = rl.NewFOV(gruid.NewRange(-f.LOS, -f.LOS, f.LOS+1, f.LOS+1))
 	}
@@ -280,8 +280,8 @@ func (s *FOVSystem) Update(e int) {
 // keep cells within maxLOS chebyshev distance from the source entity.
 func (g *game) InFOV(p gruid.Point) bool {
 	for _, e := range g.ECS.EntitiesWith(Position{}, FOV{}) {
-		pos := g.ECS.GetComponentUnchecked(e, Position{}).(Position)
-		fov := g.ECS.GetComponentUnchecked(e, FOV{}).(FOV)
+		pos := GetComponent[Position](g.ECS, e)
+		fov := GetComponent[FOV](g.ECS, e)
 		if fov.FOV.Visible(p) && paths.DistanceChebyshev(pos.Point, p) <= fov.LOS {
 			return true
 		}
@@ -297,19 +297,19 @@ func (s *DeathSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Health{}) {
 		return
 	}
-	health := s.ecs.GetComponentUnchecked(e, Health{}).(Health)
+	health := GetComponent[Health](s.ecs, e)
 	if health.hp > 0 {
 		return
 	}
-	name := s.ecs.GetComponentUnchecked(e, Name{}).(Name).string
-	pos := s.ecs.GetComponentUnchecked(e, Position{}).(Position)
+	name := GetComponent[Name](s.ecs, e).string
+	pos := GetComponent[Position](s.ecs, e)
 	var fov FOV
 	if e == 0 {
-		fov = s.ecs.GetComponentUnchecked(e, FOV{}).(FOV)
+		fov = GetComponent[FOV](s.ecs, e)
 	}
 	var droppedItems []int
 	if s.ecs.HasComponent(e, Inventory{}) {
-		inv := s.ecs.GetComponentUnchecked(e, Inventory{}).(Inventory)
+		inv := GetComponent[Inventory](s.ecs, e)
 		droppedItems = inv.items
 	}
 	s.ecs.ClearAllComponents(e) // Clear all components of the entity.
@@ -349,7 +349,7 @@ func (s *AnimationSystem) Update(e int) {
 	}
 
 	// Advance animation by a single tick.
-	anim := s.ecs.GetComponentUnchecked(e, Animation{}).(Animation)
+	anim := GetComponent[Animation](s.ecs, e)
 	anim.frames[anim.index].itick++
 
 	// If the current frame has expired, move to the next frame.
@@ -377,7 +377,7 @@ func (s *ConfusedSystem) Update(e int) {
 	if !s.ecs.HasComponent(e, Confused{}) {
 		return
 	}
-	conf := s.ecs.GetComponentUnchecked(e, Confused{}).(Confused)
+	conf := GetComponent[Confused](s.ecs, e)
 	conf.nticks--
 	s.ecs.AddComponent(e, conf)
 	if conf.nticks <= 0 {
@@ -386,7 +386,7 @@ func (s *ConfusedSystem) Update(e int) {
 	} else {
 		// Randomly change bump direction, if entity has one.
 		if s.ecs.HasComponent(e, Bump{}) {
-			bump := s.ecs.GetComponentUnchecked(e, Bump{}).(Bump)
+			bump := GetComponent[Bump](s.ecs, e)
 			// Randomly change the bump direction.
 			bump.Point = Directions[rand.IntN(len(Directions))]
 			s.ecs.AddComponent(e, bump)

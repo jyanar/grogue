@@ -288,7 +288,7 @@ func (m *model) DrawStatus(gd gruid.Grid) {
 	} else {
 		st := gruid.Style{Fg: ColorStatusHealthy}
 		st.Bg = ColorLogMonsterAttack
-		player_health := m.game.ECS.GetComponentUnchecked(0, Health{}).(Health)
+		player_health := GetComponent[Health](m.game.ECS, 0)
 		if player_health.hp < player_health.maxhp/2 {
 			st.Fg = ColorStatusWounded
 		}
@@ -308,7 +308,7 @@ func (m *model) DrawNames(gd gruid.Grid) {
 	// We get the names of the entities at p.
 	names := []string{}
 	for _, e := range m.game.ECS.EntitiesWith(Position{}) {
-		q := m.game.ECS.GetComponentUnchecked(e, Position{}).(Position).Point
+		q := GetComponent[Position](m.game.ECS, e).Point
 		if q != p || (!m.debugRevealAll && !m.game.InFOV(q)) {
 			continue
 		}

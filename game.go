@@ -90,7 +90,7 @@ func (g *game) PickupItem() (ok bool) {
 		// There is an item here that is collectible! Place a reference to it
 		// in e's inventory and remove its Position component.
 		ok = true
-		item_name := g.ECS.GetComponentUnchecked(i, Name{}).(Name).string
+		item_name := GetComponent[Name](g.ECS, i).string
 		g.Logf("You pick up the %s.", ColorLogSpecial, item_name)
 		inv.items = append(inv.items, i)
 		g.ECS.RemoveComponent(i, Position{})

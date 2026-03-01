@@ -11,12 +11,12 @@ import (
 
 func (m *model) OpenInventory(title string) {
 	// Build list of entries in player inventory.
-	inv := m.game.ECS.GetComponentUnchecked(0, Inventory{}).(Inventory)
+	inv := GetComponent[Inventory](m.game.ECS, 0)
 	entries := []ui.MenuEntry{}
 	r := 'a'
 	for _, it := range inv.items {
-		name := m.game.ECS.GetComponentUnchecked(it, Name{}).(Name).string
-		renderable := m.game.ECS.GetComponentUnchecked(it, Renderable{}).(Renderable)
+		name := GetComponent[Name](m.game.ECS, it).string
+		renderable := GetComponent[Renderable](m.game.ECS, it)
 		glyph := renderable.cell.Rune
 		fg := renderable.cell.Style.Fg
 		stt := ui.Text("").WithMarkup('k', gruid.Style{}.WithFg(fg))
@@ -81,7 +81,7 @@ func (m *model) activateTarget(p gruid.Point) {
 	log.Println(p)
 	// Check if there is an entity here capable of taking damage
 	itemid := m.target.itemid
-	itemdmg := m.game.ECS.GetComponentUnchecked(itemid, Damage{}).(Damage).int
+	itemdmg := GetComponent[Damage](m.game.ECS, itemid).int
 	if entities := m.game.ECS.EntitiesAtPWith(p, Health{}); len(entities) > 0 {
 		for _, e := range entities {
 			m.game.ECS.AddComponent(e, DamageEffect{0, itemdmg})
@@ -104,14 +104,14 @@ const ErrNoShow = "ErrNoShow"
 
 // TODO Better log messages
 func (g *game) InventoryActivate(entity, itemidx int) error {
-	inventory := g.ECS.GetComponentUnchecked(entity, Inventory{}).(Inventory)
+	inventory := GetComponent[Inventory](g.ECS, entity)
 	item_id := inventory.items[itemidx]
-	item_name := g.ECS.GetComponentUnchecked(item_id, Name{}).(Name).string
+	item_name := GetComponent[Name](g.ECS, item_id).string
 	g.Logf("You use the %s.", ColorLogSpecial, item_name)
 	// Item can provide healing. Apply healing.
 	if g.ECS.HasComponent(item_id, Healing{}) {
-		health := g.ECS.GetComponentUnchecked(entity, Health{}).(Health)
-		healing := g.ECS.GetComponentUnchecked(item_id, Healing{}).(Healing)
+		health := GetComponent[Health](g.ECS, entity)
+		healing := GetComponent[Healing](g.ECS, item_id)
 		health.hp += healing.amount
 		if health.hp > health.maxhp {
 			health.hp = health.maxhp
@@ -133,15 +133,15 @@ func (g *game) InventoryActivate(entity, itemidx int) error {
 // }
 
 func (g *game) InventoryDrop(entity, itemidx int) error {
-	inventory := g.ECS.GetComponentUnchecked(entity, Inventory{}).(Inventory)
+	inventory := GetComponent[Inventory](g.ECS, entity)
 	item_id := inventory.items[itemidx]
-	item_name := g.ECS.GetComponentUnchecked(item_id, Name{}).(Name).string
+	item_name := GetComponent[Name](g.ECS, item_id).string
 	prefix := "You drop the "
 	g.Logf("%s %s.", ColorLogSpecial, prefix, item_name)
 	// Remove item from inventory.
 	inventory.items = remove(inventory.items, item_id)
 	g.ECS.AddComponent(entity, inventory)
-	pos := g.ECS.GetComponentUnchecked(entity, Position{}).(Position).Point
+	pos := GetComponent[Position](g.ECS, entity).Point
 	// Add Position component back to the item.
 	g.ECS.AddComponent(item_id, Position{pos})
 	return nil

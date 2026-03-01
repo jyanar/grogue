@@ -150,6 +150,11 @@ func (ecs *ECS) GetComponentUnchecked(entity int, component Component) Component
 	return ecs.components[entity][componentString]
 }
 
+func GetComponent[T Component](ecs *ECS, entity int) T {
+	var zero T
+	return ecs.GetComponentUnchecked(entity, zero).(T)
+}
+
 func (ecs *ECS) GetComponentsFor(entity int) map[string]Component {
 	return ecs.components[entity]
 }
@@ -194,7 +199,7 @@ func (ecs *ECS) EntitiesWith(components ...any) (entities []int) {
 
 func (ecs *ECS) EntitiesAt(p gruid.Point) (entities []int) {
 	for _, e := range ecs.EntitiesWith(Position{}) {
-		if p == ecs.GetComponentUnchecked(e, Position{}).(Position).Point {
+		if p == GetComponent[Position](ecs, e).Point {
 			entities = append(entities, e)
 		}
 	}
