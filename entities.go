@@ -39,7 +39,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 		Inventory{items: map[rune]int{}},
 		Input{},
 		ObstructsMovement{},
-		LightSource{Radius: 8, Intensity: 1.0},
+		LightSource{Radius: 10, Intensity: 1.0},
 	)
 }
 
