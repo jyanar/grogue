@@ -58,6 +58,9 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case `\`:
 		m.debugRevealAll = !m.debugRevealAll
 
+	case " ":
+		m.action = action{Type: ActionPlaceRoom}
+
 	// Waiting
 	case ".":
 		m.action = action{Type: ActionWait}

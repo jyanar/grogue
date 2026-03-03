@@ -8,15 +8,6 @@ import (
 	"codeberg.org/anaseto/gruid/rl"
 )
 
-type roomType int
-
-const (
-	rect roomType = iota
-	blob
-	circle
-	circles
-)
-
 // RoomGen generates room shapes as rl.Grid values (Wall/Floor cells only).
 // Every returned grid includes a 1-cell wall border on all sides so that rooms
 // placed on the main map never expose raw edge cells to the map boundary.
@@ -24,10 +15,18 @@ type RoomGen struct {
 	Rand *rand.Rand
 }
 
-// RectRoom returns a room made of two overlapping rectangles. The two
+func (rg *RoomGen) RectRoom() rl.Grid {
+	w := 3 + rg.Rand.IntN(8)
+	h := 3 + rg.Rand.IntN(4)
+	grid := rl.NewGrid(w+2, h+2)
+	fillRect(grid, 1, 1, w, h)
+	return grid
+}
+
+// RectsRoom returns a room made of two overlapping rectangles. The two
 // rectangles are guaranteed to overlap by at least 2 cells on each axis so
 // the room is always a single connected region.
-func (rg *RoomGen) RectRoom() rl.Grid {
+func (rg *RoomGen) RectsRoom() rl.Grid {
 	w1 := 3 + rg.Rand.IntN(8) // 3–10
 	h1 := 3 + rg.Rand.IntN(4) // 3–6
 	w2 := 3 + rg.Rand.IntN(8)
@@ -125,7 +124,8 @@ func (rg *RoomGen) Random() rl.Grid {
 	// case 2:
 	// 	g = rg.CircleRoom()
 	default:
-		g = rg.CirclesRoom()
+		g = rg.RectRoom()
+		// g = rg.BlobRoom()
 	}
 	pruneRoom(g)
 	return g

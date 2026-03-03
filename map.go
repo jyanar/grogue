@@ -57,24 +57,33 @@ func (m *Map) Rune(c rl.Cell) (r rune) {
 }
 
 // canPlace reports whether ri can be stamped at origin using entrance eIdx.
-// Every room floor cell and every hallway cell must lie within map bounds
-// and currently be Wall (so rooms never overlap existing floor space).
+// Every room cell (floor and wall border) and every hallway cell must lie
+// within map bounds and currently be Wall. Hallway side cells (perpendicular
+// to the hall direction) are also checked to prevent hallways from running
+// flush against existing rooms and merging them.
 func (m *Map) canPlace(ri RoomInstance, origin gruid.Point, eIdx int) bool {
 	mr := m.Grid.Range()
 	it := ri.Grid.Iterator()
 	for it.Next() {
-		if it.Cell() != Floor {
-			continue
-		}
 		mp := gruid.Point{X: origin.X + it.P().X, Y: origin.Y + it.P().Y}
 		if !mp.In(mr) || m.Grid.At(mp) != Wall {
 			return false
 		}
 	}
-	for _, hc := range ri.Entrances[eIdx].Hall {
+	e := ri.Entrances[eIdx]
+	// Perpendicular unit vectors to the hall direction.
+	side1 := gruid.Point{X: -e.Dir.Y, Y: e.Dir.X}
+	side2 := gruid.Point{X: e.Dir.Y, Y: -e.Dir.X}
+	for _, hc := range e.Hall {
 		mp := gruid.Point{X: origin.X + hc.X, Y: origin.Y + hc.Y}
 		if !mp.In(mr) || m.Grid.At(mp) != Wall {
 			return false
+		}
+		for _, s := range [2]gruid.Point{side1, side2} {
+			sp := gruid.Point{X: mp.X + s.X, Y: mp.Y + s.Y}
+			if sp.In(mr) && m.Grid.At(sp) != Wall {
+				return false
+			}
 		}
 	}
 	return true
@@ -133,8 +142,9 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 func (m *Map) Generate() {
 	rg := RoomGen{Rand: m.Rand}
 
-	// First room: centred, no entrance needed.
-	first := rg.Random()
+	// Stamp a single RectRoom at the centre for inspection.
+	// No entrances: subsequent rooms connect to this one.
+	first := rg.RectRoom()
 	size := first.Size()
 	mapSize := m.Grid.Size()
 	ox := (mapSize.X - size.X) / 2
@@ -145,17 +155,12 @@ func (m *Map) Generate() {
 			m.Grid.Set(gruid.Point{X: ox + it.P().X, Y: oy + it.P().Y}, Floor)
 		}
 	}
+}
 
-	// Iteratively add rooms until placement consistently fails.
-	const maxConsecutiveFailures = 50
-	failures := 0
-	for failures < maxConsecutiveFailures {
-		if m.tryPlaceRoom(rg.Instance()) {
-			failures = 0
-		} else {
-			failures++
-		}
-	}
+// PlaceNextRoom attempts to add one more room to the map.
+func (m *Map) PlaceNextRoom() {
+	rg := RoomGen{Rand: m.Rand}
+	m.tryPlaceRoom(rg.Instance())
 }
 
 // RandomFloor returns a random floor cell in the map. It assumes that such a

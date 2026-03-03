@@ -23,6 +23,7 @@ const (
 	ActionDrop                    // Drop an item.
 	ActionExamine                 // Examine the map.
 	ActionIAnimate                // Start an interruptible animation.
+	ActionPlaceRoom               // Debug: place one more room on the map.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -73,6 +74,9 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionExamine:
 		m.mode = modeExamination
+
+	case ActionPlaceRoom:
+		m.game.Map.PlaceNextRoom()
 
 	case ActionIAnimate:
 		p, hasPos := m.game.ECS.GetComponent(0, Position{})
