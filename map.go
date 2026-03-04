@@ -186,8 +186,23 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 func (m *Map) Generate() {
 	rg := RoomGen{Rand: m.Rand}
 
-	// First room: centered, no entrance needed.
-	first := rg.Random()
+	// First room: centered, no entrance needed. Retry until a non-empty room
+	// is produced (BlobRoom can rarely converge to all walls).
+	var first rl.Grid
+	for {
+		first = rg.Random()
+		it := first.Iterator()
+		hasFloor := false
+		for it.Next() {
+			if it.Cell() == Floor {
+				hasFloor = true
+				break
+			}
+		}
+		if hasFloor {
+			break
+		}
+	}
 	size := first.Size()
 	mapSize := m.Grid.Size()
 	ox := (mapSize.X - size.X) / 2

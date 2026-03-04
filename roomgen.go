@@ -54,25 +54,32 @@ func (rg *RoomGen) RectsRoom() rl.Grid {
 
 // BlobRoom returns an organic, cave-like room produced by cellular automata.
 // The result is non-deterministically shaped but generally compact.
+// Retries until the CA produces at least one floor cell.
 func (rg *RoomGen) BlobRoom() rl.Grid {
 	const w, h = 8, 8
-	grid := rl.NewGrid(w, h)
-	mgen := rl.MapGen{Rand: rg.Rand, Grid: grid}
-	mgen.CellularAutomataCave(Wall, Floor, 0.50, []rl.CellularAutomataRule{
-		{WCutoff1: 5, WCutoff2: 2, Reps: 10, WallsOutOfRange: true},
-	})
-	// Explicitly enforce a 1-cell wall border. WallsOutOfRange biases edge
-	// cells toward wall but doesn't guarantee it; without a hard border,
-	// floor cells at the grid edge would have no wall buffer on the map side.
-	for x := range w {
-		grid.Set(gruid.Point{X: x, Y: 0}, Wall)
-		grid.Set(gruid.Point{X: x, Y: h - 1}, Wall)
+	for {
+		grid := rl.NewGrid(w, h)
+		mgen := rl.MapGen{Rand: rg.Rand, Grid: grid}
+		mgen.CellularAutomataCave(Wall, Floor, 0.50, []rl.CellularAutomataRule{
+			{WCutoff1: 5, WCutoff2: 2, Reps: 10, WallsOutOfRange: true},
+		})
+		// Explicitly enforce a 1-cell wall border.
+		for x := range w {
+			grid.Set(gruid.Point{X: x, Y: 0}, Wall)
+			grid.Set(gruid.Point{X: x, Y: h - 1}, Wall)
+		}
+		for y := range h {
+			grid.Set(gruid.Point{X: 0, Y: y}, Wall)
+			grid.Set(gruid.Point{X: w - 1, Y: y}, Wall)
+		}
+		it := grid.Iterator()
+		for it.Next() {
+			if it.Cell() == Floor {
+				return grid
+			}
+		}
+		// CA produced all walls; retry with a new random seed.
 	}
-	for y := range h {
-		grid.Set(gruid.Point{X: 0, Y: y}, Wall)
-		grid.Set(gruid.Point{X: w - 1, Y: y}, Wall)
-	}
-	return grid
 }
 
 // CircleRoom returns a single large circular room. The +0.5 on the radius
