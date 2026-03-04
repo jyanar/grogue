@@ -89,16 +89,25 @@ func (aip *aiPath) Neighbors(q gruid.Point) []gruid.Point {
 }
 
 func (aip *aiPath) Cost(p, q gruid.Point) int {
-	if !aip.ecs.NoBlockingEntityAt(q) {
-		// Extra cost for blocked positions: this encourages the pathfinding
-		// algorithm to take another path to reach the their destination.
-		return 8
+	// Use 10/14 integer approximation of 1/√2 so diagonal moves cost more
+	// than cardinal ones. Equal-length paths then prefer straight movement,
+	// eliminating zigzag artifacts at T-junctions.
+	base := 10
+	if p.X != q.X && p.Y != q.Y {
+		base = 14
 	}
-	return 1
+	if !aip.ecs.NoBlockingEntityAt(q) {
+		// Extra cost for blocked positions: encourages the pathfinder to
+		// route around other entities rather than through them.
+		return base + 80
+	}
+	return base
 }
 
 func (aip *aiPath) Estimation(p, q gruid.Point) int {
-	return paths.DistanceChebyshev(p, q)
+	// Scale by 10 to match the cardinal move cost, keeping the heuristic
+	// admissible (Chebyshev * 10 ≤ actual cost for any path).
+	return 10 * paths.DistanceChebyshev(p, q)
 }
 
 func (s *AISystem) Update(e int) {

@@ -57,6 +57,8 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 		pp.Print(m.game.ECS.GetComponentsFor(0))
 	case `\`:
 		m.debugRevealAll = !m.debugRevealAll
+	case "p":
+		m.debugAIPaths = !m.debugAIPaths
 	case " ":
 		m.action = action{Type: ActionPlaceRoom}
 	case "c":

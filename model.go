@@ -23,8 +23,9 @@ type model struct {
 	pr             *paths.PathRange // Pathing algorithm.
 	target         *targeting       // Mouse position.
 	ianimation     *Animation       // Interruptible animation.
-	debugRevealAll bool             // Debug: reveal entire map.
-	mouseActive    bool             // True once mouse has hovered over a visible tile.
+	debugRevealAll  bool // Debug: reveal entire map.
+	debugAIPaths    bool // Debug: visualize AI entity paths.
+	mouseActive     bool // True once mouse has hovered over a visible tile.
 }
 
 // targeting describes information related to examination or selection of
@@ -238,6 +239,11 @@ func (m *model) Draw() gruid.Grid {
 		mapgrid.Set(p.Point, c)
 	}
 
+	// Draw AI paths (debug).
+	if m.debugAIPaths {
+		m.DrawAIPaths(mapgrid)
+	}
+
 	// Draw target (if targeting), names, log, and status.
 	m.DrawTarget(mapgrid)
 	m.DrawNames(loggrid.Slice(loggrid.Range().Line(2)))
@@ -275,6 +281,27 @@ func (m *model) DrawTarget(gd gruid.Grid) {
 	for _, p := range m.target.path {
 		c := gd.At(p)
 		gd.Set(p, c.WithStyle(c.Style.WithAttrs(AttrReverse)))
+	}
+}
+
+// DrawAIPaths draws the planned A* path for every AI entity that has a
+// destination set. Path cells are highlighted with a '~' rune using the
+// target color so they are visible over any map tile.
+func (m *model) DrawAIPaths(gd gruid.Grid) {
+	aip := m.game.ECS.AISystem.aip
+	for _, e := range m.game.ECS.EntitiesWith(AI{}, Position{}) {
+		ai := GetComponent[AI](m.game.ECS, e)
+		if ai.dest == nil {
+			continue
+		}
+		pos := GetComponent[Position](m.game.ECS, e)
+		path := m.game.Map.PR.AstarPath(aip, pos.Point, *ai.dest)
+		for _, p := range path {
+			c := gd.At(p)
+			c.Rune = '~'
+			c.Style.Bg = ColorTarget
+			gd.Set(p, c)
+		}
 	}
 }
 

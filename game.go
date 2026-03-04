@@ -12,7 +12,7 @@ type game struct {
 }
 
 const (
-	MonstersToSpawn = 4
+	MonstersToSpawn = 1
 	ScrollsToPlace  = 3
 	PotionsToPlace  = 3
 	TorchesToPlace  = 5
