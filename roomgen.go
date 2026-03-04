@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand/v2"
 
@@ -27,10 +28,10 @@ func (rg *RoomGen) RectRoom() rl.Grid {
 // rectangles are guaranteed to overlap by at least 2 cells on each axis so
 // the room is always a single connected region.
 func (rg *RoomGen) RectsRoom() rl.Grid {
-	w1 := 3 + rg.Rand.IntN(8) // 3–10
-	h1 := 3 + rg.Rand.IntN(4) // 3–6
-	w2 := 3 + rg.Rand.IntN(8)
-	h2 := 3 + rg.Rand.IntN(4)
+	w1 := 4 + rg.Rand.IntN(8) // 4–12
+	h1 := 4 + rg.Rand.IntN(4) // 4–8
+	w2 := 4 + rg.Rand.IntN(8)
+	h2 := 4 + rg.Rand.IntN(4)
 
 	// Choose an offset for rect2 relative to rect1 that guarantees ≥2 cells
 	// of overlap on each axis. For width: offset in [-(w2-2), w1-2].
@@ -54,15 +55,23 @@ func (rg *RoomGen) RectsRoom() rl.Grid {
 // BlobRoom returns an organic, cave-like room produced by cellular automata.
 // The result is non-deterministically shaped but generally compact.
 func (rg *RoomGen) BlobRoom() rl.Grid {
-	const w, h = 18, 11
+	const w, h = 8, 8
 	grid := rl.NewGrid(w, h)
 	mgen := rl.MapGen{Rand: rg.Rand, Grid: grid}
-	// Cells with 5+ wall neighbours become wall; isolated walls with ≤2 wall
-	// neighbours open up. WallsOutOfRange ensures the border stays solid,
-	// giving a natural 1-cell wall edge without extra bookkeeping.
 	mgen.CellularAutomataCave(Wall, Floor, 0.50, []rl.CellularAutomataRule{
 		{WCutoff1: 5, WCutoff2: 2, Reps: 10, WallsOutOfRange: true},
 	})
+	// Explicitly enforce a 1-cell wall border. WallsOutOfRange biases edge
+	// cells toward wall but doesn't guarantee it; without a hard border,
+	// floor cells at the grid edge would have no wall buffer on the map side.
+	for x := range w {
+		grid.Set(gruid.Point{X: x, Y: 0}, Wall)
+		grid.Set(gruid.Point{X: x, Y: h - 1}, Wall)
+	}
+	for y := range h {
+		grid.Set(gruid.Point{X: 0, Y: y}, Wall)
+		grid.Set(gruid.Point{X: w - 1, Y: y}, Wall)
+	}
 	return grid
 }
 
@@ -116,16 +125,13 @@ func (rg *RoomGen) CirclesRoom() rl.Grid {
 // being returned, ensuring no disconnected islands remain.
 func (rg *RoomGen) Random() rl.Grid {
 	var g rl.Grid
-	switch rg.Rand.IntN(2) {
-	// case 0:
-	// 	g = rg.RectRoom()
-	// case 1:
-	// 	g = rg.RectRoom()
-	// case 2:
-	// 	g = rg.CircleRoom()
-	default:
-		g = rg.RectRoom()
-		// g = rg.BlobRoom()
+	switch rg.Rand.IntN(3) {
+	case 0:
+		g = rg.RectsRoom()
+	case 1:
+		g = rg.CirclesRoom()
+	case 2:
+		g = rg.BlobRoom()
 	}
 	pruneRoom(g)
 	return g
@@ -261,6 +267,33 @@ func (rg *RoomGen) Instance() RoomInstance {
 		return rg.withHallway(room)
 	}
 	return rg.withEntrances(room)
+}
+
+// Print renders the room grid to stdout as ASCII art, marking entrance
+// positions with 'E' and hallway cells with 'h'.
+func (ri RoomInstance) Print() {
+	size := ri.Grid.Size()
+	// Build a lookup of special cells.
+	marks := make(map[gruid.Point]rune)
+	for _, e := range ri.Entrances {
+		for _, hc := range e.Hall {
+			marks[hc] = 'h'
+		}
+		marks[e.Pos] = 'E'
+	}
+	for y := range size.Y {
+		for x := range size.X {
+			p := gruid.Point{X: x, Y: y}
+			if r, ok := marks[p]; ok {
+				fmt.Printf("%c", r)
+			} else if ri.Grid.At(p) == Floor {
+				fmt.Printf(".")
+			} else {
+				fmt.Printf("#")
+			}
+		}
+		fmt.Println()
+	}
 }
 
 // withEntrances picks one random edge floor cell per cardinal side and

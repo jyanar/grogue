@@ -115,6 +115,7 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 	if len(ri.Entrances) == 0 {
 		return false
 	}
+	// log.Println("Attempting to place room...")
 	mapSize := m.Grid.Size()
 	for range 500 {
 		p := gruid.Point{X: m.Rand.IntN(mapSize.X), Y: m.Rand.IntN(mapSize.Y)}
@@ -132,6 +133,8 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 			}
 		}
 	}
+	// log.Println("Room placement failed.")
+	// ri.Print()
 	return false
 }
 
@@ -142,9 +145,8 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 func (m *Map) Generate() {
 	rg := RoomGen{Rand: m.Rand}
 
-	// Stamp a single RectRoom at the centre for inspection.
-	// No entrances: subsequent rooms connect to this one.
-	first := rg.RectRoom()
+	// First room: centred, no entrance needed.
+	first := rg.Random()
 	size := first.Size()
 	mapSize := m.Grid.Size()
 	ox := (mapSize.X - size.X) / 2
@@ -153,6 +155,17 @@ func (m *Map) Generate() {
 	for it.Next() {
 		if it.Cell() == Floor {
 			m.Grid.Set(gruid.Point{X: ox + it.P().X, Y: oy + it.P().Y}, Floor)
+		}
+	}
+
+	// Iteratively add rooms until placement consistently fails.
+	const maxConsecutiveFailures = 50
+	failures := 0
+	for failures < maxConsecutiveFailures {
+		if m.tryPlaceRoom(rg.Instance()) {
+			failures = 0
+		} else {
+			failures++
 		}
 	}
 }

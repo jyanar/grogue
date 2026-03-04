@@ -1,3 +1,29 @@
+Brogue's room placement algorithm
+=================================
+The basic approach is this:
+- place a room
+- add another room connected to it
+- repeat until the level is full
+
+Rooms can be one of the following
+1. Overlapping rectangles
+2. Cellular automata blob
+3. Big circle
+4. Multiple overlaid smaller circles
+
+After the room is generated, we flip a coin to decide whether the room has a hallway or
+not. If it does, we place a hallway coming out of the room. The end of that hallway
+will be the entrance to that room. For rooms that do not get a hallway, we place
+potential entrances on all 4 sides of the room, at random locations.
+
+Then, we iterate over points on the map randomly, until we find a location into which
+the room fits. The room is placed such that it connects to any existing roomspace
+(hallway or room) via its entrance. We continue this until we fill most of the space
+with rooms.
+
+
+
+
 Observations
 ============
 * After trying out many of the different ECS frameworks available in Go, I opted
