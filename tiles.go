@@ -97,7 +97,7 @@ var fgTable = map[gruid.Color][3]color.RGBA{
 	ColorHealthPotion:     {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xcc, 0x44, 0x44)},
 	ColorScroll:           {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xd4, 0xc4, 0x8c)},
 	ColorWater2:           {ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x30, 0x58, 0x98)},
-	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33), ThemeSepia: rgba(0x36, 0x7a, 0x2e)},
+	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33), ThemeSepia: rgba(0x36, 0x36, 0x36)},
 }
 
 // bgTable maps a logical color to its per-theme background RGBA override.

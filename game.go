@@ -36,6 +36,10 @@ func (g *game) Initialize() {
 	g.ECS.Map = g.Map
 	// Place player on a random floor.
 	g.NewPlayer(g.FreeFloorTile())
+	g.SpawnTorches()
+	g.SpawnPotions()
+	g.SpawnEnemies()
+	g.SpawnGrass()
 	g.ECS.Initialize()
 }
 

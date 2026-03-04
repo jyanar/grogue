@@ -9,7 +9,7 @@ import (
 
 const (
 	UIWidth   = 80
-	UIHeight  = 34
+	UIHeight  = 32
 	MapWidth  = UIWidth - 2
 	MapHeight = UIHeight - 5
 	LogLines  = 5

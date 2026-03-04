@@ -29,7 +29,7 @@ func (g *game) NewPlayer(p gruid.Point) int {
 	return g.ECS.Create(
 		Name{"you"},
 		Position{p},
-		Visible{},
+		// Visible{},
 		NewRenderableNoBg('@', ColorPlayer, ROActor),
 		Health{hp: 18, maxhp: 18},
 		Damage{5},
