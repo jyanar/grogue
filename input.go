@@ -52,11 +52,17 @@ func (m *model) updateMsgKeyDown(msg gruid.MsgKeyDown) {
 	case "x":
 		m.action = action{Type: ActionExamine}
 
+	// Debug actions
 	case "t":
 		pp.Print(m.game.ECS.GetComponentsFor(0))
-
 	case `\`:
 		m.debugRevealAll = !m.debugRevealAll
+	case "p":
+		m.debugAIPaths = !m.debugAIPaths
+	case " ":
+		m.action = action{Type: ActionPlaceRoom}
+	case "c":
+		m.action = action{Type: ActionConnectRooms}
 
 	// Waiting
 	case ".":

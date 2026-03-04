@@ -97,7 +97,7 @@ var fgTable = map[gruid.Color][3]color.RGBA{
 	ColorHealthPotion:     {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xcc, 0x44, 0x44)},
 	ColorScroll:           {ThemeNoir: rgba(0xdb, 0xb3, 0x2d), ThemeSepia: rgba(0xd4, 0xc4, 0x8c)},
 	ColorWater2:           {ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x30, 0x58, 0x98)},
-	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33), ThemeSepia: rgba(0x36, 0x7a, 0x2e)},
+	ColorGrass:            {ThemeSelenized: rgba(0x44, 0x99, 0x33), ThemeNoir: rgba(0x44, 0x99, 0x33), ThemeSepia: rgba(0x36, 0x36, 0x36)},
 }
 
 // bgTable maps a logical color to its per-theme background RGBA override.
@@ -106,10 +106,10 @@ var bgTable = map[gruid.Color][3]color.RGBA{
 	ColorFOV:       {ThemeSelenized: rgba(0x18, 0x49, 0x56), ThemeSepia: rgba(0x14, 0x10, 0x08)},
 	ColorFOVDim:    {ThemeSelenized: rgba(0x10, 0x30, 0x3a), ThemeSepia: rgba(0x0d, 0x0b, 0x06)},
 	ColorFOVBright: {ThemeSelenized: rgba(0x28, 0x6a, 0x7c), ThemeSepia: rgba(0x2c, 0x22, 0x10)},
-	ColorBlood:  {ThemeSelenized: rgba(138, 3, 3), ThemeNoir: rgba(138, 3, 3), ThemeSepia: rgba(0x50, 0x10, 0x10)},
-	ColorTarget: {ThemeSelenized: rgba(0x75, 0x75, 0x00), ThemeNoir: rgba(100, 100, 100), ThemeSepia: rgba(0x40, 0x20, 0x60)},
-	ColorWater1: {ThemeSelenized: rgba(107, 107, 255), ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x20, 0x40, 0x80)},
-	ColorWater2: {ThemeNoir: rgba(148, 148, 255), ThemeSepia: rgba(0x18, 0x30, 0x60)},
+	ColorBlood:     {ThemeSelenized: rgba(138, 3, 3), ThemeNoir: rgba(138, 3, 3), ThemeSepia: rgba(0x50, 0x10, 0x10)},
+	ColorTarget:    {ThemeSelenized: rgba(0x75, 0x75, 0x00), ThemeNoir: rgba(100, 100, 100), ThemeSepia: rgba(0x40, 0x20, 0x60)},
+	ColorWater1:    {ThemeSelenized: rgba(107, 107, 255), ThemeNoir: rgba(107, 107, 255), ThemeSepia: rgba(0x20, 0x40, 0x80)},
+	ColorWater2:    {ThemeNoir: rgba(148, 148, 255), ThemeSepia: rgba(0x18, 0x30, 0x60)},
 }
 
 func (t *TileDrawer) GetImage(c gruid.Cell) image.Image {
@@ -153,13 +153,13 @@ func NewTileDrawer() (*TileDrawer, error) {
 
 	// Grab the monospace font TTF.
 
-	// // GoMono
+	// GoMono
 	// font, err := opentype.Parse(gomono.TTF)
 	// if err != nil {
 	// 	return nil, err
 	// }
 
-	// // IBM EGA
+	// IBM EGA
 	// font, err := readTTF("assets/MxPlus_IBM_EGA_8x14.ttf")
 	// if err != nil {
 	// 	return nil, err

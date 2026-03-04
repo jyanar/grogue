@@ -23,6 +23,8 @@ const (
 	ActionDrop                    // Drop an item.
 	ActionExamine                 // Examine the map.
 	ActionIAnimate                // Start an interruptible animation.
+	ActionPlaceRoom               // Debug: place one more room on the map.
+	ActionConnectRooms            // Second pass: connect distant regions with doors.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -32,7 +34,6 @@ func (m *model) handleAction() gruid.Effect {
 		for _, e := range m.game.ECS.EntitiesWith(Input{}) {
 			m.game.ECS.AddComponent(e, Bump{m.action.Delta})
 		}
-		m.game.ECS.printDebug(0, false)
 		m.game.ECS.Update()
 		m.game.CollectMessages()
 
@@ -74,6 +75,12 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionExamine:
 		m.mode = modeExamination
+
+	case ActionPlaceRoom:
+		m.game.Map.PlaceNextRoom()
+
+	case ActionConnectRooms:
+		m.game.Map.ConnectRooms()
 
 	case ActionIAnimate:
 		p, hasPos := m.game.ECS.GetComponent(0, Position{})

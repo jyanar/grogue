@@ -12,21 +12,21 @@ type game struct {
 }
 
 const (
-	MonstersToSpawn = 4
+	MonstersToSpawn = 1
 	ScrollsToPlace  = 3
 	PotionsToPlace  = 3
 	TorchesToPlace  = 5
 )
 
 var Directions = []gruid.Point{
-	gruid.Point{X: 0, Y: -1},  // N
-	gruid.Point{X: 1, Y: 0},   // E
-	gruid.Point{X: 0, Y: 1},   // S
-	gruid.Point{X: -1, Y: 0},  // W
-	gruid.Point{X: 1, Y: -1},  // NE
-	gruid.Point{X: 1, Y: 1},   // SE
-	gruid.Point{X: -1, Y: -1}, // NW
-	gruid.Point{X: -1, Y: 1},  // SW
+	{X: 0, Y: -1},  // N
+	{X: 1, Y: 0},   // E
+	{X: 0, Y: 1},   // S
+	{X: -1, Y: 0},  // W
+	{X: 1, Y: -1},  // NE
+	{X: 1, Y: 1},   // SE
+	{X: -1, Y: -1}, // NW
+	{X: -1, Y: 1},  // SW
 }
 
 func (g *game) Initialize() {
@@ -36,13 +36,10 @@ func (g *game) Initialize() {
 	g.ECS.Map = g.Map
 	// Place player on a random floor.
 	g.NewPlayer(g.FreeFloorTile())
-	// Spawn enemies, place items, and advance a tick.
-	g.SpawnEnemies()
-	g.SpawnPotions()
-	g.SpawnScrolls()
-	g.SpawnGrass()
 	g.SpawnTorches()
-	// g.SpawnCorpses()
+	g.SpawnPotions()
+	g.SpawnEnemies()
+	g.SpawnGrass()
 	g.ECS.Initialize()
 }
 
