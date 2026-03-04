@@ -24,6 +24,7 @@ const (
 	ActionExamine                 // Examine the map.
 	ActionIAnimate                // Start an interruptible animation.
 	ActionPlaceRoom               // Debug: place one more room on the map.
+	ActionConnectRooms            // Second pass: connect distant regions with doors.
 )
 
 func (m *model) handleAction() gruid.Effect {
@@ -77,6 +78,9 @@ func (m *model) handleAction() gruid.Effect {
 
 	case ActionPlaceRoom:
 		m.game.Map.PlaceNextRoom()
+
+	case ActionConnectRooms:
+		m.game.Map.ConnectRooms()
 
 	case ActionIAnimate:
 		p, hasPos := m.game.ECS.GetComponent(0, Position{})

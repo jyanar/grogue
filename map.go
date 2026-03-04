@@ -56,6 +56,47 @@ func (m *Map) Rune(c rl.Cell) (r rune) {
 	return r
 }
 
+// pathDist returns the walking distance from src to dst using BFS, capped at
+// limit. Returns limit+1 if dst is not reached within that many steps.
+func (m *Map) pathDist(src, dst gruid.Point, limit int) int {
+	p := m.PR.JPSPath(nil, src, dst, m.Walkable, false)
+	if len(p) == 0 {
+		return limit + 1
+	}
+	return len(p) - 1
+}
+
+// ConnectRooms scans every wall tile that has walkable tiles on both sides
+// (N/S or E/W). If the walking distance between those two tiles exceeds the
+// threshold, the wall is replaced with a Floor.
+func (m *Map) ConnectRooms() {
+	const threshold = 30
+	mr := m.Grid.Range()
+	it := m.Grid.Iterator()
+	for it.Next() {
+		p := it.P()
+		if it.Cell() != Wall {
+			continue
+		}
+		var a, b gruid.Point
+		west := gruid.Point{X: p.X - 1, Y: p.Y}
+		east := gruid.Point{X: p.X + 1, Y: p.Y}
+		north := gruid.Point{X: p.X, Y: p.Y - 1}
+		south := gruid.Point{X: p.X, Y: p.Y + 1}
+		switch {
+		case west.In(mr) && east.In(mr) && m.Walkable(west) && m.Walkable(east):
+			a, b = west, east
+		case north.In(mr) && south.In(mr) && m.Walkable(north) && m.Walkable(south):
+			a, b = north, south
+		default:
+			continue
+		}
+		if m.pathDist(a, b, threshold) > threshold {
+			m.Grid.Set(p, Floor)
+		}
+	}
+}
+
 // canPlace reports whether ri can be stamped at origin using entrance eIdx.
 // Every room cell (floor and wall border) and every hallway cell must lie
 // within map bounds and currently be Wall. Hallway side cells (perpendicular
