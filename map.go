@@ -186,7 +186,7 @@ func (m *Map) tryPlaceRoom(ri RoomInstance) bool {
 func (m *Map) Generate() {
 	rg := RoomGen{Rand: m.Rand}
 
-	// First room: centred, no entrance needed.
+	// First room: centered, no entrance needed.
 	first := rg.Random()
 	size := first.Size()
 	mapSize := m.Grid.Size()
@@ -209,6 +209,9 @@ func (m *Map) Generate() {
 			failures++
 		}
 	}
+
+	// Connect nearby rooms
+	m.ConnectRooms()
 }
 
 // PlaceNextRoom attempts to add one more room to the map.
