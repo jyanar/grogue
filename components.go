@@ -97,8 +97,10 @@ const (
 // Entities with this component will be controlled by AI, and can wander,
 // sleep, or hunt the player.
 type AI struct {
-	state creatureState
-	dest  *gruid.Point
+	state      creatureState
+	dest       *gruid.Point
+	cachedPath []gruid.Point // Last computed A* path; advanced one step per turn.
+	cachedDest *gruid.Point  // Destination used when cachedPath was computed.
 }
 
 // This component represents a message, to be processed by and added to the message log.

@@ -41,6 +41,7 @@ func (g *game) Initialize() {
 	g.SpawnEnemies()
 	g.SpawnGrass()
 	g.ECS.Initialize()
+	g.ECS.LightingSystem.BakeTorchLighting()
 }
 
 func (g *game) Pathable(p gruid.Point) bool {

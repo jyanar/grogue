@@ -25,8 +25,15 @@ func (s *PerceptionSystem) Update(e int) {
 	if !s.ecs.HasComponents(e, Position{}, Perception{}) {
 		return
 	}
+	// The player's perception output is never consumed; skip the expensive
+	// FOV computation and entity scan for entity 0.
+	if e == 0 {
+		return
+	}
 	pos := GetComponent[Position](s.ecs, e)
 	per := GetComponent[Perception](s.ecs, e)
+	// Clear perceived list from the previous turn.
+	per.perceived = per.perceived[:0]
 	if per.FOV == nil {
 		per.FOV = rl.NewFOV(gruid.NewRange(-per.LOS, -per.LOS, per.LOS+1, per.LOS+1))
 	}
@@ -35,11 +42,7 @@ func (s *PerceptionSystem) Update(e int) {
 	passable := func(p gruid.Point) bool {
 		return s.ecs.Map.Grid.At(p) != Wall
 	}
-	for _, point := range per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, true) {
-		if paths.DistanceChebyshev(point, pos.Point) > per.LOS {
-			continue
-		}
-	}
+	per.FOV.SSCVisionMap(pos.Point, per.LOS, passable, true)
 	for _, other := range s.ecs.EntitiesWith(Position{}, Visible{}) {
 		// Ignore self.
 		if other == e {
@@ -50,10 +53,10 @@ func (s *PerceptionSystem) Update(e int) {
 		if per.FOV.Visible(pos_other.Point) {
 			per.perceived = append(per.perceived, other)
 		}
-		s.ecs.AddComponent(e, per) // Update perception component.
 	}
+	s.ecs.AddComponent(e, per)
 	// If we're a mob and the player is perceived, switch to hunting state.
-	if e != 0 && s.ecs.HasComponent(e, AI{}) {
+	if s.ecs.HasComponent(e, AI{}) {
 		player_found := false
 		for _, other := range per.perceived {
 			if other == 0 {
@@ -127,7 +130,6 @@ func (s *AISystem) Update(e int) {
 				f := s.ecs.Map.RandomFloor()
 				if f != pos.Point {
 					ai.dest = &f
-					s.ecs.AddComponent(e, ai)
 					break
 				}
 			}
@@ -136,15 +138,21 @@ func (s *AISystem) Update(e int) {
 		// Set destination to be the player.
 		pp := GetComponent[Position](s.ecs, 0)
 		ai.dest = &pp.Point
-		s.ecs.AddComponent(e, ai)
 	}
-	// Compute path to ai.dest.
-	path := s.ecs.Map.PR.AstarPath(&aiPath{ecs: s.ecs}, pos.Point, *ai.dest)
-	if len(path) > 1 {
-		// Move entity to first position in the path.
-		q := path[1]
+	// Recompute A* only when the destination changed or the cached path is
+	// exhausted. Otherwise advance along the existing path one step.
+	destChanged := ai.cachedDest == nil || *ai.cachedDest != *ai.dest
+	if destChanged || len(ai.cachedPath) <= 1 {
+		ai.cachedPath = s.ecs.Map.PR.AstarPath(s.aip, pos.Point, *ai.dest)
+		dest := *ai.dest
+		ai.cachedDest = &dest
+	}
+	if len(ai.cachedPath) > 1 {
+		q := ai.cachedPath[1]
+		ai.cachedPath = ai.cachedPath[1:]
 		s.ecs.AddComponent(e, Bump{q.Sub(pos.Point)})
 	}
+	s.ecs.AddComponent(e, ai)
 }
 
 type BumpSystem struct {
@@ -419,10 +427,45 @@ type LightingSystem struct {
 	fov *rl.FOV
 }
 
+// BakeTorchLighting precomputes light contributions from all static torch
+// entities and stores the result in Map.BakedLightMap. Call once after
+// torches are placed. UpdateLighting() then blends the baked map in each
+// turn instead of re-running SSCVisionMap per torch.
+func (s *LightingSystem) BakeTorchLighting() {
+	for i := range s.ecs.Map.BakedLightMap {
+		s.ecs.Map.BakedLightMap[i] = 0
+	}
+	if s.fov == nil {
+		s.fov = rl.NewFOV(s.ecs.Map.Grid.Range())
+	}
+	passable := func(p gruid.Point) bool {
+		return s.ecs.Map.Grid.At(p) == Floor
+	}
+	for _, e := range s.ecs.EntitiesWith(Position{}, LightSource{}) {
+		if e == 0 {
+			continue // Player light is dynamic; skip here.
+		}
+		pos := GetComponent[Position](s.ecs, e)
+		ls := GetComponent[LightSource](s.ecs, e)
+		visibles := s.fov.SSCVisionMap(pos.Point, ls.Radius, passable, true)
+		for _, p := range visibles {
+			dist := paths.DistanceChebyshev(pos.Point, p)
+			if dist > ls.Radius {
+				continue
+			}
+			idx := s.ecs.Map.idx(p)
+			contribution := ls.Intensity * (1.0 - float32(dist)/float32(ls.Radius))
+			if contribution > s.ecs.Map.BakedLightMap[idx] {
+				s.ecs.Map.BakedLightMap[idx] = contribution
+			}
+		}
+	}
+}
+
 // UpdateLighting resets the map's LightMap and recomputes light levels for
 // all currently player-visible tiles. Ambient light is applied everywhere in
-// the player's FOV; each LightSource entity then contributes additional
-// brightness within its radius using symmetric shadow casting.
+// the player's FOV; baked torch light is blended in; then the player's own
+// dynamic light source is computed via shadow casting.
 func (s *LightingSystem) UpdateLighting() {
 	const ambientLight float32 = 0.1
 
@@ -448,26 +491,33 @@ func (s *LightingSystem) UpdateLighting() {
 		}
 	}
 
-	// Add contributions from each light source.
-	for _, e := range s.ecs.EntitiesWith(Position{}, LightSource{}) {
-		pos := GetComponent[Position](s.ecs, e)
-		ls := GetComponent[LightSource](s.ecs, e)
+	// Blend in pre-baked static torch lighting for player-visible tiles.
+	for i, baked := range s.ecs.Map.BakedLightMap {
+		if baked > 0 && s.ecs.Map.VisibleNow[i] && baked > s.ecs.Map.LightMap[i] {
+			s.ecs.Map.LightMap[i] = baked
+		}
+	}
 
-		visibles := s.fov.SSCVisionMap(pos.Point, ls.Radius, passable, true)
-		for _, p := range visibles {
-			dist := paths.DistanceChebyshev(pos.Point, p)
-			if dist > ls.Radius {
-				continue
-			}
-			idx := s.ecs.Map.idx(p)
-			// Only illuminate tiles currently visible to the player.
-			if !s.ecs.Map.VisibleNow[idx] {
-				continue
-			}
-			contribution := ls.Intensity * (1.0 - float32(dist)/float32(ls.Radius))
-			if contribution > s.ecs.Map.LightMap[idx] {
-				s.ecs.Map.LightMap[idx] = contribution
-			}
+	// Compute only the player's dynamic light source (player moves each turn).
+	if !s.ecs.HasComponents(0, Position{}, LightSource{}) {
+		return
+	}
+	pos := GetComponent[Position](s.ecs, 0)
+	ls := GetComponent[LightSource](s.ecs, 0)
+	visibles := s.fov.SSCVisionMap(pos.Point, ls.Radius, passable, true)
+	for _, p := range visibles {
+		dist := paths.DistanceChebyshev(pos.Point, p)
+		if dist > ls.Radius {
+			continue
+		}
+		idx := s.ecs.Map.idx(p)
+		// Only illuminate tiles currently visible to the player.
+		if !s.ecs.Map.VisibleNow[idx] {
+			continue
+		}
+		contribution := ls.Intensity * (1.0 - float32(dist)/float32(ls.Radius))
+		if contribution > s.ecs.Map.LightMap[idx] {
+			s.ecs.Map.LightMap[idx] = contribution
 		}
 	}
 }
